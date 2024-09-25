@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/DarkCharacterBase.h"
+#include "Character/DkCharacterBase.h"
 #include "Logging/LogMacros.h"
-#include "DarkCharacter.generated.h"
+#include "DkCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
@@ -13,15 +13,15 @@ class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogDarkCharacter, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogDkCharacter, Log, All);
 
 UCLASS()
-class DARK_API ADarkCharacter : public ADarkCharacterBase
+class DARK_API ADkCharacter : public ADkCharacterBase
 {
 	GENERATED_BODY()
 
 public:
-	ADarkCharacter();
+	ADkCharacter();
 	//TODO: Consider getter methods for camera and spring arm (see template)
 
 protected:

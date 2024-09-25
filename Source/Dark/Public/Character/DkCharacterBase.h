@@ -4,15 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "DarkCharacterBase.generated.h"
+#include "DkCharacterBase.generated.h"
 
 UCLASS()
-class DARK_API ADarkCharacterBase : public ACharacter
+class DARK_API ADkCharacterBase : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-	ADarkCharacterBase();
+	ADkCharacterBase();
 
 protected:
 	virtual void BeginPlay() override;

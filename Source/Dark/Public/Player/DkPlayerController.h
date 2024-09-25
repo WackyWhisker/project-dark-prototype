@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "DarkPlayerController.generated.h"
+#include "DkPlayerController.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class DARK_API ADarkPlayerController : public APlayerController
+class DARK_API ADkPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 	

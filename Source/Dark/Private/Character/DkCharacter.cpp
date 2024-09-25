@@ -1,7 +1,7 @@
 // Copyright @ Christian Reichel
 
 
-#include "Character/DarkCharacter.h"
+#include "Character/DkCharacter.h"
 
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -9,9 +9,9 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
-DEFINE_LOG_CATEGORY(LogDarkCharacter);
+DEFINE_LOG_CATEGORY(LogDkCharacter);
 
-ADarkCharacter::ADarkCharacter()
+ADkCharacter::ADkCharacter()
 {
 	//Don't rotate the character in any way through mouse/stick input
 	bUseControllerRotationPitch = false;
@@ -35,12 +35,12 @@ ADarkCharacter::ADarkCharacter()
 	
 }
 
-void ADarkCharacter::BeginPlay()
+void ADkCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 }
 
-void ADarkCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ADkCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	// Add Input Mapping Context
@@ -55,25 +55,25 @@ void ADarkCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ADarkCharacter::Move);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ADkCharacter::Move);
 
 		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADarkCharacter::Look);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADkCharacter::Look);
 
 		//Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ADarkCharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ADarkCharacter::StopJumping);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ADkCharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ADkCharacter::StopJumping);
 	}
 	else
 	{
-		UE_LOG(LogDarkCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		UE_LOG(LogDkCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
 }
 
-void ADarkCharacter::Move(const FInputActionValue& Value)
+void ADkCharacter::Move(const FInputActionValue& Value)
 {
 	FVector2D MovementVector = Value.Get<FVector2D>();
-	UE_LOG(LogDarkCharacter, Warning, TEXT("MovementVector: %s"), *MovementVector.ToString());
+	UE_LOG(LogDkCharacter, Warning, TEXT("MovementVector: %s"), *MovementVector.ToString());
 	
 	if (Controller != nullptr)
 	{
@@ -89,10 +89,10 @@ void ADarkCharacter::Move(const FInputActionValue& Value)
 
 }
 
-void ADarkCharacter::Look(const FInputActionValue& Value)
+void ADkCharacter::Look(const FInputActionValue& Value)
 {
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
-	UE_LOG(LogDarkCharacter, Warning, TEXT("MovementVector: %s"), *LookAxisVector.ToString());
+	UE_LOG(LogDkCharacter, Warning, TEXT("MovementVector: %s"), *LookAxisVector.ToString());
 	if (Controller != nullptr)
 	{
 		AddControllerYawInput(LookAxisVector.X);
@@ -100,12 +100,12 @@ void ADarkCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-void ADarkCharacter::Jump()
+void ADkCharacter::Jump()
 {
 	Super::Jump();
 }
 
-void ADarkCharacter::StopJumping()
+void ADkCharacter::StopJumping()
 {
 	Super::StopJumping();
 }
