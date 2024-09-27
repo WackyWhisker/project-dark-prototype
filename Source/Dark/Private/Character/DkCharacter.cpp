@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "StateMachine/DkStateManagerComponent.h"
 
 DEFINE_LOG_CATEGORY(LogDkCharacter);
 
@@ -32,12 +33,15 @@ ADkCharacter::ADkCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>("FollowCamera");
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false; //don't rotate through mouse/stick input
-	
+
+	//State Machine defaults
+	StateManager = CreateDefaultSubobject<UDkStateManagerComponent>("StateManager");
 }
 
 void ADkCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	StateManager->InitializeStateManager();
 }
 
 void ADkCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

@@ -11,6 +11,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class UDkStateManagerComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogDkCharacter, Log, All);
@@ -23,6 +24,10 @@ class DARK_API ADkCharacter : public ADkCharacterBase
 public:
 	ADkCharacter();
 	//TODO: Consider getter methods for camera and spring arm (see template)
+
+	//State Machine stuff
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = StateManager)
+	UDkStateManagerComponent* StateManager;
 
 protected:
 	void Move(const FInputActionValue& Value);
