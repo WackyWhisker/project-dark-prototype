@@ -6,7 +6,7 @@
 #include "UObject/NoExportTypes.h"
 #include "DkStateBase.generated.h"
 
-UCLASS()
+UCLASS(Blueprintable)
 class DARK_API UDkStateBase : public UObject
 {
 	GENERATED_BODY()

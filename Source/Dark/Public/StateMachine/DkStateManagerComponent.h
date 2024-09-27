@@ -52,6 +52,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "StateManager")
 	void InitializeStateManager();
 
+
 private:
 	bool bCanStateTick = true;
 	void InitializeStates();

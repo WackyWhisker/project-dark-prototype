@@ -1,7 +1,6 @@
 // Copyright @ Christian Reichel
 
 #include "StateMachine/DkStateManagerComponent.h"
-
 #include "StateMachine/States/DkStateBase.h"
 
 UDkStateManagerComponent::UDkStateManagerComponent()

@@ -1,6 +1,5 @@
 // Copyright @ Christian Reichel
 
-
 #include "StateMachine/States/DkStateBase.h"
 
 void UDkStateBase::OnStateEnter(AActor* StateOwner)
