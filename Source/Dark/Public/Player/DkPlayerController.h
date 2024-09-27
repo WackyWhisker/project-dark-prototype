@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DkPlayerControllerInterface.h"
 #include "GameFramework/PlayerController.h"
 #include "DkPlayerController.generated.h"
 
@@ -16,9 +17,14 @@ DECLARE_LOG_CATEGORY_EXTERN(LogDkPlayerController, Log, All);
  * 
  */
 UCLASS()
-class DARK_API ADkPlayerController : public APlayerController
+class DARK_API ADkPlayerController : public APlayerController, public IDkPlayerControllerInterface
 {
 	GENERATED_BODY()
+
+public:
+	//Input methods corresponding to the input action
+	void Jump();
+	
 	
 protected:
 	void Move(const FInputActionValue& Value);
@@ -26,6 +32,9 @@ protected:
 
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
+
+	//Player Controller Interface Overrides
+	virtual FJumpSignature* GetJumpDelegate() override;
 
 private:
 	//Controlled player
@@ -44,4 +53,7 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* JumpAction;
+
+	//Player Controller Interface Delegates
+	FJumpSignature JumpDelegate; 
 };

@@ -16,5 +16,8 @@ class DARK_API UDkPlayerStateIdle : public UDkPlayerStateBase
 
 public:
 	virtual void TickState() override;
+
+protected:
+	virtual void Jump() override;
 	
 };

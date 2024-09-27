@@ -7,6 +7,8 @@
 #include "Character/DkCharacter.h"
 #include "DkPlayerStateBase.generated.h"
 
+class IDkPlayerControllerInterface;
+
 UCLASS()
 class DARK_API UDkPlayerStateBase : public UDkStateBase
 {
@@ -18,6 +20,11 @@ public:
 
 	virtual void OnStateEnter(AActor* StateOwner) override;
 	virtual void OnStateExit() override;
-	
+
+protected:
+	IDkPlayerControllerInterface* PlayerController = nullptr;
+
+	//Matching functions for the player controller delegates
+	virtual void Jump();
 	
 };
