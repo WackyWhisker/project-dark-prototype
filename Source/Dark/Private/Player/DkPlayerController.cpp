@@ -19,18 +19,15 @@ void ADkPlayerController::BeginPlay()
 
 void ADkPlayerController::Move(const FInputActionValue& Value)
 {
-	
 	if (!PlayerRef)
 	{
 		UE_LOG(LogDkPlayerController, Warning, TEXT("No player ref when moving"));
 		return;
 	}
 	FVector2D MovementVector = Value.Get<FVector2D>();
-	UE_LOG(LogDkPlayerController, Warning, TEXT("MovementVector: %s"), *MovementVector.ToString());
+	//UE_LOG(LogDkPlayerController, Warning, TEXT("MovementVector: %s"), *MovementVector.ToString());
 	
-		//const FRotator CurrentControlRotation = GetControlRotation();
 		const FRotator YawRotation(0, ControlRotation.Yaw, 0);
-	    
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 	    
@@ -42,7 +39,7 @@ void ADkPlayerController::Look(const FInputActionValue& Value)
 {
 	if (!PlayerRef) {return;}
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
-	UE_LOG(LogDkPlayerController, Warning, TEXT("MovementVector: %s"), *LookAxisVector.ToString());
+	//UE_LOG(LogDkPlayerController, Warning, TEXT("LookAxisVector: %s"), *LookAxisVector.ToString());
 	
 		PlayerRef->AddControllerYawInput(LookAxisVector.X);
 		PlayerRef->AddControllerPitchInput(LookAxisVector.Y);
@@ -65,6 +62,10 @@ void ADkPlayerController::SetupInputComponent()
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADkPlayerController::Look);
+
+		//Jumping
+		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ADkPlayerController::Jump);
+		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ADkPlayerController::Jump);
 	}
 	else
 	{

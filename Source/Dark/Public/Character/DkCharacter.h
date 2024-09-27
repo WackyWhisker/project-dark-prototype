@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "Character/DkCharacterBase.h"
 #include "Logging/LogMacros.h"
+#include "StateMachine/DkStateManagerComponent.h"
 #include "DkCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
-class UDkStateManagerComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogDkCharacter, Log, All);
@@ -30,9 +30,6 @@ public:
 	UDkStateManagerComponent* StateManager;
 
 protected:
-	virtual void Jump() override;
-	virtual void StopJumping() override;
-
 	virtual void BeginPlay() override;
 	
 private:
@@ -42,7 +39,5 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* JumpAction;
+	
 };

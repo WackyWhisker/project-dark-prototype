@@ -5,7 +5,6 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "StateMachine/DkStateManagerComponent.h"
 
 DEFINE_LOG_CATEGORY(LogDkCharacter);
 
@@ -40,17 +39,6 @@ void ADkCharacter::BeginPlay()
 	Super::BeginPlay();
 	StateManager->InitializeStateManager();
 }
-
-void ADkCharacter::Jump()
-{
-	Super::Jump();
-}
-
-void ADkCharacter::StopJumping()
-{
-	Super::StopJumping();
-}
-
 
 
 

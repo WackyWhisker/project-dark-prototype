@@ -4,9 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "StateMachine/States/DkStateBase.h"
+#include "Character/DkCharacter.h"
 #include "DkPlayerStateBase.generated.h"
-
-class ADkCharacter;
 
 UCLASS()
 class DARK_API UDkPlayerStateBase : public UDkStateBase
