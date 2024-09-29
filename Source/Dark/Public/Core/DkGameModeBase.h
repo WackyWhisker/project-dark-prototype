@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "DarkGameModeBase.generated.h"
+#include "DkGameModeBase.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class DARK_API ADarkGameModeBase : public AGameModeBase
+class DARK_API ADkGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	

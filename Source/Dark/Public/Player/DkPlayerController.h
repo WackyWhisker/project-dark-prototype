@@ -3,44 +3,44 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/DarkCharacterBase.h"
-#include "Logging/LogMacros.h"
-#include "DarkCharacter.generated.h"
+#include "DkPlayerControllerInterface.h"
+#include "GameFramework/PlayerController.h"
+#include "DkPlayerController.generated.h"
 
-class USpringArmComponent;
-class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class ADkCharacter;
 struct FInputActionValue;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogDarkCharacter, Log, All);
-
+DECLARE_LOG_CATEGORY_EXTERN(LogDkPlayerController, Log, All);
+/**
+ * 
+ */
 UCLASS()
-class DARK_API ADarkCharacter : public ADarkCharacterBase
+class DARK_API ADkPlayerController : public APlayerController, public IDkPlayerControllerInterface
 {
 	GENERATED_BODY()
 
 public:
-	ADarkCharacter();
-	//TODO: Consider getter methods for camera and spring arm (see template)
-
+	//Input methods corresponding to the input action
+	void Jump();
+	
+	
 protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
-	virtual void Jump() override;
-	virtual void StopJumping() override;
 
-	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void BeginPlay() override;
-	
+	virtual void SetupInputComponent() override;
+
+	//Player Controller Interface Overrides
+	virtual FJumpSignature* GetJumpDelegate() override;
+
 private:
-	//Camera
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	USpringArmComponent* CameraBoom;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* FollowCamera;
-
+	//Controlled player
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
+	ADkCharacter* PlayerRef = nullptr;
+	
 	//Input actions and mappings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* DefaultMappingContext;
@@ -53,4 +53,7 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* JumpAction;
+
+	//Player Controller Interface Delegates
+	FJumpSignature JumpDelegate; 
 };
