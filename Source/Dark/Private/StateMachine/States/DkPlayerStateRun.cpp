@@ -7,7 +7,7 @@ void UDkPlayerStateRun::TickState()
 {
 	Super::TickState();
 	//UE_LOG(LogTemp, Warning, TEXT("Run State Ticking"));
-	if (PlayerRef->GetCharacterMovement()->Velocity.Length() == 0.0f)
+	if (PlayerRef->GetCharacterMovement()->Velocity.Length() == 0.0f && PlayerRef->GetCharacterMovement()->IsMovingOnGround())
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Idle");
 	}

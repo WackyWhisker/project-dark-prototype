@@ -6,9 +6,13 @@
 void UDkPlayerStateAir::TickState()
 {
 	Super::TickState();
-	if (PlayerRef->GetCharacterMovement()->IsMovingOnGround())
+	if (PlayerRef->GetCharacterMovement()->Velocity.Length() == 0.0f && PlayerRef->GetCharacterMovement()->IsMovingOnGround())
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Idle");
+	}
+	else if (PlayerRef->GetCharacterMovement()->Velocity.Length() > 0.0f && PlayerRef->GetCharacterMovement()->IsMovingOnGround())
+	{
+		PlayerRef->StateManager->SwitchStateByKey("Run");
 	}
 }
 
