@@ -21,3 +21,9 @@ void UDkPlayerStateAir::Jump()
 	Super::Jump();
 	UE_LOG(LogTemp, Warning, TEXT("Cannot Jump again"));
 }
+
+void UDkPlayerStateAir::OnStateEnter(AActor* StateOwner)
+{
+	Super::OnStateEnter(StateOwner);
+	PlayerRef->DkPlayerState = EDkPlayerState::Air;
+}

@@ -19,5 +19,6 @@ public:
 
 protected:
 	virtual void Jump() override;
+	virtual void OnStateEnter(AActor* StateOwner) override;
 	
 };

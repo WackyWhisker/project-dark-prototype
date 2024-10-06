@@ -14,6 +14,15 @@ class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 
+UENUM(BlueprintType)
+enum EDkPlayerState
+{
+	Idle,
+	Air,
+	Run,
+	Default
+};
+
 DECLARE_LOG_CATEGORY_EXTERN(LogDkCharacter, Log, All);
 
 UCLASS()
@@ -28,6 +37,9 @@ public:
 	//State Machine stuff
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = StateManager)
 	UDkStateManagerComponent* StateManager;
+
+	UPROPERTY(BlueprintReadOnly, Category = StateManager)
+	TEnumAsByte<EDkPlayerState> DkPlayerState;
 
 protected:
 	virtual void BeginPlay() override;

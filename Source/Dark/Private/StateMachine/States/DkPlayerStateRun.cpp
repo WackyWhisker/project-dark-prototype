@@ -24,3 +24,9 @@ void UDkPlayerStateRun::Jump()
 	UE_LOG(LogTemp, Warning, TEXT("Executing Jump in Run State"));
 	PlayerRef->Jump();
 }
+
+void UDkPlayerStateRun::OnStateEnter(AActor* StateOwner)
+{
+	Super::OnStateEnter(StateOwner);
+	PlayerRef->DkPlayerState = EDkPlayerState::Run;
+}
