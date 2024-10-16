@@ -34,7 +34,7 @@ bool UDkPlayerStateFall::IsNearGround()
 	FVector End = Start + PlayerRef->GetActorUpVector() * -500.0f;
 	const FName TraceTag("GroundCheckTraceTag");
 
-	GetWorld()->DebugDrawTraceTag = TraceTag;
+	//GetWorld()->DebugDrawTraceTag = TraceTag;
 	FHitResult HitResult;
 	FCollisionQueryParams Params;
 	Params.TraceTag = TraceTag;
