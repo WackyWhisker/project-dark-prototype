@@ -20,6 +20,9 @@ public:
 protected:
 	virtual void OnStateEnter(AActor* StateOwner) override;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float NearGroundDistance = 75.0f;
+
 private:
 	bool IsNearGround();
 };

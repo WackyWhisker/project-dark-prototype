@@ -7,7 +7,7 @@
 void UDkPlayerStateJump::TickState()
 {
 	Super::TickState();
-	if (PlayerRef->GetCharacterMovement()->Velocity.Z < 0)
+	if (PlayerRef->GetCharacterMovement()->Velocity.Z <= 0)
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Fall");
 	}

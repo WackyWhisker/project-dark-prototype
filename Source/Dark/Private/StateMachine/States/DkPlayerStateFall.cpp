@@ -11,6 +11,15 @@ void UDkPlayerStateFall::TickState()
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Land");
 	}
+	//TODO: CHECK IF CLEAN ENOUGH. EDGE CASE IN CASE LANDING CHECK IS WONKY
+	else if (PlayerRef->GetCharacterMovement()->Velocity.Length() == 0.0f && PlayerRef->GetCharacterMovement()->IsMovingOnGround())
+	{
+		PlayerRef->StateManager->SwitchStateByKey("Idle");
+	}
+	else if (PlayerRef->GetCharacterMovement()->Velocity.Length() > 0.0f && PlayerRef->GetCharacterMovement()->IsMovingOnGround())
+	{
+		PlayerRef->StateManager->SwitchStateByKey("Run");
+	}
 }
 
 void UDkPlayerStateFall::OnStateEnter(AActor* StateOwner)
@@ -33,14 +42,11 @@ bool UDkPlayerStateFall::IsNearGround()
 
 	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params, FCollisionResponseParams()))
 	{
-		if (HitResult.bBlockingHit && HitResult.Distance <= 150.0f)
+		if (HitResult.bBlockingHit && HitResult.Distance <= NearGroundDistance)
 		{
 			return true;
 		}
-		else
-		{
-			return false;
-		}
+		return false;
 	}
 	return false;
 }
