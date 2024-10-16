@@ -34,7 +34,7 @@ ADkCharacter::ADkCharacter()
 	StateManager = CreateDefaultSubobject<UDkStateManagerComponent>("StateManager");
 
 	//Player States
-	DkPlayerState = EDkPlayerState::Default;
+	DkPlayerState = EDkPlayerAnimationState::Default;
 }
 
 void ADkCharacter::BeginPlay()

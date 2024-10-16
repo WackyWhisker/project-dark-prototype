@@ -15,11 +15,14 @@ class UInputAction;
 struct FInputActionValue;
 
 UENUM(BlueprintType)
-enum EDkPlayerState
+enum EDkPlayerAnimationState
 {
 	Idle,
 	Air,
 	Run,
+	Jump,
+	Fall,
+	Land,
 	Default
 };
 
@@ -39,7 +42,7 @@ public:
 	UDkStateManagerComponent* StateManager;
 
 	UPROPERTY(BlueprintReadOnly, Category = StateManager)
-	TEnumAsByte<EDkPlayerState> DkPlayerState;
+	TEnumAsByte<EDkPlayerAnimationState> DkPlayerState;
 
 protected:
 	virtual void BeginPlay() override;

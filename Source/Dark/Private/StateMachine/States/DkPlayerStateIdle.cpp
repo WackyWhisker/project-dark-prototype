@@ -28,5 +28,5 @@ void UDkPlayerStateIdle::Jump()
 void UDkPlayerStateIdle::OnStateEnter(AActor* StateOwner)
 {
 	Super::OnStateEnter(StateOwner);
-	PlayerRef->DkPlayerState = EDkPlayerState::Idle;
+	PlayerRef->DkPlayerState = EDkPlayerAnimationState::Idle;
 }
