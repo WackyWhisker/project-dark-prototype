@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "DkStateBase.generated.h"
+
 
 UCLASS(Blueprintable)
 class DARK_API UDkStateBase : public UObject

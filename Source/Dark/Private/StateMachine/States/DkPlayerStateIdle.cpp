@@ -1,7 +1,6 @@
 // Copyright @ Christian Reichel
 
 #include "StateMachine/States/DkPlayerStateIdle.h"
-#include "GameFramework/CharacterMovementComponent.h"
 
 void UDkPlayerStateIdle::TickState()
 {
@@ -29,6 +28,7 @@ void UDkPlayerStateIdle::Attack()
 {
 	Super::Attack();
 	UE_LOG(LogTemp, Warning, TEXT("Executing Attack in Idle State"));
+	PlayerRef->StateManager->SwitchStateByKey("Attack");
 }
 
 void UDkPlayerStateIdle::OnStateEnter(AActor* StateOwner)

@@ -1,7 +1,6 @@
 // Copyright @ Christian Reichel
 
 #include "StateMachine/States/DkPlayerStateBase.h"
-
 #include "Kismet/GameplayStatics.h"
 #include "Player/DkPlayerControllerInterface.h"
 
@@ -30,7 +29,7 @@ void UDkPlayerStateBase::OnStateEnter(AActor* StateOwner)
 void UDkPlayerStateBase::OnStateExit()
 {
 	Super::OnStateExit();
-	//Unbind all relevant delegats
+	//Unbind all relevant delegates
 	if(PlayerController)
 	{
 		PlayerController->GetJumpDelegate()->RemoveAll(this);

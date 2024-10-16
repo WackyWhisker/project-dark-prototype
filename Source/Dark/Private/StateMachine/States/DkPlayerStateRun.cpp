@@ -1,7 +1,6 @@
 // Copyright @ Christian Reichel
 
 #include "StateMachine/States/DkPlayerStateRun.h"
-#include "GameFramework/CharacterMovementComponent.h"
 
 void UDkPlayerStateRun::TickState()
 {
@@ -24,6 +23,13 @@ void UDkPlayerStateRun::Jump()
 	UE_LOG(LogTemp, Warning, TEXT("Executing Jump in Run State"));
 	PlayerRef->Jump();
 	PlayerRef->StateManager->SwitchStateByKey("Jump");
+}
+
+void UDkPlayerStateRun::Attack()
+{
+	Super::Attack();
+	UE_LOG(LogTemp, Warning, TEXT("Executing Attack in Run State"));
+	PlayerRef->StateManager->SwitchStateByKey("Attack");
 }
 
 void UDkPlayerStateRun::OnStateEnter(AActor* StateOwner)

@@ -23,6 +23,7 @@ enum EDkPlayerAnimationState
 	Jump,
 	Fall,
 	Land,
+	Attack,
 	Default
 };
 

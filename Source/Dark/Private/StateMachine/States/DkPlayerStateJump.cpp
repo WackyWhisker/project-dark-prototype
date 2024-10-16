@@ -2,7 +2,6 @@
 
 
 #include "StateMachine/States/DkPlayerStateJump.h"
-#include "GameFramework/CharacterMovementComponent.h"
 
 void UDkPlayerStateJump::TickState()
 {

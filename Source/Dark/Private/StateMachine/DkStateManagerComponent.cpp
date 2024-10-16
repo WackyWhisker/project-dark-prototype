@@ -78,7 +78,6 @@ void UDkStateManagerComponent::SwitchStateByKey(FString StateKey)
 				}
 
 				CurrentState = NewState;
-				
 			}
 		}
 
