@@ -19,4 +19,7 @@ public:
 	
 protected:
 	virtual void OnStateEnter(AActor* StateOwner) override;
+
+private:
+	bool IsNearGround();
 };

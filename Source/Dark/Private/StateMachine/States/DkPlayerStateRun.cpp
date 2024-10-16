@@ -14,7 +14,7 @@ void UDkPlayerStateRun::TickState()
 
 	if (!PlayerRef->GetCharacterMovement()->IsMovingOnGround())
 	{
-		PlayerRef->StateManager->SwitchStateByKey("Air");
+		PlayerRef->StateManager->SwitchStateByKey("Fall");
 	}
 }
 
@@ -23,6 +23,7 @@ void UDkPlayerStateRun::Jump()
 	Super::Jump();
 	UE_LOG(LogTemp, Warning, TEXT("Executing Jump in Run State"));
 	PlayerRef->Jump();
+	PlayerRef->StateManager->SwitchStateByKey("Jump");
 }
 
 void UDkPlayerStateRun::OnStateEnter(AActor* StateOwner)

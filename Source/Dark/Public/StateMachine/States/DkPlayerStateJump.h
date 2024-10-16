@@ -20,3 +20,4 @@ public:
 protected:
 	virtual void OnStateEnter(AActor* StateOwner) override;
 };
+//TODO: Handle double jump in this state
