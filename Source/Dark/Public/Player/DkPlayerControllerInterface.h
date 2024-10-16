@@ -7,6 +7,7 @@
 #include "DkPlayerControllerInterface.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FJumpSignature);
+DECLARE_MULTICAST_DELEGATE(FAttackSignature);
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
@@ -26,4 +27,5 @@ class DARK_API IDkPlayerControllerInterface
 public:
 
 	virtual FJumpSignature* GetJumpDelegate() = 0;
+	virtual FAttackSignature* GetAttackDelegate() = 0;
 };

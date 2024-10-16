@@ -23,6 +23,7 @@ void UDkPlayerStateBase::OnStateEnter(AActor* StateOwner)
 	if(PlayerController)
 	{
 		PlayerController->GetJumpDelegate()->AddUObject(this, &UDkPlayerStateBase::Jump);
+		PlayerController->GetAttackDelegate()->AddUObject(this, &UDkPlayerStateBase::Attack);
 	}
 }
 
@@ -33,10 +34,16 @@ void UDkPlayerStateBase::OnStateExit()
 	if(PlayerController)
 	{
 		PlayerController->GetJumpDelegate()->RemoveAll(this);
+		PlayerController->GetAttackDelegate()->RemoveAll(this);
 	}
 }
 
 void UDkPlayerStateBase::Jump()
 {
 	//executed in child states
+}
+
+void UDkPlayerStateBase::Attack()
+{
+	
 }

@@ -37,8 +37,9 @@ void ADkPlayerController::SetupInputComponent()
 
 		//Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ADkPlayerController::Jump);
-		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ADkPlayerController::Jump);
-		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::C ompleted, this, &ADkPlayerController::Jump);
+
+		//Attacking
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ADkPlayerController::Attack);
 	}
 	else
 	{
@@ -82,8 +83,23 @@ void ADkPlayerController::Jump()
 	}
 	UE_LOG(LogTemp, Warning, TEXT("Jump Button Pressed"));
 }
+
+void ADkPlayerController::Attack()
+{
+	if (AttackDelegate.IsBound())
+	{
+		AttackDelegate.Broadcast();
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Attack Button Pressed"));
+}
+
 FJumpSignature* ADkPlayerController::GetJumpDelegate()
 {
 	return &JumpDelegate;
+}
+
+FAttackSignature* ADkPlayerController::GetAttackDelegate()
+{
+	return &AttackDelegate;
 }
 
