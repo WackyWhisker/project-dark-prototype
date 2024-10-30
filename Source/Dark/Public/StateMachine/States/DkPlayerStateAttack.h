@@ -20,9 +20,17 @@ public:
 protected:
 	virtual void Attack() override;
 	virtual void OnStateEnter(AActor* StateOwner) override;
+	
 
 	UPROPERTY(EditDefaultsOnly)
 	UAnimMontage* AttackMontage; //TODO: Combat system likely needs an array or TMAP of anims
 
 	int32 AttackIndex = 0;
+
+private:
+	bool IsAttacking = false;
+	UAnimInstance* AnimInstance;
+	UFUNCTION()
+	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	
 };
