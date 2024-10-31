@@ -26,6 +26,13 @@ void UDkPlayerStateAttack::Attack()
 void UDkPlayerStateAttack::OnStateEnter(AActor* StateOwner)
 {
 	Super::OnStateEnter(StateOwner);
+
+	//Stop player movement and decelerate
+	PlayerPCRef->SetIgnoreMoveInput(true);
+	PlayerRef->GetMovementComponent()->StopActiveMovement();
+	float PreviousBrakingDecelerationWalking = PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking;
+	PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking = PreviousBrakingDecelerationWalking *0.01;
+	
 	IsAttacking = true;
 	PlayerRef->DkPlayerState = EDkPlayerAnimationState::Attack;
 	AnimInstance = PlayerRef->GetMesh()->GetAnimInstance();
@@ -47,4 +54,8 @@ void UDkPlayerStateAttack::OnMontageEnded(UAnimMontage* Montage, bool bInterrupt
 	{
 		AnimInstance->OnMontageEnded.RemoveAll(this);
 	}
+
+	//Re-enable player movement input
+	PlayerPCRef->SetIgnoreMoveInput(false);
+	//PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking = PreviousBrakingDecelerationWalking *0.1;
 }

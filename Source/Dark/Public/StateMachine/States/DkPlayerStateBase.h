@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "StateMachine/States/DkStateBase.h"
 #include "Character/DkCharacter.h"
+#include "Player/DkPlayerController.h"
 #include "DkPlayerStateBase.generated.h"
 
 class IDkPlayerControllerInterface;
@@ -17,6 +18,9 @@ class DARK_API UDkPlayerStateBase : public UDkStateBase
 public:
 	UPROPERTY(BlueprintReadOnly)
 	ADkCharacter* PlayerRef = nullptr;
+
+	UPROPERTY(BlueprintReadOnly)
+	ADkPlayerController* PlayerPCRef = nullptr;
 
 	virtual void OnStateEnter(AActor* StateOwner) override;
 	virtual void OnStateExit() override;

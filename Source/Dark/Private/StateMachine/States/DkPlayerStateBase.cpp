@@ -10,6 +10,10 @@ void UDkPlayerStateBase::OnStateEnter(AActor* StateOwner)
 	if (!PlayerRef)
 	{
 		PlayerRef = Cast<ADkCharacter>(StateOwner);
+		if (!PlayerPCRef)
+		{
+			PlayerPCRef = Cast<ADkPlayerController>(PlayerRef->GetController());
+		}
 	}
 
 	if (!PlayerController)
