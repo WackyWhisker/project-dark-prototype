@@ -30,7 +30,12 @@ protected:
 private:
 	bool IsAttacking = false;
 	UAnimInstance* AnimInstance;
+	
 	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	//Movement related
+	float PreviousBrakingFrictionFactor;
+	float PreviousBrakingDecelerationWalking;
 	
 };

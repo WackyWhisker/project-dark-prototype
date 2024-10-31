@@ -29,9 +29,10 @@ void UDkPlayerStateAttack::OnStateEnter(AActor* StateOwner)
 
 	//Stop player movement and decelerate
 	PlayerPCRef->SetIgnoreMoveInput(true);
-	PlayerRef->GetMovementComponent()->StopActiveMovement();
-	float PreviousBrakingDecelerationWalking = PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking;
-	PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking = PreviousBrakingDecelerationWalking *0.01;
+	PreviousBrakingFrictionFactor = PlayerRef->GetCharacterMovement()->BrakingFrictionFactor;
+	PreviousBrakingDecelerationWalking = PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking;
+	PlayerRef->GetCharacterMovement()->BrakingFrictionFactor = 1.5f;  // Increase for more friction
+	PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking = 100.0f;
 	
 	IsAttacking = true;
 	PlayerRef->DkPlayerState = EDkPlayerAnimationState::Attack;
@@ -55,7 +56,8 @@ void UDkPlayerStateAttack::OnMontageEnded(UAnimMontage* Montage, bool bInterrupt
 		AnimInstance->OnMontageEnded.RemoveAll(this);
 	}
 
-	//Re-enable player movement input
+	//Re-enable player movement and restore deceleration values
 	PlayerPCRef->SetIgnoreMoveInput(false);
-	//PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking = PreviousBrakingDecelerationWalking *0.1;
+	PlayerRef->GetCharacterMovement()->BrakingFrictionFactor = PreviousBrakingFrictionFactor;
+	PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking = PreviousBrakingDecelerationWalking;
 }
