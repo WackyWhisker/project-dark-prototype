@@ -25,6 +25,7 @@ public:
 	//Input methods corresponding to the input action
 	void Jump();
 	void Attack();
+	void Target();
 	
 protected:
 	void Move(const FInputActionValue& Value);
@@ -36,6 +37,7 @@ protected:
 	//Player Controller Interface Overrides
 	virtual FJumpSignature* GetJumpDelegate() override;
 	virtual FAttackSignature* GetAttackDelegate() override;
+	virtual FTargetSignature* GetTargetDelegate() override;
 
 private:
 	//Controlled player
@@ -57,8 +59,12 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* AttackAction;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* TargetAction;
 
 	//Player Controller Interface Delegates
 	FJumpSignature JumpDelegate;
 	FAttackSignature AttackDelegate;
+	FTargetSignature TargetDelegate;
 };

@@ -31,5 +31,6 @@ protected:
 	//Matching functions for the player controller delegates
 	virtual void Jump();
 	virtual void Attack();
+	virtual void Target();
 	
 };

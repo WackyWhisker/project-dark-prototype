@@ -27,6 +27,7 @@ void UDkPlayerStateBase::OnStateEnter(AActor* StateOwner)
 	{
 		PlayerController->GetJumpDelegate()->AddUObject(this, &UDkPlayerStateBase::Jump);
 		PlayerController->GetAttackDelegate()->AddUObject(this, &UDkPlayerStateBase::Attack);
+		PlayerController->GetTargetDelegate()->AddUObject(this, &UDkPlayerStateBase::Target);
 	}
 }
 
@@ -48,5 +49,10 @@ void UDkPlayerStateBase::Jump()
 
 void UDkPlayerStateBase::Attack()
 {
-	
+	//executed in child states
+}
+
+void UDkPlayerStateBase::Target()
+{
+	//executed in child states
 }
