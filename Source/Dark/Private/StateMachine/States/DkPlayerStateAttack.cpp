@@ -26,7 +26,13 @@ void UDkPlayerStateAttack::Attack()
 void UDkPlayerStateAttack::OnStateEnter(AActor* StateOwner)
 {
 	Super::OnStateEnter(StateOwner);
+	FVector PlayerVelocity = PlayerRef->GetCharacterMovement()->Velocity;
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, PlayerVelocity.ToString());
+	FVector LaunchVelocity = PlayerVelocity * AttackLaunchStrength;
+	PlayerRef->LaunchCharacter(LaunchVelocity, true, true);
+	//TODO: Account for launching on a slope with the correct vector math.
 
+	
 	//Stop player movement and decelerate
 	PlayerPCRef->SetIgnoreMoveInput(true);
 	PreviousBrakingFrictionFactor = PlayerRef->GetCharacterMovement()->BrakingFrictionFactor;

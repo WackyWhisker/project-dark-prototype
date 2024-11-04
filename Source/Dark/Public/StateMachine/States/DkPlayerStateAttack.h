@@ -27,6 +27,9 @@ protected:
 
 	int32 AttackIndex = 0;
 
+	UPROPERTY(EditDefaultsOnly)
+	float AttackLaunchStrength = 1.0f;
+
 private:
 	bool IsAttacking = false;
 	UAnimInstance* AnimInstance;
