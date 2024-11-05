@@ -9,6 +9,7 @@
 #include "DkTargetingComponent.generated.h"
 
 class IDkPlayerControllerInterface;
+class ADkEnemyBase;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DARK_API UDkTargetingComponent : public UActorComponent
@@ -45,7 +46,27 @@ private:
 	UFUNCTION()
 	void HandleLetterboxWidget(bool IsTargeting);
 
+	UFUNCTION()
+	bool SweepForPossibleTargets(const FVector& Start,
+	const float Range,
+	const float ConeAngle,
+	const float SphereRadius,
+	TArray<FHitResult>& OutHits,
+	ECollisionChannel TraceChannel,
+	const TArray<AActor*>& ActorsToIgnore,
+	bool bDrawDebug);
+
+	UFUNCTION()
+	AActor* FindClosestTarget(const TArray<FHitResult>& Hits);
+
 	UPROPERTY()
 	bool bIsTargeting = false;
+
+	//Enemy targeting
+	UPROPERTY(VisibleAnywhere,Category = "Targets")
+	TArray<TWeakObjectPtr<AActor>> PossibleTargets;
+
+	UPROPERTY(VisibleAnywhere,Category = "Targets")
+	AActor* CurrentActiveTarget;
 	
 };
