@@ -7,6 +7,9 @@
 #include "TargetSystem/DkTargetableInterface.h"
 #include "DkEnemyBase.generated.h"
 
+class UWidgetComponent;
+class UUserWidget;
+
 UCLASS()
 class DARK_API ADkEnemyBase : public ACharacter, public IDkTargetableInterface
 {
@@ -21,11 +24,24 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
+	//Target UI
+	UPROPERTY(EditDefaultsOnly, Category = UI_Targeting)
+	UWidgetComponent* TargetReticleWidget;
+
+	UPROPERTY(EditDefaultsOnly, Category = UI_Targeting)
+	TSubclassOf<UUserWidget> TargetReticleWidgetClass;
+
+	UFUNCTION(BlueprintCallable, Category = UI_Targeting)
+	void ToggleTargetReticle(bool bShowTargetReticle);
+
 //IDkTargetableInterface functions
 	virtual bool CanBeTargeted_Implementation() const override;
 	virtual void OnTargeted_Implementation() override;
 	virtual void OnUntargeted_Implementation() override;
 	virtual FVector GetTargetLocation_Implementation() const override;
+	
+private:
+
 	
 
 };

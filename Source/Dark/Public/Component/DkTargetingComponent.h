@@ -47,6 +47,9 @@ private:
 	void HandleLetterboxWidget(bool IsTargeting);
 
 	UFUNCTION()
+	void HandleTargetClearing(bool IsTargeting);
+
+	UFUNCTION()
 	bool SweepForPossibleTargets(const FVector& Start,
 	const float Range,
 	const float ConeAngle,

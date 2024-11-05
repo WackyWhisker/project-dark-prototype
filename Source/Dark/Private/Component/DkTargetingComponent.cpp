@@ -73,6 +73,7 @@ void UDkTargetingComponent::OnTargetEnd()
 	bIsTargeting = false;
 	HandlePlayerLocomotion(bIsTargeting);
 	HandleLetterboxWidget(bIsTargeting);
+	HandleTargetClearing(bIsTargeting);
 }
 
 void UDkTargetingComponent::HandlePlayerLocomotion(bool IsTargeting)
@@ -91,9 +92,18 @@ void UDkTargetingComponent::HandleLetterboxWidget(bool IsTargeting)
 	}
 }
 
+void UDkTargetingComponent::HandleTargetClearing(bool IsTargeting)
+{
+	if (CurrentActiveTarget && CurrentActiveTarget->Implements<UDkTargetableInterface>())
+	{
+		IDkTargetableInterface::Execute_OnUntargeted(CurrentActiveTarget);
+		CurrentActiveTarget = nullptr;
+	}
+}
+
 bool UDkTargetingComponent::SweepForPossibleTargets(const FVector& Start, const float Range, const float ConeAngle,
-	const float SphereRadius, TArray<FHitResult>& OutHits, ECollisionChannel TraceChannel,
-	const TArray<AActor*>& ActorsToIgnore, bool bDrawDebug)
+                                                    const float SphereRadius, TArray<FHitResult>& OutHits, ECollisionChannel TraceChannel,
+                                                    const TArray<AActor*>& ActorsToIgnore, bool bDrawDebug)
 {
 	FRotator CameraRotation = PlayerControllerRef->PlayerCameraManager->GetCameraRotation();
 	FVector CameraForward = CameraRotation.Vector();
