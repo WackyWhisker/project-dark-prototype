@@ -42,7 +42,8 @@ void ADkPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ADkPlayerController::Attack);
 
 		//Targeting
-		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Started, this, &ADkPlayerController::Target);
+		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetStart);
+		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ADkPlayerController::TargetEnd);
 	}
 	else
 	{
@@ -78,13 +79,22 @@ void ADkPlayerController::Look(const FInputActionValue& Value)
 	PlayerRef->AddControllerPitchInput(LookAxisVector.Y);
 }
 
-void ADkPlayerController::Target()
+void ADkPlayerController::TargetStart()
 {
-	if (TargetDelegate.IsBound())
+	if (TargetStartDelegate.IsBound())
 	{
-		TargetDelegate.Broadcast();
+		TargetStartDelegate.Broadcast();
 	}
 	UE_LOG(LogTemp, Warning, TEXT("Target Button Pressed"));
+}
+
+void ADkPlayerController::TargetEnd()
+{
+	if (TargetEndDelegate.IsBound())
+	{
+		TargetEndDelegate.Broadcast();
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Target Button Released"));
 }
 
 void ADkPlayerController::Jump()
@@ -105,9 +115,14 @@ void ADkPlayerController::Attack()
 	UE_LOG(LogTemp, Warning, TEXT("Attack Button Pressed"));
 }
 
-FTargetSignature* ADkPlayerController::GetTargetDelegate()
+FTargetStartSignature* ADkPlayerController::GetTargetStartDelegate()
 {
-	return &TargetDelegate;
+	return &TargetStartDelegate;
+}
+
+FTargetEndSignature* ADkPlayerController::GetTargetEndDelegate()
+{
+	return &TargetEndDelegate;
 }
 
 FJumpSignature* ADkPlayerController::GetJumpDelegate()

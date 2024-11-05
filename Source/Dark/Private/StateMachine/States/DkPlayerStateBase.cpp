@@ -27,7 +27,7 @@ void UDkPlayerStateBase::OnStateEnter(AActor* StateOwner)
 	{
 		PlayerController->GetJumpDelegate()->AddUObject(this, &UDkPlayerStateBase::Jump);
 		PlayerController->GetAttackDelegate()->AddUObject(this, &UDkPlayerStateBase::Attack);
-		PlayerController->GetTargetDelegate()->AddUObject(this, &UDkPlayerStateBase::Target);
+		//PlayerController->GetTargetStartDelegate()->AddUObject(this, &UDkPlayerStateBase::TargetStart);
 	}
 }
 

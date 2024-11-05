@@ -8,7 +8,9 @@
 
 DECLARE_MULTICAST_DELEGATE(FJumpSignature);
 DECLARE_MULTICAST_DELEGATE(FAttackSignature);
-DECLARE_MULTICAST_DELEGATE(FTargetSignature);
+DECLARE_MULTICAST_DELEGATE(FTargetStartSignature);
+DECLARE_MULTICAST_DELEGATE(FTargetEndSignature);
+
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
@@ -29,5 +31,6 @@ public:
 
 	virtual FJumpSignature* GetJumpDelegate() = 0;
 	virtual FAttackSignature* GetAttackDelegate() = 0;
-	virtual FTargetSignature* GetTargetDelegate() = 0;
+	virtual FTargetStartSignature* GetTargetStartDelegate() = 0;
+	virtual FTargetEndSignature* GetTargetEndDelegate() = 0;
 };

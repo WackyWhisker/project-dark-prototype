@@ -25,7 +25,8 @@ public:
 	//Input methods corresponding to the input action
 	void Jump();
 	void Attack();
-	void Target();
+	void TargetStart();
+	void TargetEnd();
 	
 protected:
 	void Move(const FInputActionValue& Value);
@@ -37,7 +38,9 @@ protected:
 	//Player Controller Interface Overrides
 	virtual FJumpSignature* GetJumpDelegate() override;
 	virtual FAttackSignature* GetAttackDelegate() override;
-	virtual FTargetSignature* GetTargetDelegate() override;
+	virtual FTargetStartSignature* GetTargetStartDelegate() override;
+	virtual FTargetEndSignature* GetTargetEndDelegate() override;
+
 
 private:
 	//Controlled player
@@ -66,5 +69,6 @@ private:
 	//Player Controller Interface Delegates
 	FJumpSignature JumpDelegate;
 	FAttackSignature AttackDelegate;
-	FTargetSignature TargetDelegate;
+	FTargetStartSignature TargetStartDelegate;
+	FTargetEndSignature TargetEndDelegate;
 };
