@@ -10,6 +10,7 @@
 class UInputMappingContext;
 class UInputAction;
 class ADkCharacter;
+class UUserWidget;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogDkPlayerController, Log, All);
@@ -27,6 +28,13 @@ public:
 	void Attack();
 	void TargetStart();
 	void TargetEnd();
+
+	//Targeting UI
+	UPROPERTY(EditDefaultsOnly, Category = UI_Targeting)
+	TSubclassOf<UUserWidget> LetterboxWidgetClass;
+
+	UFUNCTION(BlueprintCallable, Category = UI_Targeting)
+	void ToggleLetterboxUI(bool bShowLetterboxUI);
 	
 protected:
 	void Move(const FInputActionValue& Value);
@@ -71,4 +79,11 @@ private:
 	FAttackSignature AttackDelegate;
 	FTargetStartSignature TargetStartDelegate;
 	FTargetEndSignature TargetEndDelegate;
+
+	//Targeting UI
+	UPROPERTY()
+	UUserWidget* LetterboxWidget;
+
+	UPROPERTY()
+	float FadeDuration;
 };

@@ -3,6 +3,7 @@
 #include "Player/DkPlayerController.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Blueprint/UserWidget.h"
 #include "Character/DkCharacter.h"
 
 DEFINE_LOG_CATEGORY(LogDkPlayerController);
@@ -14,6 +15,12 @@ void ADkPlayerController::BeginPlay()
 	{
 		PlayerRef = Cast<ADkCharacter>(GetPawn());
 		UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerRef set"));
+	}
+
+	//Targeting UI
+	if (LetterboxWidgetClass)
+	{
+		LetterboxWidget = CreateWidget<UUserWidget>(this, LetterboxWidgetClass);
 	}
 }
 
@@ -48,6 +55,26 @@ void ADkPlayerController::SetupInputComponent()
 	else
 	{
 		UE_LOG(LogDkPlayerController, Error, TEXT("'%s' Failed to find an Enhanced Input component!"), *GetNameSafe(this));
+	}
+}
+
+void ADkPlayerController::ToggleLetterboxUI(bool bShowLetterboxUI)
+{
+	if (!LetterboxWidget) {return;}
+
+	if (bShowLetterboxUI)
+	{
+		if (!LetterboxWidget->IsInViewport())
+		{
+			LetterboxWidget->AddToViewport();
+		}
+	}
+	else
+	{
+		if(LetterboxWidget->IsInViewport())
+		{
+			LetterboxWidget->RemoveFromParent();
+		}
 	}
 }
 

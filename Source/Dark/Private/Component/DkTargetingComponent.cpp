@@ -52,6 +52,7 @@ void UDkTargetingComponent::OnTargetStart()
 	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetStart"));
 	bIsTargeting = true;
 	HandlePlayerLocomotion(bIsTargeting);
+	HandleLetterboxWidget(bIsTargeting);
 }
 
 void UDkTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -66,6 +67,7 @@ void UDkTargetingComponent::OnTargetEnd()
 	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetEnd"));
 	bIsTargeting = false;
 	HandlePlayerLocomotion(bIsTargeting);
+	HandleLetterboxWidget(bIsTargeting);
 }
 
 void UDkTargetingComponent::HandlePlayerLocomotion(bool IsTargeting)
@@ -73,6 +75,14 @@ void UDkTargetingComponent::HandlePlayerLocomotion(bool IsTargeting)
 	if (PlayerRef)
 	{
 		PlayerRef->GetCharacterMovement()->bOrientRotationToMovement = !IsTargeting;
+	}
+}
+
+void UDkTargetingComponent::HandleLetterboxWidget(bool IsTargeting)
+{
+	if (PlayerControllerRef)
+	{
+		PlayerControllerRef->ToggleLetterboxUI(IsTargeting);
 	}
 }
 

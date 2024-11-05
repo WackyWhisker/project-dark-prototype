@@ -35,15 +35,17 @@ protected:
 private:
 	UFUNCTION()
 	void OnTargetStart();
+	
 	UFUNCTION()
 	void OnTargetEnd();
 
 	UFUNCTION()
 	void HandlePlayerLocomotion(bool IsTargeting);
 
+	UFUNCTION()
+	void HandleLetterboxWidget(bool IsTargeting);
+
 	UPROPERTY()
 	bool bIsTargeting = false;
-
-	
 	
 };
