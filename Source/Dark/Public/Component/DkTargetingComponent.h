@@ -10,6 +10,8 @@
 
 class IDkPlayerControllerInterface;
 class ADkEnemyBase;
+class UCameraComponent;
+class USpringArmComponent;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DARK_API UDkTargetingComponent : public UActorComponent
@@ -27,6 +29,12 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 	ADkPlayerController* PlayerControllerRef = nullptr;
+
+	UPROPERTY(BlueprintReadOnly)
+	UCameraComponent* PlayerCameraRef = nullptr;
+
+	UPROPERTY(BlueprintReadOnly)
+	USpringArmComponent* PlayerSpringArmRef = nullptr;
 
 protected:
 	virtual void BeginPlay() override;
@@ -48,6 +56,16 @@ private:
 
 	UFUNCTION()
 	void HandleTargetClearing(bool IsTargeting);
+
+	//Targeting Tick
+	UFUNCTION()
+	void HandleEnemyTrackingWhileTargeting(float DeltaTime);
+
+	UFUNCTION()
+	void UpdatePlayerRotationWhileTargeting(float DeltaTime);
+
+	UFUNCTION()
+	void UpdateCameraWhileTargeting(float DeltaTime);
 
 	UFUNCTION()
 	bool SweepForPossibleTargets(const FVector& Start,

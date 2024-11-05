@@ -3,14 +3,19 @@
 
 #include "Component/DkTargetingComponent.h"
 
+#include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Player/DkPlayerControllerInterface.h"
 #include "TargetSystem/DkTargetableInterface.h"
 
 UDkTargetingComponent::UDkTargetingComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	if (!bIsTargeting) {return;}
+	
 
 }
 
@@ -25,6 +30,14 @@ void UDkTargetingComponent::BeginPlay()
 		if (!PlayerControllerRef)
 		{
 			PlayerControllerRef = Cast<ADkPlayerController>(PlayerRef->GetController());
+		}
+		if (!PlayerCameraRef)
+		{
+			PlayerCameraRef = PlayerRef->FindComponentByClass<UCameraComponent>();
+		}
+		if (!PlayerSpringArmRef)
+		{
+			PlayerSpringArmRef = PlayerRef->FindComponentByClass<USpringArmComponent>();
 		}
 	}
 	
@@ -65,6 +78,8 @@ void UDkTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	if (!bIsTargeting) {return;} //TODO: Consider disabling tick all together instead of driving by bool
+
+	HandleEnemyTrackingWhileTargeting(DeltaTime);
 }
 
 void UDkTargetingComponent::OnTargetEnd()
@@ -81,6 +96,10 @@ void UDkTargetingComponent::HandlePlayerLocomotion(bool IsTargeting)
 	if (PlayerRef)
 	{
 		PlayerRef->GetCharacterMovement()->bOrientRotationToMovement = !IsTargeting;
+	}
+	if (PlayerSpringArmRef)
+	{
+		//PlayerSpringArmRef->bUsePawnControlRotation = !IsTargeting;
 	}
 }
 
@@ -99,6 +118,45 @@ void UDkTargetingComponent::HandleTargetClearing(bool IsTargeting)
 		IDkTargetableInterface::Execute_OnUntargeted(CurrentActiveTarget);
 		CurrentActiveTarget = nullptr;
 	}
+}
+
+void UDkTargetingComponent::HandleEnemyTrackingWhileTargeting(float DeltaTime)
+{
+	UpdatePlayerRotationWhileTargeting(DeltaTime);
+}
+
+void UDkTargetingComponent::UpdatePlayerRotationWhileTargeting(float DeltaTime)
+{
+	if (!CurrentActiveTarget || !PlayerRef) {return;}
+	FVector TargetLocation = CurrentActiveTarget->GetActorLocation();
+	FVector PlayerLocation = PlayerRef->GetActorLocation();
+
+	FRotator CurrentRotation = PlayerRef->GetActorRotation();
+	FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(PlayerLocation, TargetLocation);
+
+	TargetRotation.Pitch = CurrentRotation.Pitch;
+	TargetRotation.Roll = CurrentRotation.Roll;
+
+	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, 15.0f);
+	PlayerRef->SetActorRotation(NewRotation);
+}
+
+void UDkTargetingComponent::UpdateCameraWhileTargeting(float DeltaTime)
+{
+	if (!PlayerRef || !CurrentActiveTarget || !PlayerControllerRef) {return;}
+
+	FVector TargetLocation = CurrentActiveTarget->GetActorLocation();
+	FVector CameraLocation = PlayerCameraRef->GetComponentLocation();
+
+	FRotator CurrentRotation = PlayerCameraRef->GetComponentRotation();
+	FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(CameraLocation, TargetLocation);
+
+	TargetRotation.Pitch = CurrentRotation.Pitch;
+	TargetRotation.Roll = CurrentRotation.Roll;
+	
+	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, 15.0f);
+
+	//PlayerControllerRef->SetControlRotation(NewRotation); //TODO: Figure out how to set correctly the spring arm rotation
 }
 
 bool UDkTargetingComponent::SweepForPossibleTargets(const FVector& Start, const float Range, const float ConeAngle,
