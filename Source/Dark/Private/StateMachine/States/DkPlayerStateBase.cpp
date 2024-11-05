@@ -10,24 +10,23 @@ void UDkPlayerStateBase::OnStateEnter(AActor* StateOwner)
 	if (!PlayerRef)
 	{
 		PlayerRef = Cast<ADkCharacter>(StateOwner);
-		if (!PlayerPCRef)
+		if (!PlayerControllerRef)
 		{
-			PlayerPCRef = Cast<ADkPlayerController>(PlayerRef->GetController());
+			PlayerControllerRef = Cast<ADkPlayerController>(PlayerRef->GetController());
 		}
 	}
 
-	if (!PlayerController)
+	if (!PlayerControllerInterface)
 	{
-		PlayerController = Cast<IDkPlayerControllerInterface>(UGameplayStatics::GetPlayerController(this, 0));
+		PlayerControllerInterface = Cast<IDkPlayerControllerInterface>(UGameplayStatics::GetPlayerController(this, 0));
 	}
 
 	//Bind all relevant delegates
 	//TODO: Consider which of these should be in the child states only
-	if(PlayerController)
+	if(PlayerControllerInterface)
 	{
-		PlayerController->GetJumpDelegate()->AddUObject(this, &UDkPlayerStateBase::Jump);
-		PlayerController->GetAttackDelegate()->AddUObject(this, &UDkPlayerStateBase::Attack);
-		//PlayerController->GetTargetStartDelegate()->AddUObject(this, &UDkPlayerStateBase::TargetStart);
+		PlayerControllerInterface->GetJumpDelegate()->AddUObject(this, &UDkPlayerStateBase::Jump);
+		PlayerControllerInterface->GetAttackDelegate()->AddUObject(this, &UDkPlayerStateBase::Attack);
 	}
 }
 
@@ -35,10 +34,10 @@ void UDkPlayerStateBase::OnStateExit()
 {
 	Super::OnStateExit();
 	//Unbind all relevant delegates
-	if(PlayerController)
+	if(PlayerControllerInterface)
 	{
-		PlayerController->GetJumpDelegate()->RemoveAll(this);
-		PlayerController->GetAttackDelegate()->RemoveAll(this);
+		PlayerControllerInterface->GetJumpDelegate()->RemoveAll(this);
+		PlayerControllerInterface->GetAttackDelegate()->RemoveAll(this);
 	}
 }
 
@@ -48,11 +47,6 @@ void UDkPlayerStateBase::Jump()
 }
 
 void UDkPlayerStateBase::Attack()
-{
-	//executed in child states
-}
-
-void UDkPlayerStateBase::Target()
 {
 	//executed in child states
 }

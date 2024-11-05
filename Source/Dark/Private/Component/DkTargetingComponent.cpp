@@ -2,6 +2,8 @@
 
 
 #include "Component/DkTargetingComponent.h"
+
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/DkPlayerControllerInterface.h"
 
@@ -15,17 +17,27 @@ void UDkTargetingComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	UE_LOG(LogTemp, Log, TEXT("Targeting component initialized"));
-	if (!PlayerController)
+
+	if (!PlayerRef)
 	{
-		PlayerController = Cast<IDkPlayerControllerInterface>(UGameplayStatics::GetPlayerController(this, 0));
+		PlayerRef = Cast<ADkCharacter>(GetOwner());
+		if (!PlayerControllerRef)
+		{
+			PlayerControllerRef = Cast<ADkPlayerController>(PlayerRef->GetController());
+		}
+	}
+	
+	if (!PlayerControllerInterface)
+	{
+		PlayerControllerInterface = Cast<IDkPlayerControllerInterface>(UGameplayStatics::GetPlayerController(this, 0));
 	}
 
 	//Bind all relevant delegates
 	//TODO: Consider which of these should be in the child states only
-	if(PlayerController)
+	if(PlayerControllerInterface)
 	{
-		PlayerController->GetTargetStartDelegate()->AddUObject(this, &UDkTargetingComponent::OnTargetStart);
-		PlayerController->GetTargetEndDelegate()->AddUObject(this, &UDkTargetingComponent::OnTargetEnd);
+		PlayerControllerInterface->GetTargetStartDelegate()->AddUObject(this, &UDkTargetingComponent::OnTargetStart);
+		PlayerControllerInterface->GetTargetEndDelegate()->AddUObject(this, &UDkTargetingComponent::OnTargetEnd);
 	}
 	
 }
@@ -39,6 +51,7 @@ void UDkTargetingComponent::OnTargetStart()
 {
 	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetStart"));
 	bIsTargeting = true;
+	HandlePlayerLocomotion(bIsTargeting);
 }
 
 void UDkTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -52,5 +65,24 @@ void UDkTargetingComponent::OnTargetEnd()
 {
 	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetEnd"));
 	bIsTargeting = false;
+	HandlePlayerLocomotion(bIsTargeting);
+}
+
+void UDkTargetingComponent::HandlePlayerLocomotion(bool IsTargeting)
+{
+	if (IsTargeting)
+	{
+		if (PlayerRef)
+		{
+			PlayerRef->GetCharacterMovement()->bOrientRotationToMovement = false;
+		}
+	}
+	else
+	{
+		if (PlayerRef)
+		{
+			PlayerRef->GetCharacterMovement()->bOrientRotationToMovement = true;
+		}
+	}
 }
 

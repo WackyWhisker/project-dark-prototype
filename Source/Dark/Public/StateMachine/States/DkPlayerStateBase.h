@@ -20,17 +20,15 @@ public:
 	ADkCharacter* PlayerRef = nullptr;
 
 	UPROPERTY(BlueprintReadOnly)
-	ADkPlayerController* PlayerPCRef = nullptr;
+	ADkPlayerController* PlayerControllerRef = nullptr;
 
 	virtual void OnStateEnter(AActor* StateOwner) override;
 	virtual void OnStateExit() override;
 
 protected:
-	IDkPlayerControllerInterface* PlayerController = nullptr;
+	IDkPlayerControllerInterface* PlayerControllerInterface = nullptr;
 
 	//Matching functions for the player controller delegates
 	virtual void Jump();
 	virtual void Attack();
-	virtual void Target();
-	
 };

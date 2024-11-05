@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Character/DkCharacter.h"
+#include "Player/DkPlayerController.h"
 #include "DkTargetingComponent.generated.h"
 
 class IDkPlayerControllerInterface;
@@ -19,16 +21,25 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 							   FActorComponentTickFunction* ThisTickFunction) override;
 
+	UPROPERTY(BlueprintReadOnly)
+	ADkCharacter* PlayerRef = nullptr;
+
+	UPROPERTY(BlueprintReadOnly)
+	ADkPlayerController* PlayerControllerRef = nullptr;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void InitializeComponent() override;
-	IDkPlayerControllerInterface* PlayerController = nullptr;
+	IDkPlayerControllerInterface* PlayerControllerInterface = nullptr;
 
 private:
 	UFUNCTION()
 	void OnTargetStart();
 	UFUNCTION()
 	void OnTargetEnd();
+
+	UFUNCTION()
+	void HandlePlayerLocomotion(bool IsTargeting);
 
 	UPROPERTY()
 	bool bIsTargeting = false;
