@@ -70,19 +70,9 @@ void UDkTargetingComponent::OnTargetEnd()
 
 void UDkTargetingComponent::HandlePlayerLocomotion(bool IsTargeting)
 {
-	if (IsTargeting)
+	if (PlayerRef)
 	{
-		if (PlayerRef)
-		{
-			PlayerRef->GetCharacterMovement()->bOrientRotationToMovement = false;
-		}
-	}
-	else
-	{
-		if (PlayerRef)
-		{
-			PlayerRef->GetCharacterMovement()->bOrientRotationToMovement = true;
-		}
+		PlayerRef->GetCharacterMovement()->bOrientRotationToMovement = !IsTargeting;
 	}
 }
 
