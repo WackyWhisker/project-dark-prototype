@@ -26,12 +26,9 @@ void UDkPlayerStateAttack::Attack()
 void UDkPlayerStateAttack::OnStateEnter(AActor* StateOwner)
 {
 	Super::OnStateEnter(StateOwner);
-	FVector PlayerVelocity = PlayerRef->GetCharacterMovement()->Velocity;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, PlayerVelocity.ToString());
-	FVector LaunchVelocity = PlayerVelocity * AttackLaunchStrength;
-	PlayerRef->LaunchCharacter(LaunchVelocity, true, true);
-	//TODO: Account for launching on a slope with the correct vector math.
-
+	
+	//Launch character in momentum direction, but also accounted for slopes
+	AttackLaunchCharacter();
 	
 	//Stop player movement and decelerate
 	PlayerControllerRef->SetIgnoreMoveInput(true);
@@ -66,4 +63,23 @@ void UDkPlayerStateAttack::OnMontageEnded(UAnimMontage* Montage, bool bInterrupt
 	PlayerControllerRef->SetIgnoreMoveInput(false);
 	PlayerRef->GetCharacterMovement()->BrakingFrictionFactor = PreviousBrakingFrictionFactor;
 	PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking = PreviousBrakingDecelerationWalking;
+}
+
+void UDkPlayerStateAttack::AttackLaunchCharacter()
+{
+	FVector PlayerVelocity = PlayerRef->GetCharacterMovement()->Velocity;
+	FVector FloorNormal;
+	FHitResult HitResult;
+	FVector Start = PlayerRef->GetActorLocation();
+	FVector End = Start - FVector(0, 0, 100);  // Trace downward
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(PlayerRef);
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, QueryParams))
+	{
+		FloorNormal = HitResult.Normal;
+		FVector LaunchDir = FVector::VectorPlaneProject(PlayerVelocity, FloorNormal).GetSafeNormal();
+		FVector LaunchVelocity = LaunchDir * AttackLaunchStrength;
+		PlayerRef->LaunchCharacter(LaunchVelocity, true, true);
+	}
 }

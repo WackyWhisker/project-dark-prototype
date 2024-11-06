@@ -37,6 +37,8 @@ private:
 	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	void AttackLaunchCharacter();
+
 	//Movement related
 	float PreviousBrakingFrictionFactor;
 	float PreviousBrakingDecelerationWalking;
