@@ -23,6 +23,7 @@ public:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 							   FActorComponentTickFunction* ThisTickFunction) override;
+	
 
 	UPROPERTY(BlueprintReadOnly)
 	ADkCharacter* PlayerRef = nullptr;

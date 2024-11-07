@@ -69,7 +69,6 @@ void UDkTargetingComponent::OnTargetStart()
 	bIsTargeting = true;
 	HandlePlayerLocomotion(bIsTargeting); 
 	HandleLetterboxWidget(bIsTargeting);
-	//HandleSpringArmDefaults(bIsTargeting); //call instead when active target found
 
 	TArray<FHitResult> Hits;
 	TArray<AActor*> IgnoreActors;
@@ -81,6 +80,7 @@ void UDkTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                           FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	
 	if (!bIsTargeting) {return;} //TODO: Consider disabling tick all together instead of driving by bool
 
 	HandleEnemyTrackingWhileTargeting(DeltaTime);
@@ -125,14 +125,18 @@ void UDkTargetingComponent::HandleSpringArmDefaults(bool IsTargeting)
 		PlayerSpringArmRef->bUsePawnControlRotation = false;
 		PlayerSpringArmRef->bEnableCameraLag = true;
 		PlayerSpringArmRef->bEnableCameraRotationLag = true;
-		PlayerSpringArmRef->bDoCollisionTest = true;
 	}
 	else
 	{
 		PlayerSpringArmRef->bUsePawnControlRotation = true;
 		PlayerSpringArmRef->bEnableCameraLag = false;
 		PlayerSpringArmRef->bEnableCameraRotationLag = false;
-		PlayerSpringArmRef->bDoCollisionTest = false;
+
+		//restore camera value
+		FRotator RestoredRotation = PlayerRef->GetActorRotation();
+		RestoredRotation.Pitch = LastUsedTargetRotation.Pitch;
+		PlayerSpringArmRef->SetRelativeRotation(RestoredRotation);
+		PlayerControllerRef->SetControlRotation(RestoredRotation);
 	}
 }
 
@@ -154,7 +158,7 @@ void UDkTargetingComponent::UpdatePlayerRotationWhileTargeting(float DeltaTime)
 	TargetRotation.Pitch = CurrentRotation.Pitch;
 	TargetRotation.Roll = CurrentRotation.Roll;
 
-	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, 15.0f);
+	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, 150.0f);
 	PlayerRef->SetActorRotation(NewRotation);
 }
 
@@ -218,7 +222,7 @@ FRotator UDkTargetingComponent::CalculateIdealSpringArmRotation() const
 	FVector CameraPosition = MidPoint + CameraOffset * TargetArmLength;
 	FRotator WorldRotation = UKismetMathLibrary::FindLookAtRotation(CameraPosition, MidPoint);
 
-	// Add 90 degrees to the Yaw to correct the spring arm's orientation
+	// Subtract 90 degrees from the Yaw to correct the spring arm's orientation
 	WorldRotation.Yaw -= 90.0f;
 	
 	return (WorldRotation - PlayerRef->GetActorRotation()).GetNormalized();

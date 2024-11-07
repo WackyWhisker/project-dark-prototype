@@ -15,7 +15,7 @@ ADkCharacter::ADkCharacter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 	
-	//Ensure the character rotates towards movement input, at a certain speed (TODO: not when aiming at enemy)
+	//Ensure the character rotates towards movement input, at a certain speed
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
 	
