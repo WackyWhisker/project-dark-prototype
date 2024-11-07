@@ -12,6 +12,7 @@ class IDkPlayerControllerInterface;
 class ADkEnemyBase;
 class UCameraComponent;
 class USpringArmComponent;
+class UDkHealthComponent;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DARK_API UDkTargetingComponent : public UActorComponent
@@ -122,5 +123,12 @@ private:
 
 	FRotator LastUsedTargetRotation;
 
+	void InitiateSweepForTargets();
+
+	UPROPERTY()
+	UDkHealthComponent* HealthComponent = nullptr;
+
+	UFUNCTION()
+	void OnCurrentTargetHealthDepleted();
 	
 };

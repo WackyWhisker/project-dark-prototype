@@ -41,6 +41,7 @@ void UDkHealthComponent::TakeDamage(float DamageAmount)
 	if (CurrentHealth <= 0.0f)
 	{
 		bIsDead = true;
+		OnHealthDepleted.Broadcast();
 		GetOwner()->Destroy(); //TODO: Get rid of this temp destroy asap
 	}
 }

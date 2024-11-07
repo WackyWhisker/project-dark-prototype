@@ -4,7 +4,7 @@
 #include "Component/DkTargetingComponent.h"
 
 #include "Camera/CameraComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "Component/DkHealthComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -70,10 +70,7 @@ void UDkTargetingComponent::OnTargetStart()
 	HandlePlayerLocomotion(bIsTargeting); 
 	HandleLetterboxWidget(bIsTargeting);
 
-	TArray<FHitResult> Hits;
-	TArray<AActor*> IgnoreActors;
-	IgnoreActors.Add(PlayerRef);
-	SweepForPossibleTargets(PlayerRef->GetActorLocation(), 1000.0f, 45.0f, 1000.0f, Hits, ECC_Visibility, IgnoreActors, true);
+	InitiateSweepForTargets();
 }
 
 void UDkTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -92,8 +89,8 @@ void UDkTargetingComponent::OnTargetEnd()
 	bIsTargeting = false;
 	HandlePlayerLocomotion(bIsTargeting);
 	HandleLetterboxWidget(bIsTargeting);
-	HandleTargetClearing(bIsTargeting);
 	HandleSpringArmDefaults(bIsTargeting);
+	HandleTargetClearing(bIsTargeting);
 }
 
 void UDkTargetingComponent::HandlePlayerLocomotion(bool IsTargeting)
@@ -133,10 +130,13 @@ void UDkTargetingComponent::HandleSpringArmDefaults(bool IsTargeting)
 		PlayerSpringArmRef->bEnableCameraRotationLag = false;
 
 		//restore camera value
-		FRotator RestoredRotation = PlayerRef->GetActorRotation();
-		RestoredRotation.Pitch = LastUsedTargetRotation.Pitch;
-		PlayerSpringArmRef->SetRelativeRotation(RestoredRotation);
-		PlayerControllerRef->SetControlRotation(RestoredRotation);
+		if (CurrentActiveTarget)
+		{
+			FRotator RestoredRotation = PlayerRef->GetActorRotation();
+			RestoredRotation.Pitch = LastUsedTargetRotation.Pitch;
+			PlayerSpringArmRef->SetRelativeRotation(RestoredRotation);
+			PlayerControllerRef->SetControlRotation(RestoredRotation);
+		}
 	}
 }
 
@@ -241,6 +241,28 @@ float UDkTargetingComponent::CalculateIdealSpringArmLength() const
 	return FMath::Min(IdealLength, TargetArmLength);
 }
 
+void UDkTargetingComponent::InitiateSweepForTargets()
+{
+	TArray<FHitResult> Hits;
+	TArray<AActor*> IgnoreActors;
+	IgnoreActors.Add(PlayerRef);
+	SweepForPossibleTargets(PlayerRef->GetActorLocation(), 1000.0f, 45.0f, 1000.0f, Hits, ECC_Visibility, IgnoreActors, true);
+}
+
+void UDkTargetingComponent::OnCurrentTargetHealthDepleted()
+{
+	CurrentActiveTarget = nullptr;
+
+	FTimerHandle TickTimerHandle;
+	GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
+	{
+		// Code that will run next frame
+		InitiateSweepForTargets();
+	});
+	
+}
+
+
 bool UDkTargetingComponent::SweepForPossibleTargets(const FVector& Start, const float Range, const float ConeAngle,
                                                     const float SphereRadius, TArray<FHitResult>& OutHits, ECollisionChannel TraceChannel,
                                                     const TArray<AActor*>& ActorsToIgnore, bool bDrawDebug)
@@ -286,6 +308,15 @@ bool UDkTargetingComponent::SweepForPossibleTargets(const FVector& Start, const 
 		if (CurrentActiveTarget && CurrentActiveTarget->Implements<UDkTargetableInterface>())
 		{
 			IDkTargetableInterface::Execute_OnTargeted(CurrentActiveTarget);
+			//Subscribe to active target health comp
+			HealthComponent = CurrentActiveTarget->FindComponentByClass<UDkHealthComponent>();
+			if (HealthComponent)
+			{
+				HealthComponent->OnHealthDepleted.AddDynamic(this, &UDkTargetingComponent::OnCurrentTargetHealthDepleted);
+			}
+
+
+			//Subscribe done
 			HandleSpringArmDefaults(true);
 		}
 	}

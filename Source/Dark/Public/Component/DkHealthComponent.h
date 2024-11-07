@@ -7,6 +7,7 @@
 #include "DkHealthComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChanged, float, Health, float, HealthDelta);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHealthDepleted);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DARK_API UDkHealthComponent : public UActorComponent
@@ -18,6 +19,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category="Events")
 	FOnHealthChanged OnHealthChanged;
+
+	UPROPERTY(BlueprintAssignable, Category="Events")
+	FOnHealthDepleted OnHealthDepleted;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Health")
 	float CurrentHealth;
