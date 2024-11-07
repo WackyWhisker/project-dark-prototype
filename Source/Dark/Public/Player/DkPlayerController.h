@@ -11,6 +11,7 @@ class UInputMappingContext;
 class UInputAction;
 class ADkCharacter;
 class UUserWidget;
+class USpringArmComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogDkPlayerController, Log, All);
@@ -35,6 +36,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = UI_Targeting)
 	void ToggleLetterboxUI(bool bShowLetterboxUI);
+
+	UPROPERTY()
+	USpringArmComponent* PlayerSpringArmRef;
 	
 protected:
 	void Move(const FInputActionValue& Value);

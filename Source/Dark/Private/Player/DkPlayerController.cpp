@@ -4,6 +4,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Blueprint/UserWidget.h"
+#include "GameFramework/SpringArmComponent.h"
+
 #include "Character/DkCharacter.h"
 
 DEFINE_LOG_CATEGORY(LogDkPlayerController);
@@ -16,6 +18,12 @@ void ADkPlayerController::BeginPlay()
 		PlayerRef = Cast<ADkCharacter>(GetPawn());
 		UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerRef set"));
 	}
+	if (PlayerRef)
+	{
+		PlayerSpringArmRef = PlayerRef->FindComponentByClass<USpringArmComponent>();
+	}
+
+	
 
 	//Targeting UI
 	if (LetterboxWidgetClass)
@@ -86,12 +94,15 @@ void ADkPlayerController::Move(const FInputActionValue& Value)
 		return;
 	}
 	FVector2D MovementVector = Value.Get<FVector2D>();
-	//UE_LOG(LogDkPlayerController, Warning, TEXT("MovementVector: %s"), *MovementVector.ToString());
-	
-	const FRotator YawRotation(0, ControlRotation.Yaw, 0);
+	const FRotator SpringArmRotation = PlayerSpringArmRef->GetTargetRotation();
+	// We only want the yaw component for horizontal movement
+	const FRotator YawRotation(0, SpringArmRotation.Yaw, 0);
+    
+	// Get the forward and right vectors based on the spring arm's rotation
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-	    
+    
+	// Apply movement in the rotated directions
 	PlayerRef->AddMovementInput(ForwardDirection, MovementVector.Y);
 	PlayerRef->AddMovementInput(RightDirection, MovementVector.X);
 }

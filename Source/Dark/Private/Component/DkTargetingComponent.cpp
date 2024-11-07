@@ -14,9 +14,6 @@
 UDkTargetingComponent::UDkTargetingComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	if (!bIsTargeting) {return;}
-	
-
 }
 
 void UDkTargetingComponent::BeginPlay()
@@ -27,17 +24,23 @@ void UDkTargetingComponent::BeginPlay()
 	if (!PlayerRef)
 	{
 		PlayerRef = Cast<ADkCharacter>(GetOwner());
+	}
+
+	if (PlayerRef)
+	{
 		if (!PlayerControllerRef)
 		{
 			PlayerControllerRef = Cast<ADkPlayerController>(PlayerRef->GetController());
 		}
-		if (!PlayerCameraRef)
-		{
-			PlayerCameraRef = PlayerRef->FindComponentByClass<UCameraComponent>();
-		}
+    
 		if (!PlayerSpringArmRef)
 		{
-			PlayerSpringArmRef = PlayerRef->FindComponentByClass<USpringArmComponent>();
+			PlayerSpringArmRef = Cast<USpringArmComponent>(PlayerRef->GetComponentByClass(USpringArmComponent::StaticClass()));
+		}
+
+		if (PlayerSpringArmRef)
+		{
+			PlayerCameraRef = Cast<UCameraComponent>(PlayerSpringArmRef->GetChildComponent(0));
 		}
 	}
 	
@@ -65,7 +68,8 @@ void UDkTargetingComponent::OnTargetStart()
 	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetStart"));
 	bIsTargeting = true;
 	HandlePlayerLocomotion(bIsTargeting); 
-	HandleLetterboxWidget(bIsTargeting); 
+	HandleLetterboxWidget(bIsTargeting);
+	//HandleSpringArmDefaults(bIsTargeting); //call instead when active target found
 
 	TArray<FHitResult> Hits;
 	TArray<AActor*> IgnoreActors;
@@ -89,18 +93,11 @@ void UDkTargetingComponent::OnTargetEnd()
 	HandlePlayerLocomotion(bIsTargeting);
 	HandleLetterboxWidget(bIsTargeting);
 	HandleTargetClearing(bIsTargeting);
+	HandleSpringArmDefaults(bIsTargeting);
 }
 
 void UDkTargetingComponent::HandlePlayerLocomotion(bool IsTargeting)
 {
-	if (PlayerRef)
-	{
-		PlayerRef->GetCharacterMovement()->bOrientRotationToMovement = !IsTargeting;
-	}
-	if (PlayerSpringArmRef)
-	{
-		//PlayerSpringArmRef->bUsePawnControlRotation = !IsTargeting;
-	}
 }
 
 void UDkTargetingComponent::HandleLetterboxWidget(bool IsTargeting)
@@ -120,9 +117,29 @@ void UDkTargetingComponent::HandleTargetClearing(bool IsTargeting)
 	}
 }
 
+void UDkTargetingComponent::HandleSpringArmDefaults(bool IsTargeting)
+{
+	if (!PlayerSpringArmRef) {return;}
+	if (IsTargeting && CurrentActiveTarget)
+	{
+		PlayerSpringArmRef->bUsePawnControlRotation = false;
+		PlayerSpringArmRef->bEnableCameraLag = true;
+		PlayerSpringArmRef->bEnableCameraRotationLag = true;
+		PlayerSpringArmRef->bDoCollisionTest = true;
+	}
+	else
+	{
+		PlayerSpringArmRef->bUsePawnControlRotation = true;
+		PlayerSpringArmRef->bEnableCameraLag = false;
+		PlayerSpringArmRef->bEnableCameraRotationLag = false;
+		PlayerSpringArmRef->bDoCollisionTest = false;
+	}
+}
+
 void UDkTargetingComponent::HandleEnemyTrackingWhileTargeting(float DeltaTime)
 {
 	UpdatePlayerRotationWhileTargeting(DeltaTime);
+	UpdateCameraWhileTargeting(DeltaTime);
 }
 
 void UDkTargetingComponent::UpdatePlayerRotationWhileTargeting(float DeltaTime)
@@ -143,20 +160,81 @@ void UDkTargetingComponent::UpdatePlayerRotationWhileTargeting(float DeltaTime)
 
 void UDkTargetingComponent::UpdateCameraWhileTargeting(float DeltaTime)
 {
-	if (!PlayerRef || !CurrentActiveTarget || !PlayerControllerRef) {return;}
+	if (!PlayerRef || !CurrentActiveTarget || !PlayerSpringArmRef || !PlayerCameraRef) {return;}
 
-	FVector TargetLocation = CurrentActiveTarget->GetActorLocation();
-	FVector CameraLocation = PlayerCameraRef->GetComponentLocation();
+	// Calculate ideal rotation to look at target
+	FRotator TargetRotation = CalculateIdealSpringArmRotation();
+    
+	// Smoothly interpolate rotation
+	FRotator NewRotation = FMath::RInterpTo(
+		PlayerSpringArmRef->GetRelativeRotation(),
+		TargetRotation,
+		DeltaTime,
+		InterpSpeed
+	);
+	PlayerSpringArmRef->SetRelativeRotation(NewRotation);
+	LastUsedTargetRotation = NewRotation;
 
-	FRotator CurrentRotation = PlayerCameraRef->GetComponentRotation();
-	FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(CameraLocation, TargetLocation);
+	// Update spring arm length
+	float TargetLength = CalculateIdealSpringArmLength();
+	float NewLength = FMath::FInterpTo(
+		PlayerSpringArmRef->TargetArmLength,
+		TargetLength,
+		DeltaTime,
+		InterpSpeed
+	);
+	//PlayerSpringArmRef->TargetArmLength = NewLength;
 
-	TargetRotation.Pitch = CurrentRotation.Pitch;
-	TargetRotation.Roll = CurrentRotation.Roll;
+	// Update camera FOV based on distance
+	if (PlayerCameraRef)
+	{
+		float Distance = FVector::Distance(PlayerRef->GetActorLocation(), CurrentActiveTarget->GetActorLocation());
+		float NormalizedDistance = FMath::GetMappedRangeValueClamped(
+			FVector2D(MinTargetDistance, TargetArmLength),
+			FVector2D(0.0f, 1.0f),
+			Distance
+		);
+		float TargetFOV = FMath::Lerp(MinFOV, MaxFOV, NormalizedDistance);
+		float NewFOV = FMath::FInterpTo(PlayerCameraRef->FieldOfView, TargetFOV, DeltaTime, InterpSpeed);
+		//PlayerCameraRef->SetFieldOfView(NewFOV);
+	}
 	
-	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, 15.0f);
+}
 
-	//PlayerControllerRef->SetControlRotation(NewRotation); //TODO: Figure out how to set correctly the spring arm rotation
+FRotator UDkTargetingComponent::CalculateIdealSpringArmRotation() const
+{
+	// Find the midpoint between player and target
+	FVector MidPoint = (PlayerRef->GetActorLocation() + CurrentActiveTarget->GetActorLocation()) * 0.5f;
+    
+	// Calculate the direction from player to target
+	FVector TargetDirection = (CurrentActiveTarget->GetActorLocation() - PlayerRef->GetActorLocation()).GetSafeNormal();
+    
+	// Calculate camera position that's perpendicular to the player-target line
+	FVector CameraOffset = FVector::CrossProduct(TargetDirection, FVector::UpVector);
+	CameraOffset.Z = CameraHeight / TargetArmLength; // Normalize the height based on arm length
+	CameraOffset.Normalize();
+    
+	// Convert to relative rotation
+	FVector CameraPosition = MidPoint + CameraOffset * TargetArmLength;
+	FRotator WorldRotation = UKismetMathLibrary::FindLookAtRotation(CameraPosition, MidPoint);
+
+	// Add 90 degrees to the Yaw to correct the spring arm's orientation
+	WorldRotation.Yaw -= 90.0f;
+	
+	return (WorldRotation - PlayerRef->GetActorRotation()).GetNormalized();
+	
+}
+
+float UDkTargetingComponent::CalculateIdealSpringArmLength() const
+{
+	// Calculate distance between characters
+	float Distance = FVector::Distance(PlayerRef->GetActorLocation(), CurrentActiveTarget->GetActorLocation());
+    
+	// Scale arm length based on distance, but ensure it's never less than our minimum
+	float IdealLength = FMath::Max(Distance * 0.75f, MinTargetDistance);
+    
+	// Clamp to our configured maximum
+	return FMath::Min(IdealLength, TargetArmLength);
 }
 
 bool UDkTargetingComponent::SweepForPossibleTargets(const FVector& Start, const float Range, const float ConeAngle,
@@ -204,6 +282,7 @@ bool UDkTargetingComponent::SweepForPossibleTargets(const FVector& Start, const 
 		if (CurrentActiveTarget && CurrentActiveTarget->Implements<UDkTargetableInterface>())
 		{
 			IDkTargetableInterface::Execute_OnTargeted(CurrentActiveTarget);
+			HandleSpringArmDefaults(true);
 		}
 	}
 	return bHit;
@@ -231,4 +310,6 @@ AActor* UDkTargetingComponent::FindClosestTarget(const TArray<FHitResult>& Hits)
 
 	return ClosestTarget;
 }
+
+
 

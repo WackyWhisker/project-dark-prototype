@@ -30,11 +30,28 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	ADkPlayerController* PlayerControllerRef = nullptr;
 
-	UPROPERTY(BlueprintReadOnly)
-	UCameraComponent* PlayerCameraRef = nullptr;
+	//Enemy targeting camera
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Targeting")
+	float TargetArmLength = 800.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Targeting")
+	float CameraDistance = 800.0f;
 
-	UPROPERTY(BlueprintReadOnly)
-	USpringArmComponent* PlayerSpringArmRef = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Targeting")
+	float CameraHeight = 200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Targeting")
+	float InterpSpeed = 15.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Targeting")
+	float MinFOV = 90.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Targeting")
+	float MaxFOV = 110.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Targeting")
+	float MinTargetDistance = 300.0f;
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -56,6 +73,9 @@ private:
 
 	UFUNCTION()
 	void HandleTargetClearing(bool IsTargeting);
+
+	UFUNCTION()
+	void HandleSpringArmDefaults(bool IsTargeting);
 
 	//Targeting Tick
 	UFUNCTION()
@@ -89,5 +109,17 @@ private:
 
 	UPROPERTY(VisibleAnywhere,Category = "Targets")
 	AActor* CurrentActiveTarget;
+
+	UPROPERTY()
+	UCameraComponent* PlayerCameraRef = nullptr;
+
+	UPROPERTY()
+	USpringArmComponent* PlayerSpringArmRef = nullptr;
+
+	FRotator CalculateIdealSpringArmRotation() const;
+	float CalculateIdealSpringArmLength() const;
+
+	FRotator LastUsedTargetRotation;
+
 	
 };
