@@ -26,6 +26,9 @@ void UDkPlayerStateAttack::Attack()
 void UDkPlayerStateAttack::OnStateEnter(AActor* StateOwner)
 {
 	Super::OnStateEnter(StateOwner);
+
+	//Attach weapon to hand
+	PlayerRef->AttachWeaponToSocket("AttackWeaponSocket");
 	
 	//Launch character in momentum direction, but also accounted for slopes
 	AttackLaunchCharacter();
@@ -48,6 +51,13 @@ void UDkPlayerStateAttack::OnStateEnter(AActor* StateOwner)
 	}
 	UE_LOG(LogTemp, Warning, TEXT("Attack Index: %s"), *FString::FromInt(AttackIndex));
 	AttackIndex++;
+	
+}
+
+void UDkPlayerStateAttack::OnStateExit()
+{
+	Super::OnStateExit();
+	PlayerRef->AttachWeaponToSocket("HolsterWeaponSocket");
 	
 }
 

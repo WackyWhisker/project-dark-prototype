@@ -231,6 +231,7 @@ void UDkTargetingComponent::UpdateCameraWithoutActiveTarget(float DeltaTime)
 {
 	if (!PlayerRef || !PlayerSpringArmRef || !PlayerCameraRef) {return;}
 	// Calculate ideal rotation to look at target
+	
 	static FRotator TargetRotation = FRotator(-14.0f, 0.0f, 0.0f);
     
 	// Smoothly interpolate rotation

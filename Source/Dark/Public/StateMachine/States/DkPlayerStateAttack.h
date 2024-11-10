@@ -20,6 +20,7 @@ public:
 protected:
 	virtual void Attack() override;
 	virtual void OnStateEnter(AActor* StateOwner) override;
+	virtual void OnStateExit() override;
 	
 
 	UPROPERTY(EditDefaultsOnly)

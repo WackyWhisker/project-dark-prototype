@@ -10,6 +10,7 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class UStaticMeshComponent;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
@@ -45,6 +46,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = StateManager)
 	TEnumAsByte<EDkPlayerAnimationState> DkPlayerState;
 
+	UFUNCTION(BlueprintCallable, Category = Combat)
+	void AttachWeaponToSocket(FName SocketName);
+
 protected:
 	virtual void BeginPlay() override;
 	
@@ -55,5 +59,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
+
+	//Weapons TODO: see if a weapon manager would be needed
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* WeaponMesh;
 	
 };

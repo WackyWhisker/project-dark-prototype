@@ -18,6 +18,10 @@ ADkCharacter::ADkCharacter()
 	//Ensure the character rotates towards movement input, at a certain speed
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
+
+	//Weapon mesh
+	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>("WeaponMesh");
+	
 	
 	//Camera boom
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>("CameraBoom");
@@ -37,10 +41,19 @@ ADkCharacter::ADkCharacter()
 	DkPlayerState = EDkPlayerAnimationState::Default;
 }
 
+void ADkCharacter::AttachWeaponToSocket(FName SocketName)
+{
+	if (!WeaponMesh) return;
+	FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, true);
+	WeaponMesh->AttachToComponent(GetMesh(), AttachRules, SocketName);
+	WeaponMesh->ComponentTags.Add(FName("WeaponTag"));
+}
+
 void ADkCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	StateManager->InitializeStateManager();
+	AttachWeaponToSocket("HolsterWeaponSocket");
 }
 
 
