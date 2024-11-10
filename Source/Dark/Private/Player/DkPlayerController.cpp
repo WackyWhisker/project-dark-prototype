@@ -123,7 +123,7 @@ void ADkPlayerController::TargetStart()
 	{
 		TargetStartDelegate.Broadcast();
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Target Button Pressed"));
+	//UE_LOG(LogTemp, Warning, TEXT("Target Button Pressed"));
 }
 
 void ADkPlayerController::TargetEnd()
@@ -132,7 +132,7 @@ void ADkPlayerController::TargetEnd()
 	{
 		TargetEndDelegate.Broadcast();
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Target Button Released"));
+	//UE_LOG(LogTemp, Warning, TEXT("Target Button Released"));
 }
 
 void ADkPlayerController::Jump()
@@ -141,7 +141,7 @@ void ADkPlayerController::Jump()
 	{
 		JumpDelegate.Broadcast();
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Jump Button Pressed"));
+	//UE_LOG(LogTemp, Warning, TEXT("Jump Button Pressed"));
 }
 
 void ADkPlayerController::Attack()
@@ -150,7 +150,7 @@ void ADkPlayerController::Attack()
 	{
 		AttackDelegate.Broadcast();
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Attack Button Pressed"));
+	//UE_LOG(LogTemp, Warning, TEXT("Attack Button Pressed"));
 }
 
 FTargetStartSignature* ADkPlayerController::GetTargetStartDelegate()

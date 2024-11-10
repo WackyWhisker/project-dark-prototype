@@ -68,13 +68,22 @@ private:
 	void OnTargetEnd();
 
 	UFUNCTION()
-	void HandleLetterboxWidget(bool IsTargeting);
+	void ToggleLetterboxWidget(bool IsTargeting); //always
 
 	UFUNCTION()
-	void HandleTargetClearing(bool IsTargeting);
+	void ToggleSpringArmDefaults(bool IsTargeting);
 
 	UFUNCTION()
-	void HandleSpringArmDefaults(bool IsTargeting);
+	void TogglePlayerDefaults(bool IsTargeting);
+
+	UFUNCTION()
+	void StoreCameraPositionOnStart();
+
+	UFUNCTION()
+	void RestoreCameraPositionOnEnd();
+
+	UFUNCTION()
+	void ClearTarget(bool IsTargeting); //Only on target end
 
 	//Targeting Tick
 	UFUNCTION()
@@ -84,7 +93,10 @@ private:
 	void UpdatePlayerRotationWhileTargeting(float DeltaTime);
 
 	UFUNCTION()
-	void UpdateCameraWhileTargeting(float DeltaTime);
+	void UpdateCameraWithActiveTarget(float DeltaTime);
+
+	UFUNCTION()
+	void UpdateCameraWithoutActiveTarget(float DeltaTime);
 
 	UFUNCTION()
 	bool SweepForPossibleTargets(const FVector& Start,

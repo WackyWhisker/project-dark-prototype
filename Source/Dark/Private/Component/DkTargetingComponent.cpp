@@ -5,6 +5,7 @@
 
 #include "Camera/CameraComponent.h"
 #include "Component/DkHealthComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -67,8 +68,9 @@ void UDkTargetingComponent::OnTargetStart()
 {
 	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetStart"));
 	bIsTargeting = true;
-	HandleLetterboxWidget(bIsTargeting);
-
+	ToggleLetterboxWidget(bIsTargeting);
+	TogglePlayerDefaults(bIsTargeting);
+	ToggleSpringArmDefaults(bIsTargeting);
 	InitiateSweepForTargets();
 }
 
@@ -77,22 +79,32 @@ void UDkTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
-	if (!bIsTargeting) {return;} //TODO: Consider disabling tick all together instead of driving by bool
+	if (!bIsTargeting) {return;} 
 
-	HandleEnemyTrackingWhileTargeting(DeltaTime);
+	if (CurrentActiveTarget)
+	{
+		HandleEnemyTrackingWhileTargeting(DeltaTime);
+	}
+	else
+	{
+		UpdateCameraWithoutActiveTarget(DeltaTime);
+	}
+	
 }
 
 void UDkTargetingComponent::OnTargetEnd()
 {
 	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetEnd"));
 	bIsTargeting = false;
-	HandleLetterboxWidget(bIsTargeting);
-	HandleSpringArmDefaults(bIsTargeting);
-	HandleTargetClearing(bIsTargeting);
+	ToggleLetterboxWidget(bIsTargeting);
+	TogglePlayerDefaults(bIsTargeting);
+	ToggleSpringArmDefaults(bIsTargeting);
+	RestoreCameraPositionOnEnd();
+	ClearTarget(bIsTargeting);
 }
 
-
-void UDkTargetingComponent::HandleLetterboxWidget(bool IsTargeting)
+//Do always when starting or ending targeting
+void UDkTargetingComponent::ToggleLetterboxWidget(bool IsTargeting)
 {
 	if (PlayerControllerRef)
 	{
@@ -100,19 +112,11 @@ void UDkTargetingComponent::HandleLetterboxWidget(bool IsTargeting)
 	}
 }
 
-void UDkTargetingComponent::HandleTargetClearing(bool IsTargeting)
-{
-	if (CurrentActiveTarget && CurrentActiveTarget->Implements<UDkTargetableInterface>())
-	{
-		IDkTargetableInterface::Execute_OnUntargeted(CurrentActiveTarget);
-		CurrentActiveTarget = nullptr;
-	}
-}
 
-void UDkTargetingComponent::HandleSpringArmDefaults(bool IsTargeting)
+void UDkTargetingComponent::ToggleSpringArmDefaults(bool IsTargeting)
 {
 	if (!PlayerSpringArmRef) {return;}
-	if (IsTargeting && CurrentActiveTarget)
+	if (IsTargeting)
 	{
 		PlayerSpringArmRef->bUsePawnControlRotation = false;
 		PlayerSpringArmRef->bEnableCameraLag = true;
@@ -123,22 +127,45 @@ void UDkTargetingComponent::HandleSpringArmDefaults(bool IsTargeting)
 		PlayerSpringArmRef->bUsePawnControlRotation = true;
 		PlayerSpringArmRef->bEnableCameraLag = false;
 		PlayerSpringArmRef->bEnableCameraRotationLag = false;
+	}
+}
 
-		//restore camera value
-		if (CurrentActiveTarget)
-		{
-			FRotator RestoredRotation = PlayerRef->GetActorRotation();
-			RestoredRotation.Pitch = LastUsedTargetRotation.Pitch;
-			PlayerSpringArmRef->SetRelativeRotation(RestoredRotation);
-			PlayerControllerRef->SetControlRotation(RestoredRotation);
-		}
+//Do always when starting or ending targeting
+void UDkTargetingComponent::TogglePlayerDefaults(bool IsTargeting)
+{
+	if (PlayerRef)
+	{
+		PlayerRef->GetCharacterMovement()->bOrientRotationToMovement = !bIsTargeting;
+	}
+}
+
+void UDkTargetingComponent::StoreCameraPositionOnStart()
+{
+	
+}
+
+void UDkTargetingComponent::RestoreCameraPositionOnEnd()
+{
+	if (!PlayerSpringArmRef || !PlayerControllerRef) {	return;}
+	
+	FRotator RestoredRotation = PlayerRef->GetActorRotation();
+	RestoredRotation.Pitch = LastUsedTargetRotation.Pitch;
+	PlayerControllerRef->SetControlRotation(RestoredRotation);
+}
+
+void UDkTargetingComponent::ClearTarget(bool IsTargeting)
+{
+	if (CurrentActiveTarget && CurrentActiveTarget->Implements<UDkTargetableInterface>())
+	{
+		IDkTargetableInterface::Execute_OnUntargeted(CurrentActiveTarget);
+		CurrentActiveTarget = nullptr;
 	}
 }
 
 void UDkTargetingComponent::HandleEnemyTrackingWhileTargeting(float DeltaTime)
 {
 	UpdatePlayerRotationWhileTargeting(DeltaTime);
-	UpdateCameraWhileTargeting(DeltaTime);
+	UpdateCameraWithActiveTarget(DeltaTime);
 }
 
 void UDkTargetingComponent::UpdatePlayerRotationWhileTargeting(float DeltaTime)
@@ -157,7 +184,7 @@ void UDkTargetingComponent::UpdatePlayerRotationWhileTargeting(float DeltaTime)
 	PlayerRef->SetActorRotation(NewRotation);
 }
 
-void UDkTargetingComponent::UpdateCameraWhileTargeting(float DeltaTime)
+void UDkTargetingComponent::UpdateCameraWithActiveTarget(float DeltaTime)
 {
 	if (!PlayerRef || !CurrentActiveTarget || !PlayerSpringArmRef || !PlayerCameraRef) {return;}
 
@@ -197,6 +224,24 @@ void UDkTargetingComponent::UpdateCameraWhileTargeting(float DeltaTime)
 		float NewFOV = FMath::FInterpTo(PlayerCameraRef->FieldOfView, TargetFOV, DeltaTime, InterpSpeed);
 		//PlayerCameraRef->SetFieldOfView(NewFOV);
 	}
+	
+}
+
+void UDkTargetingComponent::UpdateCameraWithoutActiveTarget(float DeltaTime)
+{
+	if (!PlayerRef || !PlayerSpringArmRef || !PlayerCameraRef) {return;}
+	// Calculate ideal rotation to look at target
+	static FRotator TargetRotation = FRotator(-14.0f, 0.0f, 0.0f);
+    
+	// Smoothly interpolate rotation
+	FRotator NewRotation = FMath::RInterpTo(
+		PlayerSpringArmRef->GetRelativeRotation(),
+		TargetRotation,
+		DeltaTime,
+		InterpSpeed
+	);
+	PlayerSpringArmRef->SetRelativeRotation(NewRotation);
+	LastUsedTargetRotation = NewRotation;
 	
 }
 
@@ -257,7 +302,6 @@ void UDkTargetingComponent::OnCurrentTargetHealthDepleted()
 	
 }
 
-
 bool UDkTargetingComponent::SweepForPossibleTargets(const FVector& Start, const float Range, const float ConeAngle,
                                                     const float SphereRadius, TArray<FHitResult>& OutHits, ECollisionChannel TraceChannel,
                                                     const TArray<AActor*>& ActorsToIgnore, bool bDrawDebug)
@@ -315,7 +359,7 @@ bool UDkTargetingComponent::SweepForPossibleTargets(const FVector& Start, const 
 
 
 			//Subscribe done
-			HandleSpringArmDefaults(true);
+			//ToggleSpringArmDefaults(true);
 		}
 	}
 	return bHit;
