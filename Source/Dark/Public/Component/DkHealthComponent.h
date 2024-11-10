@@ -48,8 +48,16 @@ protected:
 		const class UDamageType* DamageType, class AController* InstigatedBy,
 		AActor* DamageCauser);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", meta = (ClampMin = "0.0"))
+	float DamageCooldownDuration = 0.5f;
+
 private:
 	bool bIsDead;
+
+	FTimerHandle DamageCooldownTimer;
+	bool bCanTakeDamage = true;
+
+	void ResetDamageCooldown();
 
 	
 };

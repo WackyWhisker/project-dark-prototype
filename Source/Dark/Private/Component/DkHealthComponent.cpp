@@ -31,7 +31,9 @@ void UDkHealthComponent::BeginPlay()
 
 void UDkHealthComponent::TakeDamage(float DamageAmount)
 {
-	if (DamageAmount <= 0.0f || bIsDead) {return;}
+	if (DamageAmount <= 0.0f || bIsDead || !bCanTakeDamage) {return;}
+
+	bCanTakeDamage = false;
 
 	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
 
@@ -44,6 +46,15 @@ void UDkHealthComponent::TakeDamage(float DamageAmount)
 		OnHealthDepleted.Broadcast();
 		GetOwner()->Destroy(); //TODO: Get rid of this temp destroy asap
 	}
+
+	// Start cooldown timer
+	GetWorld()->GetTimerManager().SetTimer(
+		DamageCooldownTimer,
+		this,
+		&UDkHealthComponent::ResetDamageCooldown,
+		DamageCooldownDuration,
+		false
+	);
 }
 
 void UDkHealthComponent::Heal(float HealAmount)
@@ -74,6 +85,11 @@ void UDkHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor, float Damage,
 	}
 
 	TakeDamage(Damage);
+}
+
+void UDkHealthComponent::ResetDamageCooldown()
+{
+	bCanTakeDamage = true;
 }
 
 
