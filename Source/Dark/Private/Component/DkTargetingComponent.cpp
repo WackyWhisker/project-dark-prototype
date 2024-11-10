@@ -67,7 +67,6 @@ void UDkTargetingComponent::OnTargetStart()
 {
 	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetStart"));
 	bIsTargeting = true;
-	HandlePlayerLocomotion(bIsTargeting); 
 	HandleLetterboxWidget(bIsTargeting);
 
 	InitiateSweepForTargets();
@@ -87,15 +86,11 @@ void UDkTargetingComponent::OnTargetEnd()
 {
 	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetEnd"));
 	bIsTargeting = false;
-	HandlePlayerLocomotion(bIsTargeting);
 	HandleLetterboxWidget(bIsTargeting);
 	HandleSpringArmDefaults(bIsTargeting);
 	HandleTargetClearing(bIsTargeting);
 }
 
-void UDkTargetingComponent::HandlePlayerLocomotion(bool IsTargeting)
-{
-}
 
 void UDkTargetingComponent::HandleLetterboxWidget(bool IsTargeting)
 {
@@ -312,6 +307,9 @@ bool UDkTargetingComponent::SweepForPossibleTargets(const FVector& Start, const 
 			HealthComponent = CurrentActiveTarget->FindComponentByClass<UDkHealthComponent>();
 			if (HealthComponent)
 			{
+				// Remove any existing binding first
+				HealthComponent->OnHealthDepleted.RemoveDynamic(this, &UDkTargetingComponent::OnCurrentTargetHealthDepleted);
+				// Then add the new binding
 				HealthComponent->OnHealthDepleted.AddDynamic(this, &UDkTargetingComponent::OnCurrentTargetHealthDepleted);
 			}
 

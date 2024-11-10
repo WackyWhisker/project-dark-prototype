@@ -68,9 +68,6 @@ private:
 	void OnTargetEnd();
 
 	UFUNCTION()
-	void HandlePlayerLocomotion(bool IsTargeting);
-
-	UFUNCTION()
 	void HandleLetterboxWidget(bool IsTargeting);
 
 	UFUNCTION()
