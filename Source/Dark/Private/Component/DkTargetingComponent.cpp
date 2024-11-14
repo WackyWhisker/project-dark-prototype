@@ -88,7 +88,76 @@ bool UDkTargetingComponent::FindBestTarget(AActor*& OutBestTarget, float SphereR
 	return true;
 }
 
+bool UDkTargetingComponent::CycleTarget(bool bGoingRight)
+{
+	if (!CurrentActiveTarget) {return false;}
+	TArray<AActor*> TargetsInRange;
+	TArray<AActor*> TargetsInCone;
 
+	if (!GetTargetableActorsInRange(TargetsInRange, TargetableActorsScanRange) ||
+		!FilterTargetsByViewCone(TargetsInRange, TargetsInCone, MaxViewConeAngle))
+	{
+		UE_LOG(LogTemp, Log, TEXT("There are no further targets to target at all"));
+		return false;
+	}
+
+	FVector CameraLocation = PlayerCameraRef->GetComponentLocation();
+	FVector CameraForward = PlayerCameraRef->GetForwardVector();
+	FVector CameraRight = PlayerCameraRef->GetRightVector();
+
+	// Get current target's direction and side
+	FVector DirToCurrent = (CurrentActiveTarget->GetActorLocation() - CameraLocation).GetSafeNormal();
+	float CurrentSide = FVector::DotProduct(DirToCurrent, CameraRight);
+
+	AActor* BestNextTarget = nullptr;
+	float BestDot = -1.0f;
+
+	for (AActor* Target : TargetsInCone)
+	{
+		if (Target == CurrentActiveTarget) continue;
+        
+		FVector DirToTarget = (Target->GetActorLocation() - CameraLocation).GetSafeNormal();
+		float TargetSide = FVector::DotProduct(DirToTarget, CameraRight);
+        
+		if ((bGoingRight && TargetSide > CurrentSide) || (!bGoingRight && TargetSide < CurrentSide))
+		{
+			float DotWithForward = FVector::DotProduct(DirToTarget, CameraForward);
+			if (DotWithForward > BestDot)
+			{
+				BestDot = DotWithForward;
+				BestNextTarget = Target;
+			}
+		}
+	}
+
+	if (BestNextTarget)
+	{
+		//If there is a current active one, first run the untarget logic, and then after set the new current one.
+		if (CurrentActiveTarget && CurrentActiveTarget->Implements<UDkTargetableInterface>())
+		{
+			IDkTargetableInterface::Execute_OnUntargeted(CurrentActiveTarget);
+		}
+
+		//Just another sanity null check
+		CurrentActiveTarget = BestNextTarget;
+		if (CurrentActiveTarget && CurrentActiveTarget->Implements<UDkTargetableInterface>())
+		{
+			IDkTargetableInterface::Execute_OnTargeted(CurrentActiveTarget);
+			//Subscribe to active target health comp
+			HealthComponent = CurrentActiveTarget->FindComponentByClass<UDkHealthComponent>();
+			if (HealthComponent)
+			{
+				// Remove any existing binding first
+				HealthComponent->OnHealthDepleted.RemoveDynamic(this, &UDkTargetingComponent::OnCurrentTargetHealthDepleted);
+				// Then add the new binding
+				HealthComponent->OnHealthDepleted.AddDynamic(this, &UDkTargetingComponent::OnCurrentTargetHealthDepleted);
+			}
+		}
+		return true;
+	}
+	return false;
+	
+}
 
 bool UDkTargetingComponent::GetTargetableActorsInRange(TArray<AActor*>& OutTargetableActors, float SphereRadius)
 {
@@ -167,8 +236,6 @@ bool UDkTargetingComponent::FilterTargetsByViewCone(const TArray<AActor*>& Poten
 	TArray<AActor*>& OutValidTargets, float MaxAngleInDegrees)
 {
 	if (!PlayerCameraRef) { return  false;}
-
-	
 	
 	
 	// Get camera forward vector and location
@@ -283,11 +350,19 @@ void UDkTargetingComponent::OnTargetEnd()
 void UDkTargetingComponent::OnTargetCycleLeft()
 {
 	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetCycleLeft"));
+	if (!CycleTarget(false))
+	{
+		UE_LOG(LogTemp, Log, TEXT("There is no more target to the left"));
+	}
 }
 
 void UDkTargetingComponent::OnTargetCycleRight()
 {
 	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetCycleRight"));
+	if (!CycleTarget(true))
+	{
+		UE_LOG(LogTemp, Log, TEXT("There is no more target to the right"));
+	}
 }
 
 //Do always when starting or ending targeting
@@ -499,95 +574,5 @@ void UDkTargetingComponent::OnCurrentTargetHealthDepleted()
 	});
 	
 }
-
-bool UDkTargetingComponent::SweepForPossibleTargets(const FVector& Start, const float Range, const float ConeAngle,
-                                                    const float SphereRadius, TArray<FHitResult>& OutHits, ECollisionChannel TraceChannel,
-                                                    const TArray<AActor*>& ActorsToIgnore, bool bDrawDebug)
-{
-	FRotator CameraRotation = PlayerControllerRef->PlayerCameraManager->GetCameraRotation();
-	FVector CameraForward = CameraRotation.Vector();
-	const FVector ForwardVector = CameraForward;
-	const float HalfAngleRad = FMath::DegreesToRadians(ConeAngle * 0.5f);
-	const float EndRadius = Range * FMath::Tan(HalfAngleRad);
-
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActors(ActorsToIgnore);
-	const FVector EndLocation = Start + (ForwardVector * Range);
-
-	DrawDebugSphere(GetWorld(), Start, SphereRadius, 12, FColor::Red, true, 1.0f);
-	DrawDebugSphere(GetWorld(), EndLocation, SphereRadius, 12, FColor::Red, true, 1.0f);
-	DrawDebugLine(GetWorld(), Start, EndLocation, FColor::Red, true, 1.0f);
-	bool bHit = GetWorld()->SweepMultiByChannel(OutHits, Start, EndLocation, FQuat::Identity, TraceChannel, FCollisionShape::MakeSphere(SphereRadius), QueryParams);
-
-	for (int32 i = OutHits.Num() - 1; i >= 0; i--)
-	{
-		const FHitResult& Hit = OutHits[i];
-    
-		if (!Hit.GetActor() || !Hit.GetActor()->Implements<UDkTargetableInterface>())
-		{
-			OutHits.RemoveAt(i);
-			continue;
-		}
-
-		FVector Origin;
-		FVector Extend;
-		Hit.GetActor()->GetActorBounds(false, Origin, Extend);
-
-		// Check if actor is visible in viewport
-		FVector2D ScreenLocation;
-		bool bIsInViewport = PlayerControllerRef->ProjectWorldLocationToScreen(Origin, ScreenLocation);
-
-		if (!bIsInViewport)
-		{
-			OutHits.RemoveAt(i);
-		}
-	}
-	if (OutHits.Num() > 0)
-	{
-		CurrentActiveTarget = FindClosestTarget(OutHits);
-		if (CurrentActiveTarget && CurrentActiveTarget->Implements<UDkTargetableInterface>())
-		{
-			IDkTargetableInterface::Execute_OnTargeted(CurrentActiveTarget);
-			//Subscribe to active target health comp
-			HealthComponent = CurrentActiveTarget->FindComponentByClass<UDkHealthComponent>();
-			if (HealthComponent)
-			{
-				// Remove any existing binding first
-				HealthComponent->OnHealthDepleted.RemoveDynamic(this, &UDkTargetingComponent::OnCurrentTargetHealthDepleted);
-				// Then add the new binding
-				HealthComponent->OnHealthDepleted.AddDynamic(this, &UDkTargetingComponent::OnCurrentTargetHealthDepleted);
-			}
-
-
-			//Subscribe done
-			//ToggleSpringArmDefaults(true);
-		}
-	}
-	return bHit;
-}
-
-AActor* UDkTargetingComponent::FindClosestTarget(const TArray<FHitResult>& Hits)
-{
-	AActor* ClosestTarget = nullptr;
-	float ClosestDistanceSq = TNumericLimits<float>::Max();
-
-	for (const FHitResult& Hit : Hits)
-	{
-		AActor* Actor = Hit.GetActor();
-		if (!Actor)
-		{
-			continue;
-		}
-		const float DistSq = FVector::DistSquared(Actor->GetActorLocation(), PlayerRef->GetActorLocation());
-		if (DistSq < ClosestDistanceSq)
-		{
-			ClosestDistanceSq = DistSq;
-			ClosestTarget = Actor;
-		}
-	}
-
-	return ClosestTarget;
-}
-
 
 

@@ -73,6 +73,9 @@ protected:
 										   TArray<AActor*>& OutValidTargets, 
 										   float MaxAngleInDegrees);
 
+	UFUNCTION()
+	bool CycleTarget(bool bGoingRight);
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Targeting")
 	float TargetableActorsScanRange = 1500.0f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Targeting")
@@ -123,18 +126,6 @@ private:
 	UFUNCTION()
 	void UpdateCameraWithoutActiveTarget(float DeltaTime);
 
-	UFUNCTION()
-	bool SweepForPossibleTargets(const FVector& Start,
-	const float Range,
-	const float ConeAngle,
-	const float SphereRadius,
-	TArray<FHitResult>& OutHits,
-	ECollisionChannel TraceChannel,
-	const TArray<AActor*>& ActorsToIgnore,
-	bool bDrawDebug);
-
-	UFUNCTION()
-	AActor* FindClosestTarget(const TArray<FHitResult>& Hits);
 
 	UPROPERTY()
 	bool bIsTargeting = false;
