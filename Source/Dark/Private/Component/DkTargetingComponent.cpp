@@ -187,20 +187,7 @@ bool UDkTargetingComponent::GetTargetableActorsInRange(TArray<AActor*>& OutTarge
 		CollisionShape,
 		QueryParams
 	);
-
-	// Standard usage with sensible defaults
-	DrawDebugSphere(
-		GetWorld(),              // World context
-		StartLocation,            // Location in world space
-		SphereRadius,            // Radius in Unreal units (1 unit = 1cm)
-		12,                // Number of segments (more = smoother sphere)
-		FColor::Red,       // Color of the sphere
-		true,             // Persistent lines
-		-1.0f,             // Lifetime (-1 = infinite)
-		0,                 // Depth priority
-		1.0f              // Thickness of lines
-	);
-
+	
 	if (bSuccess)
 	{
 		// Filter results for ITargetable interface
@@ -212,17 +199,6 @@ bool UDkTargetingComponent::GetTargetableActorsInRange(TArray<AActor*>& OutTarge
 				if (OverlappedActor->Implements<UDkTargetableInterface>())
 				{
 					OutTargetableActors.Add(OverlappedActor);
-					DrawDebugSphere(
-		GetWorld(),              
-		OverlappedActor->GetActorLocation(),            
-		100.0f,            
-		12,                
-		FColor::Yellow,       
-		true,             
-		-1.0f,             
-		0,                 
-		1.0f              
-	);
 				}
 			}
 		}
@@ -275,17 +251,6 @@ bool UDkTargetingComponent::FilterTargetsByViewCone(const TArray<AActor*>& Poten
 		if (DotProduct >= CosMaxAngle)
 		{
 			ValidTargetsWithDot.Add(FTargetDot(Target, DotProduct));
-			DrawDebugSphere(
-		GetWorld(),              
-		Target->GetActorLocation(),            
-		120.0f,            
-		12,                
-		FColor::Green,       
-		true,             
-		-1.0f,             
-		0,                 
-		2.0f              
-	);
 		}
 	}
     
@@ -399,11 +364,6 @@ void UDkTargetingComponent::TogglePlayerDefaults(bool IsTargeting)
 	{
 		PlayerRef->GetCharacterMovement()->bOrientRotationToMovement = !bIsTargeting;
 	}
-}
-
-void UDkTargetingComponent::StoreCameraPositionOnStart()
-{
-	
 }
 
 void UDkTargetingComponent::RestoreCameraPositionOnEnd()
@@ -572,7 +532,6 @@ void UDkTargetingComponent::OnCurrentTargetHealthDepleted()
 		// Code that will run next frame
 		InitiateSweepForTargets();
 	});
-	
 }
 
 

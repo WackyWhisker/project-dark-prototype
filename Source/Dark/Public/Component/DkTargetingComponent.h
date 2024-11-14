@@ -105,9 +105,6 @@ private:
 	void TogglePlayerDefaults(bool IsTargeting);
 
 	UFUNCTION()
-	void StoreCameraPositionOnStart();
-
-	UFUNCTION()
 	void RestoreCameraPositionOnEnd();
 
 	UFUNCTION()
@@ -125,7 +122,6 @@ private:
 
 	UFUNCTION()
 	void UpdateCameraWithoutActiveTarget(float DeltaTime);
-
 
 	UPROPERTY()
 	bool bIsTargeting = false;
