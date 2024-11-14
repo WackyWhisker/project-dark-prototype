@@ -56,12 +56,185 @@ void UDkTargetingComponent::BeginPlay()
 	{
 		PlayerControllerInterface->GetTargetStartDelegate()->AddUObject(this, &UDkTargetingComponent::OnTargetStart);
 		PlayerControllerInterface->GetTargetEndDelegate()->AddUObject(this, &UDkTargetingComponent::OnTargetEnd);
+		PlayerControllerInterface->GetTargetCycleLeftDelegate()->AddUObject(this, &UDkTargetingComponent::OnTargetCycleLeft);
+		PlayerControllerInterface->GetTargetCycleRightDelegate()->AddUObject(this, &UDkTargetingComponent::OnTargetCycleRight);
+		
 	}
 }
 
 void UDkTargetingComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
+}
+
+bool UDkTargetingComponent::FindBestTarget(AActor*& OutBestTarget, float SphereRadius, float MaxAngleInDegrees)
+{
+	TArray<AActor*> TargetsInRange;
+	TArray<AActor*> TargetsInCone;
+    
+	// Early out if no targets in range
+	if (!GetTargetableActorsInRange(TargetsInRange, SphereRadius))
+	{
+		return false;
+	}
+    
+	// Early out if no targets in cone
+	if (!FilterTargetsByViewCone(TargetsInRange, TargetsInCone, MaxAngleInDegrees))
+	{
+		return false;
+	}
+
+	OutBestTarget = TargetsInCone[0];
+	return true;
+}
+
+
+
+bool UDkTargetingComponent::GetTargetableActorsInRange(TArray<AActor*>& OutTargetableActors, float SphereRadius)
+{
+	if (!PlayerSpringArmRef) { return false;}
+
+	//Start of sphere to search within
+	FVector StartLocation = PlayerRef->GetActorLocation();
+
+	// Temp array to store all overlapped actors
+	TArray<FOverlapResult> OverlapResults;
+
+	// Configure query parameters
+	FCollisionQueryParams QueryParams;
+	QueryParams.bTraceComplex = false;
+	QueryParams.AddIgnoredActor(PlayerRef);
+
+	// Set up shape collision parameters
+	FCollisionShape CollisionShape;
+	CollisionShape.SetSphere(SphereRadius);
+
+	// Perform overlap check
+	bool bSuccess = GetWorld()->OverlapMultiByChannel(
+		OverlapResults,
+		StartLocation,
+		FQuat::Identity,
+		ECollisionChannel::ECC_Visibility,
+		CollisionShape,
+		QueryParams
+	);
+
+	// Standard usage with sensible defaults
+	DrawDebugSphere(
+		GetWorld(),              // World context
+		StartLocation,            // Location in world space
+		SphereRadius,            // Radius in Unreal units (1 unit = 1cm)
+		12,                // Number of segments (more = smoother sphere)
+		FColor::Red,       // Color of the sphere
+		true,             // Persistent lines
+		-1.0f,             // Lifetime (-1 = infinite)
+		0,                 // Depth priority
+		1.0f              // Thickness of lines
+	);
+
+	if (bSuccess)
+	{
+		// Filter results for ITargetable interface
+		for (const FOverlapResult& Result : OverlapResults)
+		{
+			if (AActor* OverlappedActor = Result.GetActor())
+			{
+				// Check if actor implements ITargetable
+				if (OverlappedActor->Implements<UDkTargetableInterface>())
+				{
+					OutTargetableActors.Add(OverlappedActor);
+					DrawDebugSphere(
+		GetWorld(),              
+		OverlappedActor->GetActorLocation(),            
+		100.0f,            
+		12,                
+		FColor::Yellow,       
+		true,             
+		-1.0f,             
+		0,                 
+		1.0f              
+	);
+				}
+			}
+		}
+	}
+    
+	return OutTargetableActors.Num() > 0;
+	
+}
+
+bool UDkTargetingComponent::FilterTargetsByViewCone(const TArray<AActor*>& PotentialTargets,
+	TArray<AActor*>& OutValidTargets, float MaxAngleInDegrees)
+{
+	if (!PlayerCameraRef) { return  false;}
+
+	
+	
+	
+	// Get camera forward vector and location
+	FVector CameraLocation;
+	FVector CameraForward;
+	
+	CameraLocation = PlayerCameraRef->GetComponentLocation();
+	CameraForward = PlayerCameraRef->GetForwardVector();
+    
+	// Convert max angle to cosine for comparison
+	float CosMaxAngle = FMath::Cos(FMath::DegreesToRadians(MaxAngleInDegrees));
+
+	// Struct to store actor and its dot product for sorting
+	struct FTargetDot {                                    // 1
+		AActor* Actor;                                     // 2
+		float DotProduct;                                  // 3
+    
+		FTargetDot(AActor* InActor, float InDot)          // 4
+			: Actor(InActor), DotProduct(InDot) {}        // 5
+	};
+
+	// Temporary array to store valid targets with their dot products
+	TArray<FTargetDot> ValidTargetsWithDot;
+	
+	// Check each potential target
+	for (AActor* Target : PotentialTargets)
+	{
+		if (!Target) continue;
+        
+		// Get direction to target (normalized)
+		FVector DirectionToTarget = (Target->GetActorLocation() - CameraLocation).GetSafeNormal();
+        
+		// Calculate dot product (gives us cosine of angle between vectors)
+		float DotProduct = FVector::DotProduct(CameraForward, DirectionToTarget);
+        
+		// If dot product is greater than cosine of our max angle, target is in cone
+		if (DotProduct >= CosMaxAngle)
+		{
+			ValidTargetsWithDot.Add(FTargetDot(Target, DotProduct));
+			DrawDebugSphere(
+		GetWorld(),              
+		Target->GetActorLocation(),            
+		120.0f,            
+		12,                
+		FColor::Green,       
+		true,             
+		-1.0f,             
+		0,                 
+		2.0f              
+	);
+		}
+	}
+    
+	// Sort by dot product (highest/most centered first)
+	ValidTargetsWithDot.Sort([](const FTargetDot& A, const FTargetDot& B) {
+		return A.DotProduct > B.DotProduct;
+	});
+    
+	// Fill output array with sorted actors
+	OutValidTargets.Empty();
+	for (const FTargetDot& TargetDot : ValidTargetsWithDot)
+	{
+		OutValidTargets.Add(TargetDot.Actor);
+	}
+    
+	return OutValidTargets.Num() > 0;
 }
 
 void UDkTargetingComponent::OnTargetStart()
@@ -101,6 +274,20 @@ void UDkTargetingComponent::OnTargetEnd()
 	ToggleSpringArmDefaults(bIsTargeting);
 	RestoreCameraPositionOnEnd();
 	ClearTarget(bIsTargeting);
+
+	// This clears everything - including spheres, lines, boxes, etc.
+	FlushPersistentDebugLines(GetWorld());
+	
+}
+
+void UDkTargetingComponent::OnTargetCycleLeft()
+{
+	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetCycleLeft"));
+}
+
+void UDkTargetingComponent::OnTargetCycleRight()
+{
+	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetCycleRight"));
 }
 
 //Do always when starting or ending targeting
@@ -284,10 +471,20 @@ float UDkTargetingComponent::CalculateIdealSpringArmLength() const
 
 void UDkTargetingComponent::InitiateSweepForTargets()
 {
-	TArray<FHitResult> Hits;
-	TArray<AActor*> IgnoreActors;
-	IgnoreActors.Add(PlayerRef);
-	SweepForPossibleTargets(PlayerRef->GetActorLocation(), 1000.0f, 45.0f, 1000.0f, Hits, ECC_Visibility, IgnoreActors, true);
+	FindBestTarget(CurrentActiveTarget, TargetableActorsScanRange, MaxViewConeAngle);
+	if (CurrentActiveTarget && CurrentActiveTarget->Implements<UDkTargetableInterface>())
+	{
+		IDkTargetableInterface::Execute_OnTargeted(CurrentActiveTarget);
+		//Subscribe to active target health comp
+		HealthComponent = CurrentActiveTarget->FindComponentByClass<UDkHealthComponent>();
+		if (HealthComponent)
+		{
+			// Remove any existing binding first
+			HealthComponent->OnHealthDepleted.RemoveDynamic(this, &UDkTargetingComponent::OnCurrentTargetHealthDepleted);
+			// Then add the new binding
+			HealthComponent->OnHealthDepleted.AddDynamic(this, &UDkTargetingComponent::OnCurrentTargetHealthDepleted);
+		}
+	}
 }
 
 void UDkTargetingComponent::OnCurrentTargetHealthDepleted()
@@ -317,6 +514,9 @@ bool UDkTargetingComponent::SweepForPossibleTargets(const FVector& Start, const 
 	QueryParams.AddIgnoredActors(ActorsToIgnore);
 	const FVector EndLocation = Start + (ForwardVector * Range);
 
+	DrawDebugSphere(GetWorld(), Start, SphereRadius, 12, FColor::Red, true, 1.0f);
+	DrawDebugSphere(GetWorld(), EndLocation, SphereRadius, 12, FColor::Red, true, 1.0f);
+	DrawDebugLine(GetWorld(), Start, EndLocation, FColor::Red, true, 1.0f);
 	bool bHit = GetWorld()->SweepMultiByChannel(OutHits, Start, EndLocation, FQuat::Identity, TraceChannel, FCollisionShape::MakeSphere(SphereRadius), QueryParams);
 
 	for (int32 i = OutHits.Num() - 1; i >= 0; i--)

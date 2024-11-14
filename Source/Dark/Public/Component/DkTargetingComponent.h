@@ -60,12 +60,37 @@ protected:
 	virtual void InitializeComponent() override;
 	IDkPlayerControllerInterface* PlayerControllerInterface = nullptr;
 
+
+	//Improved Target Selection
+	UFUNCTION()
+	bool FindBestTarget(AActor*& OutBestTarget, float SphereRadius, float MaxAngleInDegrees);
+	
+	UFUNCTION()
+	bool GetTargetableActorsInRange(TArray<AActor*>& OutTargetableActors, float SphereRadius);
+	
+	UFUNCTION()
+	bool FilterTargetsByViewCone(const TArray<AActor*>& PotentialTargets, 
+										   TArray<AActor*>& OutValidTargets, 
+										   float MaxAngleInDegrees);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Targeting")
+	float TargetableActorsScanRange = 1500.0f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Targeting")
+	float MaxViewConeAngle = 30.0f;
+
+
 private:
 	UFUNCTION()
 	void OnTargetStart();
 	
 	UFUNCTION()
 	void OnTargetEnd();
+
+	UFUNCTION()
+	void OnTargetCycleLeft();
+
+	UFUNCTION()
+	void OnTargetCycleRight();
 
 	UFUNCTION()
 	void ToggleLetterboxWidget(bool IsTargeting); //always

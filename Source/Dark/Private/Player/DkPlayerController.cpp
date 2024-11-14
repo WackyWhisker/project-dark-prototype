@@ -59,6 +59,8 @@ void ADkPlayerController::SetupInputComponent()
 		//Targeting
 		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetStart);
 		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ADkPlayerController::TargetEnd);
+		EnhancedInputComponent->BindAction(TargetCycleLeftAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetCycleLeft);
+		EnhancedInputComponent->BindAction(TargetCycleRightAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetCycleRight);
 	}
 	else
 	{
@@ -122,6 +124,11 @@ void ADkPlayerController::TargetStart()
 	if (TargetStartDelegate.IsBound())
 	{
 		TargetStartDelegate.Broadcast();
+		// Add additional mapping context for when targeting is active
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(TargetMappingContext, 0);
+		}
 	}
 	//UE_LOG(LogTemp, Warning, TEXT("Target Button Pressed"));
 }
@@ -131,8 +138,29 @@ void ADkPlayerController::TargetEnd()
 	if (TargetEndDelegate.IsBound())
 	{
 		TargetEndDelegate.Broadcast();
+		// Remove additional mapping context for when targeting is active
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+		{
+			Subsystem->RemoveMappingContext(TargetMappingContext);
+		}
 	}
 	//UE_LOG(LogTemp, Warning, TEXT("Target Button Released"));
+}
+
+void ADkPlayerController::TargetCycleLeft()
+{
+	if(TargetCycleLeftDelegate.IsBound())
+	{
+		TargetCycleLeftDelegate.Broadcast();
+	}
+}
+
+void ADkPlayerController::TargetCycleRight()
+{
+	if(TargetCycleRightDelegate.IsBound())
+	{
+		TargetCycleRightDelegate.Broadcast();
+	}
 }
 
 void ADkPlayerController::Jump()
@@ -156,11 +184,22 @@ void ADkPlayerController::Attack()
 FTargetStartSignature* ADkPlayerController::GetTargetStartDelegate()
 {
 	return &TargetStartDelegate;
+	
 }
 
 FTargetEndSignature* ADkPlayerController::GetTargetEndDelegate()
 {
 	return &TargetEndDelegate;
+}
+
+FTargetCycleLeftSignature* ADkPlayerController::GetTargetCycleLeftDelegate()
+{
+	return &TargetCycleLeftDelegate;
+}
+
+FTargetCycleRightSignature* ADkPlayerController::GetTargetCycleRightDelegate()
+{
+	return &TargetCycleRightDelegate;
 }
 
 FJumpSignature* ADkPlayerController::GetJumpDelegate()

@@ -29,6 +29,8 @@ public:
 	void Attack();
 	void TargetStart();
 	void TargetEnd();
+	void TargetCycleLeft();
+	void TargetCycleRight();
 
 	//Targeting UI
 	UPROPERTY(EditDefaultsOnly, Category = UI_Targeting)
@@ -52,7 +54,8 @@ protected:
 	virtual FAttackSignature* GetAttackDelegate() override;
 	virtual FTargetStartSignature* GetTargetStartDelegate() override;
 	virtual FTargetEndSignature* GetTargetEndDelegate() override;
-
+	virtual FTargetCycleLeftSignature* GetTargetCycleLeftDelegate() override;
+	virtual FTargetCycleRightSignature* GetTargetCycleRightDelegate() override;
 
 private:
 	//Controlled player
@@ -62,6 +65,9 @@ private:
 	//Input actions and mappings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* DefaultMappingContext;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputMappingContext* TargetMappingContext;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
@@ -78,11 +84,19 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* TargetAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* TargetCycleLeftAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* TargetCycleRightAction;
+
 	//Player Controller Interface Delegates
 	FJumpSignature JumpDelegate;
 	FAttackSignature AttackDelegate;
 	FTargetStartSignature TargetStartDelegate;
 	FTargetEndSignature TargetEndDelegate;
+	FTargetCycleLeftSignature TargetCycleLeftDelegate;
+	FTargetCycleRightSignature TargetCycleRightDelegate;
 
 	//Targeting UI
 	UPROPERTY()

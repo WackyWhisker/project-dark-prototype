@@ -10,6 +10,8 @@ DECLARE_MULTICAST_DELEGATE(FJumpSignature);
 DECLARE_MULTICAST_DELEGATE(FAttackSignature);
 DECLARE_MULTICAST_DELEGATE(FTargetStartSignature);
 DECLARE_MULTICAST_DELEGATE(FTargetEndSignature);
+DECLARE_MULTICAST_DELEGATE(FTargetCycleLeftSignature);
+DECLARE_MULTICAST_DELEGATE(FTargetCycleRightSignature);
 
 
 // This class does not need to be modified.
@@ -33,4 +35,6 @@ public:
 	virtual FAttackSignature* GetAttackDelegate() = 0;
 	virtual FTargetStartSignature* GetTargetStartDelegate() = 0;
 	virtual FTargetEndSignature* GetTargetEndDelegate() = 0;
+	virtual FTargetCycleLeftSignature* GetTargetCycleLeftDelegate() = 0;
+	virtual FTargetCycleRightSignature* GetTargetCycleRightDelegate() = 0;
 };
