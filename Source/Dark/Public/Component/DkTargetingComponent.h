@@ -81,6 +81,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Targeting")
 	float MaxViewConeAngle = 30.0f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Targeting")
+	float PlayerRotationInterpolationSpeed = 50.0f;
+
 
 private:
 	UFUNCTION()
@@ -99,10 +102,7 @@ private:
 	void ToggleLetterboxWidget(bool IsTargeting); //always
 
 	UFUNCTION()
-	void ToggleSpringArmDefaults(bool IsTargeting);
-
-	UFUNCTION()
-	void TogglePlayerDefaults(bool IsTargeting);
+	void TogglePlayerComponentValues(bool IsTargeting);
 
 	UFUNCTION()
 	void RestoreCameraPositionOnEnd();
@@ -121,7 +121,7 @@ private:
 	void UpdateCameraWithActiveTarget(float DeltaTime);
 
 	UFUNCTION()
-	void UpdateCameraWithoutActiveTarget(float DeltaTime);
+	void UpdatePlayerWithoutActiveTarget(float DeltaTime);
 
 	UPROPERTY()
 	bool bIsTargeting = false;
@@ -151,5 +151,7 @@ private:
 
 	UFUNCTION()
 	void OnCurrentTargetHealthDepleted();
+
+	
 	
 };

@@ -115,8 +115,9 @@ void ADkPlayerController::Look(const FInputActionValue& Value)
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 	//UE_LOG(LogDkPlayerController, Warning, TEXT("LookAxisVector: %s"), *LookAxisVector.ToString());
 	
-	PlayerRef->AddControllerYawInput(LookAxisVector.X);
+	PlayerRef->AddControllerYawInput(LookAxisVector.X * TargetingYawInputScale);
 	PlayerRef->AddControllerPitchInput(LookAxisVector.Y);
+	 
 }
 
 void ADkPlayerController::TargetStart()

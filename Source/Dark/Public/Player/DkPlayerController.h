@@ -41,6 +41,9 @@ public:
 
 	UPROPERTY()
 	USpringArmComponent* PlayerSpringArmRef;
+
+	UPROPERTY()
+	float TargetingYawInputScale = 1.0f;
 	
 protected:
 	void Move(const FInputActionValue& Value);

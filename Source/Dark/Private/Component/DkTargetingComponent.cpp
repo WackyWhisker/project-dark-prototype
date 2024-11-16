@@ -274,8 +274,7 @@ void UDkTargetingComponent::OnTargetStart()
 	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetStart"));
 	bIsTargeting = true;
 	ToggleLetterboxWidget(bIsTargeting);
-	TogglePlayerDefaults(bIsTargeting);
-	ToggleSpringArmDefaults(bIsTargeting);
+	TogglePlayerComponentValues(bIsTargeting);
 	InitiateSweepForTargets();
 }
 
@@ -283,6 +282,7 @@ void UDkTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                           FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	UE_LOG(LogTemp, Warning, TEXT("Control Rotation: %s"), *PlayerControllerRef->GetControlRotation().ToString());
 	
 	if (!bIsTargeting) {return;} 
 
@@ -292,7 +292,7 @@ void UDkTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	}
 	else
 	{
-		UpdateCameraWithoutActiveTarget(DeltaTime);
+		UpdatePlayerWithoutActiveTarget(DeltaTime);
 	}
 	
 }
@@ -302,8 +302,7 @@ void UDkTargetingComponent::OnTargetEnd()
 	UE_LOG(LogTemp, Log, TEXT("Targeting component executing TargetEnd"));
 	bIsTargeting = false;
 	ToggleLetterboxWidget(bIsTargeting);
-	TogglePlayerDefaults(bIsTargeting);
-	ToggleSpringArmDefaults(bIsTargeting);
+	TogglePlayerComponentValues(bIsTargeting);
 	RestoreCameraPositionOnEnd();
 	ClearTarget(bIsTargeting);
 
@@ -340,29 +339,28 @@ void UDkTargetingComponent::ToggleLetterboxWidget(bool IsTargeting)
 }
 
 
-void UDkTargetingComponent::ToggleSpringArmDefaults(bool IsTargeting)
+void UDkTargetingComponent::TogglePlayerComponentValues(bool IsTargeting)
 {
-	if (!PlayerSpringArmRef) {return;}
+	if (!PlayerSpringArmRef || !PlayerRef || !PlayerControllerRef) {return;}
 	if (IsTargeting)
 	{
 		PlayerSpringArmRef->bUsePawnControlRotation = false;
 		PlayerSpringArmRef->bEnableCameraLag = true;
 		PlayerSpringArmRef->bEnableCameraRotationLag = true;
+
+		PlayerRef->GetCharacterMovement()->bOrientRotationToMovement = false;
+		
+		PlayerControllerRef->TargetingYawInputScale = 0.0f;
 	}
 	else
 	{
 		PlayerSpringArmRef->bUsePawnControlRotation = true;
 		PlayerSpringArmRef->bEnableCameraLag = false;
 		PlayerSpringArmRef->bEnableCameraRotationLag = false;
-	}
-}
 
-//Do always when starting or ending targeting
-void UDkTargetingComponent::TogglePlayerDefaults(bool IsTargeting)
-{
-	if (PlayerRef)
-	{
-		PlayerRef->GetCharacterMovement()->bOrientRotationToMovement = !bIsTargeting;
+		PlayerRef->GetCharacterMovement()->bOrientRotationToMovement = true;
+		
+		PlayerControllerRef->TargetingYawInputScale = 1.0f;
 	}
 }
 
@@ -402,8 +400,9 @@ void UDkTargetingComponent::UpdatePlayerRotationWhileTargeting(float DeltaTime)
 	TargetRotation.Pitch = CurrentRotation.Pitch;
 	TargetRotation.Roll = CurrentRotation.Roll;
 
-	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, 150.0f);
+	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, PlayerRotationInterpolationSpeed);
 	PlayerRef->SetActorRotation(NewRotation);
+	UE_LOG(LogTemp, Warning, TEXT("SettingPlayerRefRot in line 407"));
 }
 
 void UDkTargetingComponent::UpdateCameraWithActiveTarget(float DeltaTime)
@@ -421,6 +420,7 @@ void UDkTargetingComponent::UpdateCameraWithActiveTarget(float DeltaTime)
 		InterpSpeed
 	);
 	PlayerSpringArmRef->SetRelativeRotation(NewRotation);
+	UE_LOG(LogTemp, Warning, TEXT("SettingSpringArm in line 424"));
 	LastUsedTargetRotation = NewRotation;
 
 	// Update spring arm length
@@ -449,22 +449,19 @@ void UDkTargetingComponent::UpdateCameraWithActiveTarget(float DeltaTime)
 	
 }
 
-void UDkTargetingComponent::UpdateCameraWithoutActiveTarget(float DeltaTime)
+void UDkTargetingComponent::UpdatePlayerWithoutActiveTarget(float DeltaTime)
 {
-	if (!PlayerRef || !PlayerSpringArmRef || !PlayerCameraRef) {return;}
-	// Calculate ideal rotation to look at target
-	
-	static FRotator TargetRotation = FRotator(-14.0f, 0.0f, 0.0f);
-    
-	// Smoothly interpolate rotation
-	FRotator NewRotation = FMath::RInterpTo(
-		PlayerSpringArmRef->GetRelativeRotation(),
-		TargetRotation,
-		DeltaTime,
-		InterpSpeed
-	);
-	PlayerSpringArmRef->SetRelativeRotation(NewRotation);
-	LastUsedTargetRotation = NewRotation;
+	if (!PlayerRef || !PlayerSpringArmRef || !PlayerControllerRef) {return;}
+
+	FRotator CurrentRotation = PlayerRef->GetActorRotation();
+	FRotator TargetRotation = PlayerControllerRef->GetControlRotation();
+
+	// Keep the original pitch and roll
+	TargetRotation.Pitch = CurrentRotation.Pitch;
+	TargetRotation.Roll = CurrentRotation.Roll;
+
+	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, PlayerRotationInterpolationSpeed);
+	PlayerRef->SetActorRotation(NewRotation);
 	
 }
 
