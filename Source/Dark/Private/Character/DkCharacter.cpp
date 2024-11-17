@@ -8,7 +8,8 @@
 
 DEFINE_LOG_CATEGORY(LogDkCharacter);
 
-ADkCharacter::ADkCharacter()
+ADkCharacter::ADkCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	//Don't rotate the character in any way through mouse/stick input
 	bUseControllerRotationPitch = false;

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Component/DkCharacterMovementComponent.h"
 #include "DkCharacterBase.generated.h"
 
 UCLASS()
@@ -12,7 +13,8 @@ class DARK_API ADkCharacterBase : public ACharacter
 	GENERATED_BODY()
 
 public:
-	ADkCharacterBase();
+	explicit ADkCharacterBase(const FObjectInitializer& ObjectInitializer);
+
 
 protected:
 	virtual void BeginPlay() override;

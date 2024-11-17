@@ -6,6 +6,7 @@
 #include "Character/DkCharacterBase.h"
 #include "Logging/LogMacros.h"
 #include "StateMachine/DkStateManagerComponent.h"
+#include "Component/DkCharacterMovementComponent.h"
 #include "DkCharacter.generated.h"
 
 class USpringArmComponent;
@@ -36,7 +37,7 @@ class DARK_API ADkCharacter : public ADkCharacterBase
 	GENERATED_BODY()
 
 public:
-	ADkCharacter();
+	explicit ADkCharacter(const FObjectInitializer& ObjectInitializer);
 	//TODO: Consider getter methods for camera and spring arm (see template)
 
 	//State Machine stuff

@@ -3,10 +3,10 @@
 
 #include "Character/DkCharacterBase.h"
 
-ADkCharacterBase::ADkCharacterBase()
+ADkCharacterBase::ADkCharacterBase(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetNestedDefaultSubobjectClass<UDkCharacterMovementComponent>(TEXT("CharMoveComp")))
 {
-	PrimaryActorTick.bCanEverTick = true;
-
+	// Any base character initialization
 }
 
 void ADkCharacterBase::BeginPlay()
