@@ -54,6 +54,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Targeting")
 	float MinTargetDistance = 300.0f;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Targeting")
+	bool bIsTargeting = false;
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -123,8 +126,7 @@ private:
 	UFUNCTION()
 	void UpdatePlayerWithoutActiveTarget(float DeltaTime);
 
-	UPROPERTY()
-	bool bIsTargeting = false;
+	
 
 	//Enemy targeting
 	UPROPERTY(VisibleAnywhere,Category = "Targets")

@@ -282,7 +282,6 @@ void UDkTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                           FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	UE_LOG(LogTemp, Warning, TEXT("Control Rotation: %s"), *PlayerControllerRef->GetControlRotation().ToString());
 	
 	if (!bIsTargeting) {return;} 
 
@@ -402,7 +401,6 @@ void UDkTargetingComponent::UpdatePlayerRotationWhileTargeting(float DeltaTime)
 
 	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, PlayerRotationInterpolationSpeed);
 	PlayerRef->SetActorRotation(NewRotation);
-	UE_LOG(LogTemp, Warning, TEXT("SettingPlayerRefRot in line 407"));
 }
 
 void UDkTargetingComponent::UpdateCameraWithActiveTarget(float DeltaTime)
@@ -420,7 +418,6 @@ void UDkTargetingComponent::UpdateCameraWithActiveTarget(float DeltaTime)
 		InterpSpeed
 	);
 	PlayerSpringArmRef->SetRelativeRotation(NewRotation);
-	UE_LOG(LogTemp, Warning, TEXT("SettingSpringArm in line 424"));
 	LastUsedTargetRotation = NewRotation;
 
 	// Update spring arm length
