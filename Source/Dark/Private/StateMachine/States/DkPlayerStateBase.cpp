@@ -27,6 +27,7 @@ void UDkPlayerStateBase::OnStateEnter(AActor* StateOwner)
 	{
 		PlayerControllerInterface->GetJumpDelegate()->AddUObject(this, &UDkPlayerStateBase::Jump);
 		PlayerControllerInterface->GetAttackDelegate()->AddUObject(this, &UDkPlayerStateBase::Attack);
+		PlayerControllerInterface->GetDodgeDelegate()->AddUObject(this, &UDkPlayerStateBase::Dodge);
 	}
 }
 
@@ -38,6 +39,7 @@ void UDkPlayerStateBase::OnStateExit()
 	{
 		PlayerControllerInterface->GetJumpDelegate()->RemoveAll(this);
 		PlayerControllerInterface->GetAttackDelegate()->RemoveAll(this);
+		PlayerControllerInterface->GetDodgeDelegate()->RemoveAll(this);
 	}
 }
 
@@ -47,6 +49,11 @@ void UDkPlayerStateBase::Jump()
 }
 
 void UDkPlayerStateBase::Attack()
+{
+	//executed in child states
+}
+
+void UDkPlayerStateBase::Dodge()
 {
 	//executed in child states
 }

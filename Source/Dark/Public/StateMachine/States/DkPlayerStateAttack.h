@@ -33,6 +33,8 @@ protected:
 
 private:
 	bool IsAttacking = false;
+
+	UPROPERTY()
 	UAnimInstance* AnimInstance;
 	
 	UFUNCTION()

@@ -32,6 +32,13 @@ void UDkPlayerStateRun::Attack()
 	PlayerRef->StateManager->SwitchStateByKey("Attack");
 }
 
+void UDkPlayerStateRun::Dodge()
+{
+	Super::Dodge();
+	UE_LOG(LogTemp, Warning, TEXT("Executing Dodge in Run State"));
+	PlayerRef->StateManager->SwitchStateByKey("Dodge");
+}
+
 void UDkPlayerStateRun::OnStateEnter(AActor* StateOwner)
 {
 	Super::OnStateEnter(StateOwner);
