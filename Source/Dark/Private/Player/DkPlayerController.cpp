@@ -23,8 +23,6 @@ void ADkPlayerController::BeginPlay()
 		PlayerSpringArmRef = PlayerRef->FindComponentByClass<USpringArmComponent>();
 	}
 
-	
-
 	//Targeting UI
 	if (LetterboxWidgetClass)
 	{
@@ -52,6 +50,9 @@ void ADkPlayerController::SetupInputComponent()
 
 		//Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ADkPlayerController::Jump);
+
+		//Dodge
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, this, &ADkPlayerController::Dodge);
 
 		//Attacking
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ADkPlayerController::Attack);
@@ -173,6 +174,15 @@ void ADkPlayerController::Jump()
 	//UE_LOG(LogTemp, Warning, TEXT("Jump Button Pressed"));
 }
 
+void ADkPlayerController::Dodge()
+{
+	if (DodgeDelegate.IsBound())
+	{
+		DodgeDelegate.Broadcast();
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Dodge Button Pressed"));
+}
+
 void ADkPlayerController::Attack()
 {
 	if (AttackDelegate.IsBound())
@@ -206,6 +216,11 @@ FTargetCycleRightSignature* ADkPlayerController::GetTargetCycleRightDelegate()
 FJumpSignature* ADkPlayerController::GetJumpDelegate()
 {
 	return &JumpDelegate;
+}
+
+FDodgeSignature* ADkPlayerController::GetDodgeDelegate()
+{
+	return &DodgeDelegate;
 }
 
 FAttackSignature* ADkPlayerController::GetAttackDelegate()

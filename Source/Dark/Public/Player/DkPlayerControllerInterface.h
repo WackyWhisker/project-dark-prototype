@@ -7,6 +7,7 @@
 #include "DkPlayerControllerInterface.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FJumpSignature);
+DECLARE_MULTICAST_DELEGATE(FDodgeSignature);
 DECLARE_MULTICAST_DELEGATE(FAttackSignature);
 DECLARE_MULTICAST_DELEGATE(FTargetStartSignature);
 DECLARE_MULTICAST_DELEGATE(FTargetEndSignature);
@@ -32,6 +33,7 @@ class DARK_API IDkPlayerControllerInterface
 public:
 
 	virtual FJumpSignature* GetJumpDelegate() = 0;
+	virtual FDodgeSignature* GetDodgeDelegate() = 0;
 	virtual FAttackSignature* GetAttackDelegate() = 0;
 	virtual FTargetStartSignature* GetTargetStartDelegate() = 0;
 	virtual FTargetEndSignature* GetTargetEndDelegate() = 0;

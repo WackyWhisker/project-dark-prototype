@@ -26,6 +26,7 @@ class DARK_API ADkPlayerController : public APlayerController, public IDkPlayerC
 public:
 	//Input methods corresponding to the input action
 	void Jump();
+	void Dodge();
 	void Attack();
 	void TargetStart();
 	void TargetEnd();
@@ -54,6 +55,7 @@ protected:
 
 	//Player Controller Interface Overrides
 	virtual FJumpSignature* GetJumpDelegate() override;
+	virtual FDodgeSignature* GetDodgeDelegate() override;
 	virtual FAttackSignature* GetAttackDelegate() override;
 	virtual FTargetStartSignature* GetTargetStartDelegate() override;
 	virtual FTargetEndSignature* GetTargetEndDelegate() override;
@@ -82,6 +84,9 @@ private:
 	UInputAction* JumpAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* DodgeAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* AttackAction;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -95,6 +100,7 @@ private:
 
 	//Player Controller Interface Delegates
 	FJumpSignature JumpDelegate;
+	FDodgeSignature DodgeDelegate;
 	FAttackSignature AttackDelegate;
 	FTargetStartSignature TargetStartDelegate;
 	FTargetEndSignature TargetEndDelegate;
