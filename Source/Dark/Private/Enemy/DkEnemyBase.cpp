@@ -2,6 +2,7 @@
 
 
 #include "Enemy/DkEnemyBase.h"
+#include "Component/DkDamageFlashComponent.h"
 #include "Components/WidgetComponent.h"
 
 ADkEnemyBase::ADkEnemyBase()
@@ -17,6 +18,10 @@ ADkEnemyBase::ADkEnemyBase()
 	TargetReticleWidget->SetWidgetSpace(EWidgetSpace::Screen); // Makes it face the camera
 	//TargetReticleWidget->SetDrawSize(FVector2D(250, 250)); // Set your desired size
 	TargetReticleWidget->SetRelativeLocation(FVector(0, 0, 100)); // Adjust position above enemy
+
+	//Adding flash component
+	FlashComponent = CreateDefaultSubobject<UDkDamageFlashComponent>(TEXT("FlashComponent"));
+
 }
 
 void ADkEnemyBase::BeginPlay()
@@ -30,6 +35,11 @@ void ADkEnemyBase::BeginPlay()
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Something not set correctly on the widget class"));
+	}
+
+	if (FlashComponent)
+	{
+		FlashComponent->SetupMesh(GetMesh());
 	}
 	
 }

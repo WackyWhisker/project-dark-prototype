@@ -9,6 +9,7 @@
 
 class UWidgetComponent;
 class UUserWidget;
+class UDkDamageFlashComponent;
 
 UCLASS()
 class DARK_API ADkEnemyBase : public ACharacter, public IDkTargetableInterface
@@ -33,6 +34,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = UI_Targeting)
 	void ToggleTargetReticle(bool bShowTargetReticle);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects")
+	UDkDamageFlashComponent* FlashComponent;
+
 
 //IDkTargetableInterface functions
 	virtual bool CanBeTargeted_Implementation() const override;
