@@ -13,5 +13,12 @@ UCLASS()
 class DARK_API ADkGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
+
+public:
+	void RestartLevelDelayed();
+    
+protected:
+	UFUNCTION()
+	void LoadNewLevel();
 	
 };

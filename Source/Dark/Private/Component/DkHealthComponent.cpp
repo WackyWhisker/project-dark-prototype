@@ -3,6 +3,8 @@
 
 #include "Component/DkHealthComponent.h"
 
+#include "GameFramework/Character.h"
+
 
 // Sets default values for this component's properties
 UDkHealthComponent::UDkHealthComponent()
@@ -85,6 +87,20 @@ void UDkHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor, float Damage,
 	}
 
 	TakeDamage(Damage);
+	ApplyDamagePushback(DamagedActor, Damage, DamageCauser);
+}
+
+void UDkHealthComponent::ApplyDamagePushback(AActor* DamagedActor, float Damage, AActor* DamageCauser)
+{
+	if (!DamagedActor || !DamageCauser)
+		return;
+
+	ACharacter* OwningCharacter = Cast<ACharacter>(DamagedActor);
+	if (!OwningCharacter)
+		return;
+
+	FVector PushDirection = (DamagedActor->GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal();
+	OwningCharacter->LaunchCharacter(PushDirection * DamagePushbackStrength, false, false);
 }
 
 void UDkHealthComponent::ResetDamageCooldown()

@@ -51,6 +51,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", meta = (ClampMin = "0.0"))
 	float DamageCooldownDuration = 0.5f;
 
+	UFUNCTION()
+	void ApplyDamagePushback(AActor* DamagedActor, float Damage, AActor* DamageCauser);
+//TODO: PUSH BACK IN ITS OWN COMP
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Pushback")
+	float DamagePushbackStrength = 1000.0f;
+
 private:
 	bool bIsDead;
 

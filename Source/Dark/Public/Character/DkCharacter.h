@@ -6,7 +6,6 @@
 #include "Character/DkCharacterBase.h"
 #include "Logging/LogMacros.h"
 #include "StateMachine/DkStateManagerComponent.h"
-#include "Component/DkCharacterMovementComponent.h"
 #include "DkCharacter.generated.h"
 
 class USpringArmComponent;
@@ -52,6 +51,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Destroyed() override;
+
+	
 	
 private:
 	//Camera

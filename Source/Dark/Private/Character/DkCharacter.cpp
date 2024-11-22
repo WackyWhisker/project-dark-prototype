@@ -3,8 +3,10 @@
 #include "Character/DkCharacter.h"
 
 #include "Camera/CameraComponent.h"
+#include "Core/DkGameModeBase.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY(LogDkCharacter);
 
@@ -55,6 +57,16 @@ void ADkCharacter::BeginPlay()
 	Super::BeginPlay();
 	StateManager->InitializeStateManager();
 	AttachWeaponToSocket("HolsterWeaponSocket");
+	
+}
+
+void ADkCharacter::Destroyed()
+{
+	Super::Destroyed();//TODO: Remove after playtest
+	if (ADkGameModeBase* DkGameModeBase = Cast<ADkGameModeBase>(GetWorld()->GetAuthGameMode()))
+	{
+		DkGameModeBase->RestartLevelDelayed();
+	}
 }
 
 
