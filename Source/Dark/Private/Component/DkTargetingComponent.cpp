@@ -166,6 +166,8 @@ bool UDkTargetingComponent::GetTargetableActorsInRange(TArray<AActor*>& OutTarge
 	//Start of sphere to search within
 	FVector StartLocation = PlayerRef->GetActorLocation();
 
+	FVector CameraLocation = PlayerSpringArmRef->GetComponentLocation();
+
 	// Temp array to store all overlapped actors
 	TArray<FOverlapResult> OverlapResults;
 
@@ -190,20 +192,37 @@ bool UDkTargetingComponent::GetTargetableActorsInRange(TArray<AActor*>& OutTarge
 	
 	if (bSuccess)
 	{
+		FHitResult HitResult;
+		FCollisionQueryParams LineTraceParams;
+		LineTraceParams.bTraceComplex = true;
+		LineTraceParams.AddIgnoredActor(PlayerRef);
+		
 		// Filter results for ITargetable interface
 		for (const FOverlapResult& Result : OverlapResults)
 		{
 			if (AActor* OverlappedActor = Result.GetActor())
 			{
-				// Check if actor implements ITargetable
 				if (OverlappedActor->Implements<UDkTargetableInterface>())
 				{
-					OutTargetableActors.Add(OverlappedActor);
+					FVector TargetLocation = OverlappedActor->GetActorLocation();
+               
+					bool bHasLineOfSight = !GetWorld()->LineTraceSingleByChannel(
+						HitResult,
+						CameraLocation,
+						TargetLocation,
+						ECC_Visibility,
+						LineTraceParams
+					);
+
+					if (bHasLineOfSight || HitResult.GetActor() == OverlappedActor)
+					{
+						OutTargetableActors.Add(OverlappedActor);
+					}
 				}
 			}
 		}
 	}
-    
+
 	return OutTargetableActors.Num() > 0;
 	
 }
