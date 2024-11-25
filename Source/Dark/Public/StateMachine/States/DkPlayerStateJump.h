@@ -3,14 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DkPlayerStateBase.h"
+#include "StateMachine/States/DkPlayerStateAir.h"
 #include "DkPlayerStateJump.generated.h"
 
-/**
- * 
- */
+
 UCLASS()
-class DARK_API UDkPlayerStateJump : public UDkPlayerStateBase
+class DARK_API UDkPlayerStateJump : public UDkPlayerStateAir
 {
 	GENERATED_BODY()
 
