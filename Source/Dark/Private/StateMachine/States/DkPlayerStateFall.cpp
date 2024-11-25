@@ -25,6 +25,15 @@ void UDkPlayerStateFall::OnStateEnter(AActor* StateOwner)
 {
 	Super::OnStateEnter(StateOwner);
 	PlayerRef->DkPlayerState = EDkPlayerAnimationState::Fall;
+	PlayerRef->GetCharacterMovement()->GravityScale = FallGravity;
+}
+
+void UDkPlayerStateFall::OnStateExit()
+{
+	Super::OnStateExit();
+	PlayerRef->GetCharacterMovement()->RotationRate = FRotator(0, 500.0f, 0.0f);
+	PlayerRef->GetCharacterMovement()->GravityScale = 1.0f;
+	
 }
 
 bool UDkPlayerStateFall::IsNearGround()

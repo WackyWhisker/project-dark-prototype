@@ -21,3 +21,9 @@ void UDkPlayerStateLand::OnStateEnter(AActor* StateOwner)
 	Super::OnStateEnter(StateOwner);
 	PlayerRef->DkPlayerState = EDkPlayerAnimationState::Land;
 }
+
+void UDkPlayerStateLand::OnStateExit()
+{
+	Super::OnStateExit();
+	
+}

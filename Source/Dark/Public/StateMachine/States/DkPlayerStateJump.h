@@ -19,5 +19,8 @@ public:
 	
 protected:
 	virtual void OnStateEnter(AActor* StateOwner) override;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float AirYaw = 150.0f;
 };
 //TODO: Handle double jump in this state

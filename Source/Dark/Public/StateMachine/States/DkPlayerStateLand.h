@@ -19,4 +19,5 @@ public:
 	
 protected:
 	virtual void OnStateEnter(AActor* StateOwner) override;
+	virtual void OnStateExit() override;
 };
