@@ -35,7 +35,7 @@ protected:
 	float LedgeCheckInwardsOffset = 25.0f;
 
 	UPROPERTY(EditDefaultsOnly)
-	float LedgeCheckSideOffset = 25.0f;
+	float LedgeCheckSideOffset = 45.0f;
 
 	UPROPERTY(EditDefaultsOnly)
 	float LedgeCheckDownwardTraceLength = 200.0f;

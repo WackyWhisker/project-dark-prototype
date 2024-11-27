@@ -133,20 +133,55 @@ bool UDkPlayerStateAir::CheckForLedgeAbove(const FHitResult& InWallHit, FHitResu
 	// Draw spheres at hit points
 	if (bHitCenter)
 	{
-		DrawDebugSphere(GetWorld(), OutLedgeHit.ImpactPoint, 20.0f, 12, FColor::Green, false, -1.0f, 0, 1.0f);
+		DrawDebugSphere(GetWorld(), OutLedgeHit.ImpactPoint, 15.0f, 12, FColor::Green, false, -1.0f, 0, 1.0f);
 	}
 	if (bHitLeft)
 	{
-		DrawDebugSphere(GetWorld(), LeftHit.ImpactPoint, 20.0f, 12, FColor::Green, false, -1.0f, 0, 1.0f);
+		DrawDebugSphere(GetWorld(), LeftHit.ImpactPoint, 15.0f, 12, FColor::Green, false, -1.0f, 0, 1.0f);
 	}
 	if (bHitRight)
 	{
-		DrawDebugSphere(GetWorld(), RightHit.ImpactPoint, 20.0f, 12, FColor::Green, false, -1.0f, 0, 1.0f);
+		DrawDebugSphere(GetWorld(), RightHit.ImpactPoint, 15.0f, 12, FColor::Green, false, -1.0f, 0, 1.0f);
 	}
 
 	// Count how many traces hit
 	int32 HitCount = (bHitCenter ? 1 : 0) + (bHitLeft ? 1 : 0) + (bHitRight ? 1 : 0);
-   
-	// Return true if at least 2 traces hit
-	return HitCount >= 2;
+
+	// Quick returns for definite cases
+	if (HitCount == 3) return true;
+	if (HitCount < 2) return false;
+
+	// If we get here, we know exactly 2 traces hit
+	FVector MidStart, MidEnd;
+	if (!bHitLeft)
+	{
+		// Calculate midpoint between center and left trace
+		MidStart = (CenterStart + LeftStart) * 0.5f;
+		MidEnd = MidStart + FVector(0, 0, -LedgeCheckDownwardTraceLength);
+	}
+	else if (!bHitRight)
+	{
+		// Calculate midpoint between center and right trace
+		MidStart = (CenterStart + RightStart) * 0.5f;
+		MidEnd = MidStart + FVector(0, 0, -LedgeCheckDownwardTraceLength);
+	}
+
+	FHitResult MidHit;
+	bool bHitMid = GetWorld()->LineTraceSingleByChannel(MidHit, MidStart, MidEnd, ECC_Visibility);
+
+	// Debug visualization for mid trace
+	DrawDebugLine(
+	   GetWorld(),
+	   MidStart,
+	   bHitMid ? MidHit.ImpactPoint : MidEnd,
+	   bHitMid ? FColor::Yellow : FColor::Red,
+	   false, -1.0f, 0, 1.0f
+	);
+
+	if (bHitMid)
+	{
+		DrawDebugSphere(GetWorld(), MidHit.ImpactPoint, 10.0f, 12, FColor::Yellow, false, -1.0f, 0, 1.0f);
+	}
+
+	return bHitMid;
 }
