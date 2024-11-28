@@ -47,6 +47,7 @@ void UDkStateManagerComponent::SwitchStateByKey(FString StateKey)
 		if(!CurrentState)
 		{
 			CurrentState = NewState;
+			NewState->PreviousState = nullptr;
 		}
 		else
 		{
@@ -61,6 +62,8 @@ void UDkStateManagerComponent::SwitchStateByKey(FString StateKey)
 			//else state is repeatable or it's a different state alltogether
 			else
 			{
+				NewState->PreviousState = CurrentState;
+				
 				//stop ticking of current state
 				CurrentState->bCanStateTick = false;
 				//call exit on current state

@@ -24,4 +24,11 @@ public:
 	virtual void OnStateEnter(AActor* StateOwner);
 	virtual void TickState();
 	virtual void OnStateExit();
+
+	UPROPERTY()
+	TObjectPtr<UDkStateBase> PreviousState;
+
+	UFUNCTION(BlueprintCallable, Category = "State")
+	UDkStateBase* GetPreviousState() const {return PreviousState; }
+	
 };

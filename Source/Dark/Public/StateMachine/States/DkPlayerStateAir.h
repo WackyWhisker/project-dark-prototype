@@ -84,6 +84,5 @@ private:
 
 	// Member variable
 	FLedgeDetectionData LedgeData;
-
 	
 };

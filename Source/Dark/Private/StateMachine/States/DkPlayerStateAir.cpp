@@ -12,7 +12,7 @@ void UDkPlayerStateAir::TickState()
 			FVector IdealPosition = CalculateIdealHangPosition(); // Calculate once
 			if (IsCloseEnoughToHang(IdealPosition))  // Pass the position we already calculated
 			{
-				// Ready to transition
+				PlayerRef->StateManager->SwitchStateByKey("Hang");
 			}
 		}
 	}
