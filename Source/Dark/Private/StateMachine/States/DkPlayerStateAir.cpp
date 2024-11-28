@@ -7,9 +7,13 @@ void UDkPlayerStateAir::TickState()
 	Super::TickState();
 	if (CheckForWallInFront(WallHit))
 	{
-		if (CheckForLedgeAbove(WallHit, LedgeHit))
+		if (CheckForLedgeAbove(WallHit, LedgeHit, LedgeData))
 		{
-			
+			FVector IdealPosition = CalculateIdealHangPosition(); // Calculate once
+			if (IsCloseEnoughToHang(IdealPosition))  // Pass the position we already calculated
+			{
+				// Ready to transition
+			}
 		}
 	}
 }
@@ -71,9 +75,15 @@ bool UDkPlayerStateAir::CheckForWallInFront(FHitResult& OutHit)
 	return bHitSomething;
 }
 
-bool UDkPlayerStateAir::CheckForLedgeAbove(const FHitResult& InWallHit, FHitResult& OutLedgeHit)
+bool UDkPlayerStateAir::CheckForLedgeAbove(const FHitResult& InWallHit, FHitResult& OutLedgeHit, FLedgeDetectionData& OutData)
 {
 	if (!PlayerRef) return false;
+
+	// Initialize detection data
+	OutData.bIsValid = false;
+	OutData.WallHitLocation = InWallHit.ImpactPoint;
+	OutData.WallNormal = InWallHit.ImpactNormal;
+	
 
 	FVector BaseStart = WallHit.ImpactPoint +                  // Start at wall hit
 						FVector(0, 0, LedgeCheckUpwardsOffset) +           // Go up
@@ -97,6 +107,10 @@ bool UDkPlayerStateAir::CheckForLedgeAbove(const FHitResult& InWallHit, FHitResu
 
 	// Perform all three traces
 	bool bHitCenter = GetWorld()->LineTraceSingleByChannel(OutLedgeHit, CenterStart, CenterEnd, ECC_Visibility);
+	if (bHitCenter)
+	{
+		OutData.CenterHitLocation = OutLedgeHit.ImpactPoint;
+	}
    
 	FHitResult LeftHit, RightHit;
 	bool bHitLeft = GetWorld()->LineTraceSingleByChannel(LeftHit, LeftStart, LeftEnd, ECC_Visibility);
@@ -148,7 +162,11 @@ bool UDkPlayerStateAir::CheckForLedgeAbove(const FHitResult& InWallHit, FHitResu
 	int32 HitCount = (bHitCenter ? 1 : 0) + (bHitLeft ? 1 : 0) + (bHitRight ? 1 : 0);
 
 	// Quick returns for definite cases
-	if (HitCount == 3) return true;
+	if (HitCount == 3)
+	{
+		OutData.bIsValid = true;
+		return true;
+	}
 	if (HitCount < 2) return false;
 
 	// If we get here, we know exactly 2 traces hit
@@ -183,5 +201,54 @@ bool UDkPlayerStateAir::CheckForLedgeAbove(const FHitResult& InWallHit, FHitResu
 		DrawDebugSphere(GetWorld(), MidHit.ImpactPoint, 10.0f, 12, FColor::Yellow, false, -1.0f, 0, 1.0f);
 	}
 
+	OutData.bIsValid = bHitMid;
 	return bHitMid;
 }
+
+FVector UDkPlayerStateAir::CalculateIdealHangPosition() const
+{
+	if (!LedgeData.bIsValid) return FVector::ZeroVector;
+   
+	FVector HangPosition = LedgeData.CenterHitLocation +                    
+						  FVector(0, 0, HangPositionHeightOffset) +        
+						  (LedgeData.WallNormal * HangPositionWallOffset);
+
+	// Debug visualization
+	DrawDebugSphere(
+		GetWorld(),
+		HangPosition,
+		15.0f,
+		12,
+		FColor::Purple,
+		false,
+		-1.0f,
+		0,
+		1.0f
+	);
+	return HangPosition;
+}
+
+bool UDkPlayerStateAir::IsCloseEnoughToHang(const FVector& IdealPosition) const
+{
+	if (!PlayerRef) return false;
+
+	FVector CurrentPosition = PlayerRef->GetActorLocation();
+	float Distance = FVector::Dist(CurrentPosition, IdealPosition);
+
+	DrawDebugSphere(
+		GetWorld(),
+		CurrentPosition,
+		HangPositionTolerance * 0.5,
+		12,
+		Distance <= HangPositionTolerance ? FColor::Red : FColor::White,
+		false,
+		-1.0f,
+		0,
+		1.0f
+	);
+
+	return Distance <= HangPositionTolerance;
+}
+
+
+

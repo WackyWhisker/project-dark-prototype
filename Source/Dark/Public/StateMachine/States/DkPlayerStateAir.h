@@ -6,9 +6,24 @@
 #include "StateMachine/States/DkPlayerStateBase.h"
 #include "DkPlayerStateAir.generated.h"
 
-/**
- * 
- */
+USTRUCT()
+struct FLedgeDetectionData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	bool bIsValid = false;
+
+	UPROPERTY()
+	FVector CenterHitLocation;
+
+	UPROPERTY()
+	FVector WallNormal;
+
+	UPROPERTY()
+	FVector WallHitLocation;
+};
+
 UCLASS()
 class DARK_API UDkPlayerStateAir : public UDkPlayerStateBase
 {
@@ -40,14 +55,35 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float LedgeCheckDownwardTraceLength = 200.0f;
 	
+	UPROPERTY(EditDefaultsOnly)
+	float HangPositionHeightOffset = -100.0f;
+
+	UPROPERTY(EditDefaultsOnly)
+	float HangPositionWallOffset = 30.0f;
+
+	UPROPERTY(EditDefaultsOnly)
+	float HangPositionTolerance = 100.0f;
+	
 	UFUNCTION()
 	bool CheckForWallInFront(FHitResult& OutHit);
+	
+	// Method declaration using the struct
+	UFUNCTION()
+	bool CheckForLedgeAbove(const FHitResult& InWallHit, FHitResult& OutLedgeHit, FLedgeDetectionData& OutData);
+	
+	UFUNCTION()
+	FVector CalculateIdealHangPosition() const;
 
 	UFUNCTION()
-	bool CheckForLedgeAbove(const FHitResult& InWallHit, FHitResult& OutLedgeHit);
+	bool IsCloseEnoughToHang(const FVector& IdealPosition) const;
 
 private:
 	//Ledge climbing related
 	FHitResult WallHit;
 	FHitResult LedgeHit;
+
+	// Member variable
+	FLedgeDetectionData LedgeData;
+
+	
 };
