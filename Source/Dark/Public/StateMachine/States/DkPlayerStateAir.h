@@ -22,6 +22,18 @@ struct FLedgeDetectionData
 
 	UPROPERTY()
 	FVector WallHitLocation;
+
+	UPROPERTY()
+	FVector IdealHangPosition;
+
+	void Reset()
+	{
+		bIsValid = false;
+		CenterHitLocation = FVector::ZeroVector;
+		WallHitLocation = FVector::ZeroVector;
+		WallNormal = FVector::ZeroVector;
+		IdealHangPosition = FVector::ZeroVector;
+	}
 };
 
 UCLASS()
@@ -31,6 +43,12 @@ class DARK_API UDkPlayerStateAir : public UDkPlayerStateBase
 
 public:
 	virtual void TickState() override;
+
+	UFUNCTION()
+	const FLedgeDetectionData& GetLedgeData() const { return LedgeData; }
+
+	UPROPERTY(EditDefaultsOnly, Category = "Debug")
+	bool bShowDebugVisuals = true;
 	
 protected:
 	virtual void OnStateEnter(AActor* StateOwner) override;
@@ -72,10 +90,10 @@ protected:
 	bool CheckForLedgeAbove(const FHitResult& InWallHit, FHitResult& OutLedgeHit, FLedgeDetectionData& OutData);
 	
 	UFUNCTION()
-	FVector CalculateIdealHangPosition() const;
+	FVector CalculateIdealHangPosition();
 
 	UFUNCTION()
-	bool IsCloseEnoughToHang(const FVector& IdealPosition) const;
+	bool IsCloseEnoughToHang() const;
 
 private:
 	//Ledge climbing related

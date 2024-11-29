@@ -9,9 +9,10 @@ void UDkPlayerStateAir::TickState()
 	{
 		if (CheckForLedgeAbove(WallHit, LedgeHit, LedgeData))
 		{
-			FVector IdealPosition = CalculateIdealHangPosition(); // Calculate once
-			if (IsCloseEnoughToHang(IdealPosition))  // Pass the position we already calculated
+			CalculateIdealHangPosition();
+			if (IsCloseEnoughToHang())
 			{
+				// Ready to transition
 				PlayerRef->StateManager->SwitchStateByKey("Hang");
 			}
 		}
@@ -21,6 +22,7 @@ void UDkPlayerStateAir::TickState()
 void UDkPlayerStateAir::OnStateEnter(AActor* StateOwner)
 {
 	Super::OnStateEnter(StateOwner);
+	LedgeData.Reset();
 }
 
 void UDkPlayerStateAir::OnStateExit()
@@ -45,32 +47,35 @@ bool UDkPlayerStateAir::CheckForWallInFront(FHitResult& OutHit)
 
 	bool bHitSomething = GetWorld()->LineTraceSingleByChannel(OutHit, TraceStart, TraceEnd, ECC_Visibility);
 
-	// Debug visualization with color based on hit result
-	DrawDebugLine(
-		GetWorld(), 
-		TraceStart, 
-		bHitSomething ? OutHit.ImpactPoint : TraceEnd,  // Draw to hit point if we hit something
-		bHitSomething ? FColor::Green : FColor::Red,
-		false, 
-		-1.0f, 
-		0, 
-		1.0f
-	);
-
-	// Add debug sphere only on hit
-	if (bHitSomething)
+	if (bShowDebugVisuals)
 	{
-		DrawDebugSphere(
-			GetWorld(),
-			OutHit.ImpactPoint,
-			25.0f,        // Radius
-			12,           // Segments
-			FColor::Green,
-			false,        // Persistent
-			-1.0f,        // Lifetime
-			0,            // Depth Priority
-			1.0f         // Thickness
+		// Debug visualization with color based on hit result
+		DrawDebugLine(
+			GetWorld(), 
+			TraceStart, 
+			bHitSomething ? OutHit.ImpactPoint : TraceEnd,  // Draw to hit point if we hit something
+			bHitSomething ? FColor::Green : FColor::Red,
+			false, 
+			-1.0f, 
+			0, 
+			1.0f
 		);
+
+		// Add debug sphere only on hit
+		if (bHitSomething)
+		{
+			DrawDebugSphere(
+				GetWorld(),
+				OutHit.ImpactPoint,
+				25.0f,        // Radius
+				12,           // Segments
+				FColor::Green,
+				false,        // Persistent
+				-1.0f,        // Lifetime
+				0,            // Depth Priority
+				1.0f         // Thickness
+			);
+		}
 	}
 	return bHitSomething;
 }
@@ -116,46 +121,49 @@ bool UDkPlayerStateAir::CheckForLedgeAbove(const FHitResult& InWallHit, FHitResu
 	bool bHitLeft = GetWorld()->LineTraceSingleByChannel(LeftHit, LeftStart, LeftEnd, ECC_Visibility);
 	bool bHitRight = GetWorld()->LineTraceSingleByChannel(RightHit, RightStart, RightEnd, ECC_Visibility);
 
-	// Debug visualization for all three traces
-	// Center trace
-	DrawDebugLine(
-		GetWorld(), 
-		CenterStart, 
-		bHitCenter ? OutLedgeHit.ImpactPoint : CenterEnd,
-		bHitCenter ? FColor::Green : FColor::Red,
-		false, -1.0f, 0, 1.0f
-	);
-
-	// Left trace
-	DrawDebugLine(
-		GetWorld(), 
-		LeftStart, 
-		bHitLeft ? LeftHit.ImpactPoint : LeftEnd,
-		bHitLeft ? FColor::Green : FColor::Red,
-		false, -1.0f, 0, 1.0f
-	);
-
-	// Right trace
-	DrawDebugLine(
-		GetWorld(), 
-		RightStart, 
-		bHitRight ? RightHit.ImpactPoint : RightEnd,
-		bHitRight ? FColor::Green : FColor::Red,
-		false, -1.0f, 0, 1.0f
-	);
-
-	// Draw spheres at hit points
-	if (bHitCenter)
+	if (bShowDebugVisuals)
 	{
-		DrawDebugSphere(GetWorld(), OutLedgeHit.ImpactPoint, 15.0f, 12, FColor::Green, false, -1.0f, 0, 1.0f);
-	}
-	if (bHitLeft)
-	{
-		DrawDebugSphere(GetWorld(), LeftHit.ImpactPoint, 15.0f, 12, FColor::Green, false, -1.0f, 0, 1.0f);
-	}
-	if (bHitRight)
-	{
-		DrawDebugSphere(GetWorld(), RightHit.ImpactPoint, 15.0f, 12, FColor::Green, false, -1.0f, 0, 1.0f);
+		// Debug visualization for all three traces
+		// Center trace
+		DrawDebugLine(
+			GetWorld(), 
+			CenterStart, 
+			bHitCenter ? OutLedgeHit.ImpactPoint : CenterEnd,
+			bHitCenter ? FColor::Green : FColor::Red,
+			false, -1.0f, 0, 1.0f
+		);
+
+		// Left trace
+		DrawDebugLine(
+			GetWorld(), 
+			LeftStart, 
+			bHitLeft ? LeftHit.ImpactPoint : LeftEnd,
+			bHitLeft ? FColor::Green : FColor::Red,
+			false, -1.0f, 0, 1.0f
+		);
+
+		// Right trace
+		DrawDebugLine(
+			GetWorld(), 
+			RightStart, 
+			bHitRight ? RightHit.ImpactPoint : RightEnd,
+			bHitRight ? FColor::Green : FColor::Red,
+			false, -1.0f, 0, 1.0f
+		);
+
+		// Draw spheres at hit points
+		if (bHitCenter)
+		{
+			DrawDebugSphere(GetWorld(), OutLedgeHit.ImpactPoint, 15.0f, 12, FColor::Green, false, -1.0f, 0, 1.0f);
+		}
+		if (bHitLeft)
+		{
+			DrawDebugSphere(GetWorld(), LeftHit.ImpactPoint, 15.0f, 12, FColor::Green, false, -1.0f, 0, 1.0f);
+		}
+		if (bHitRight)
+		{
+			DrawDebugSphere(GetWorld(), RightHit.ImpactPoint, 15.0f, 12, FColor::Green, false, -1.0f, 0, 1.0f);
+		}
 	}
 
 	// Count how many traces hit
@@ -187,68 +195,75 @@ bool UDkPlayerStateAir::CheckForLedgeAbove(const FHitResult& InWallHit, FHitResu
 	FHitResult MidHit;
 	bool bHitMid = GetWorld()->LineTraceSingleByChannel(MidHit, MidStart, MidEnd, ECC_Visibility);
 
-	// Debug visualization for mid trace
-	DrawDebugLine(
-	   GetWorld(),
-	   MidStart,
-	   bHitMid ? MidHit.ImpactPoint : MidEnd,
-	   bHitMid ? FColor::Yellow : FColor::Red,
-	   false, -1.0f, 0, 1.0f
-	);
-
-	if (bHitMid)
+	if (bShowDebugVisuals)
 	{
-		DrawDebugSphere(GetWorld(), MidHit.ImpactPoint, 10.0f, 12, FColor::Yellow, false, -1.0f, 0, 1.0f);
+		// Debug visualization for mid trace
+		DrawDebugLine(
+		   GetWorld(),
+		   MidStart,
+		   bHitMid ? MidHit.ImpactPoint : MidEnd,
+		   bHitMid ? FColor::Yellow : FColor::Red,
+		   false, -1.0f, 0, 1.0f
+		);
+
+		if (bHitMid)
+		{
+			DrawDebugSphere(GetWorld(), MidHit.ImpactPoint, 10.0f, 12, FColor::Yellow, false, -1.0f, 0, 1.0f);
+		}
 	}
 
 	OutData.bIsValid = bHitMid;
 	return bHitMid;
 }
 
-FVector UDkPlayerStateAir::CalculateIdealHangPosition() const
+FVector UDkPlayerStateAir::CalculateIdealHangPosition()
 {
 	if (!LedgeData.bIsValid) return FVector::ZeroVector;
-   
-	FVector HangPosition = LedgeData.CenterHitLocation +                    
-						  FVector(0, 0, HangPositionHeightOffset) +        
-						  (LedgeData.WallNormal * HangPositionWallOffset);
+    
+	LedgeData.IdealHangPosition = LedgeData.CenterHitLocation +                    
+								 FVector(0, 0, HangPositionHeightOffset) +        
+								 (LedgeData.WallNormal * HangPositionWallOffset);
 
-	// Debug visualization
-	DrawDebugSphere(
-		GetWorld(),
-		HangPosition,
-		15.0f,
-		12,
-		FColor::Purple,
-		false,
-		-1.0f,
-		0,
-		1.0f
-	);
-	return HangPosition;
+	if (bShowDebugVisuals)
+	{
+		// Debug visualization
+		DrawDebugSphere(
+			GetWorld(),
+			LedgeData.IdealHangPosition,
+			15.0f,
+			12,
+			FColor::Purple,
+			false,
+			-1.0f,
+			0,
+			1.0f
+		);
+	}
+
+	return LedgeData.IdealHangPosition;
 }
 
-bool UDkPlayerStateAir::IsCloseEnoughToHang(const FVector& IdealPosition) const
+bool UDkPlayerStateAir::IsCloseEnoughToHang() const
 {
-	if (!PlayerRef) return false;
+	if (!PlayerRef || !LedgeData.bIsValid) return false;
 
 	FVector CurrentPosition = PlayerRef->GetActorLocation();
-	float Distance = FVector::Dist(CurrentPosition, IdealPosition);
+	float Distance = FVector::Dist(CurrentPosition, LedgeData.IdealHangPosition);
 
-	DrawDebugSphere(
-		GetWorld(),
-		CurrentPosition,
-		HangPositionTolerance * 0.5,
-		12,
-		Distance <= HangPositionTolerance ? FColor::Red : FColor::White,
-		false,
-		-1.0f,
-		0,
-		1.0f
-	);
+	if (bShowDebugVisuals)
+	{
+		DrawDebugSphere(
+			GetWorld(),
+			CurrentPosition,
+			HangPositionTolerance,
+			12,
+			Distance <= HangPositionTolerance ? FColor::Red : FColor::White,
+			false,
+			-1.0f,
+			0,
+			1.0f
+		);
+	}
 
 	return Distance <= HangPositionTolerance;
 }
-
-
-

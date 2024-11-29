@@ -6,11 +6,12 @@
 void UDkPlayerStateHang::OnStateEnter(AActor* StateOwner)
 {
 	Super::OnStateEnter(StateOwner);
-	//TEMP
-	if (!PlayerRef) return;
-
-	PlayerRef->GetCharacterMovement()->SetMovementMode(MOVE_None);
-    PlayerRef->GetCharacterMovement()->GravityScale = 0.0f;
+	// Cast to previous state to get ledge data
+	if (UDkPlayerStateAir* PreviousAirState = Cast<UDkPlayerStateAir>(PreviousState))
+	{
+		LedgeData = PreviousAirState->GetLedgeData();
+		UE_LOG(LogTemp, Warning, TEXT("Hang state entered and ledge data stored."));
+	}
 }
 
 void UDkPlayerStateHang::TickState()
