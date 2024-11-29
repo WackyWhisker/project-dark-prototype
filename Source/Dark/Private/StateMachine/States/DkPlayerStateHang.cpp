@@ -10,13 +10,55 @@ void UDkPlayerStateHang::OnStateEnter(AActor* StateOwner)
 	if (UDkPlayerStateAir* PreviousAirState = Cast<UDkPlayerStateAir>(PreviousState))
 	{
 		LedgeData = PreviousAirState->GetLedgeData();
-		UE_LOG(LogTemp, Warning, TEXT("Hang state entered and ledge data stored."));
+    
+		if (PlayerRef && LedgeData.bIsValid)
+		{
+			// Initialize snap interpolation
+			SnapStartPosition = PlayerRef->GetActorLocation();
+			SnapTargetPosition = LedgeData.IdealHangPosition;
+        
+			SnapStartRotation = PlayerRef->GetActorRotation();
+			SnapTargetRotation = FRotator(0, (-LedgeData.WallNormal).Rotation().Yaw, 0);
+        
+			SnapAlpha = 0.0f;
+			bIsSnapping = true;
+
+			// Lock movement
+			if (UCharacterMovementComponent* MovementComp = PlayerRef->GetCharacterMovement())
+			{
+				MovementComp->SetMovementMode(MOVE_None);
+				MovementComp->GravityScale = 0.0f;
+				MovementComp->Velocity = FVector::ZeroVector;
+			}
+		}
 	}
 }
 
 void UDkPlayerStateHang::TickState()
 {
 	Super::TickState();
+	if (bIsSnapping && PlayerRef)
+	{
+		SnapAlpha = FMath::Min(SnapAlpha + GetWorld()->GetDeltaSeconds() * SnapSpeed, 1.0f);
+    
+		// Position
+		FVector NewPosition = FMath::Lerp(SnapStartPosition, SnapTargetPosition, SnapAlpha);
+    
+		// Rotation (using same SnapAlpha)
+		FRotator CurrentRotation = PlayerRef->GetActorRotation();
+		FRotator TargetRotation = (-LedgeData.WallNormal).Rotation();
+		TargetRotation.Pitch = CurrentRotation.Pitch;
+		TargetRotation.Roll = CurrentRotation.Roll;
+		FRotator NewRotation = FMath::Lerp(SnapStartRotation, TargetRotation, SnapAlpha);
+    
+		PlayerRef->SetActorLocation(NewPosition);
+		PlayerRef->SetActorRotation(NewRotation);
+
+		if (SnapAlpha >= 1.0f)
+		{
+			bIsSnapping = false;
+		}
+	}
 }
 
 void UDkPlayerStateHang::OnStateExit()

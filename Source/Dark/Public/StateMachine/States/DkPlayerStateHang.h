@@ -21,8 +21,24 @@ protected:
 	virtual void TickState() override;
 	virtual void OnStateExit() override;
 
+protected:
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Hanging")
+	float SnapSpeed = 20.0f;
+
 private:
 	
 	FLedgeDetectionData LedgeData;
+
+	// Snap interpolation
+	FVector SnapStartPosition;
+	FVector SnapTargetPosition;
+	FRotator SnapStartRotation;
+	FRotator SnapTargetRotation;
+   
+	float SnapAlpha = 0.0f;
+	bool bIsSnapping = false;  // Also renamed this to match
+   
+	
 	
 };
