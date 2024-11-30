@@ -6,6 +6,16 @@
 #include "Components/ActorComponent.h"
 #include "DkStateManagerComponent.generated.h"
 
+struct FPendingStateTransition
+{
+	UDkStateBase* NewState;
+	bool bIsValid;
+
+	FPendingStateTransition();
+	void ResetTransition();
+	bool IsValidTransition() const;
+};
+
 class UDkStateBase;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -56,4 +66,6 @@ public:
 private:
 	bool bCanStateTick = true;
 	void InitializeStates();
+	FPendingStateTransition PendingStateTransition;
+	void ExecuteStateTransition();
 };
