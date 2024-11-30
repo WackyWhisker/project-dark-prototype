@@ -224,15 +224,22 @@ FVector UDkPlayerStateAir::CalculateIdealHangPosition()
 								 FVector(0, 0, HangPositionHeightOffset) +        
 								 (LedgeData.WallNormal * HangPositionWallOffset);
 
+	// Calculate climb position at the same time
+	LedgeData.ClimbUpPosition = LedgeData.CenterHitLocation +
+							   (-LedgeData.WallNormal * ClimbUpPositionWallOffset) +
+							   FVector(0, 0, ClimbUpPositionHeightOffset);
+
 	if (bShowDebugVisuals)
 	{
-		// Debug visualization
+		// Existing debug sphere for hang position...
+
+		// Debug sphere for climb position
 		DrawDebugSphere(
 			GetWorld(),
-			LedgeData.IdealHangPosition,
+			LedgeData.ClimbUpPosition,
 			15.0f,
 			12,
-			FColor::Purple,
+			FColor::Blue,
 			false,
 			-1.0f,
 			0,

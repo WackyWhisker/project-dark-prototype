@@ -9,98 +9,108 @@
 USTRUCT()
 struct FLedgeDetectionData
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-	UPROPERTY()
-	bool bIsValid = false;
+    UPROPERTY()
+    bool bIsValid = false;
 
-	UPROPERTY()
-	FVector CenterHitLocation;
+    UPROPERTY()
+    FVector CenterHitLocation;
 
-	UPROPERTY()
-	FVector WallNormal;
+    UPROPERTY()
+    FVector WallNormal;
 
-	UPROPERTY()
-	FVector WallHitLocation;
+    UPROPERTY()
+    FVector WallHitLocation;
 
-	UPROPERTY()
-	FVector IdealHangPosition;
+    UPROPERTY()
+    FVector IdealHangPosition;
 
-	void Reset()
-	{
-		bIsValid = false;
-		CenterHitLocation = FVector::ZeroVector;
-		WallHitLocation = FVector::ZeroVector;
-		WallNormal = FVector::ZeroVector;
-		IdealHangPosition = FVector::ZeroVector;
-	}
+    UPROPERTY()
+    FVector ClimbUpPosition;
+
+    void Reset()
+    {
+       bIsValid = false;
+       CenterHitLocation = FVector::ZeroVector;
+       WallHitLocation = FVector::ZeroVector;
+       WallNormal = FVector::ZeroVector;
+       IdealHangPosition = FVector::ZeroVector;
+    }
 };
 
 UCLASS()
 class DARK_API UDkPlayerStateAir : public UDkPlayerStateBase
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	virtual void TickState() override;
+    // public methods
+    virtual void TickState() override;
 
-	UFUNCTION()
-	const FLedgeDetectionData& GetLedgeData() const { return LedgeData; }
-
-	UPROPERTY(EditDefaultsOnly, Category = "Debug")
-	bool bShowDebugVisuals = true;
-	
+    UFUNCTION()
+    const FLedgeDetectionData& GetLedgeData() const { return LedgeData; }
+        
 protected:
-	virtual void OnStateEnter(AActor* StateOwner) override;
-	virtual void OnStateExit() override;
+    // protected methods
+    virtual void OnStateEnter(AActor* StateOwner) override;
+    virtual void OnStateExit() override;
 
-	//Ledge climbing related
-	UPROPERTY(EditDefaultsOnly)
-	float TraceStartHeightOffset = 150.0f; //Aprox chest height
-	
-	UPROPERTY(EditDefaultsOnly)
-	float TraceForWallDistance = 100.0f; //Aprox chest height
+    UFUNCTION()
+    bool CheckForWallInFront(FHitResult& OutHit);
+    
+    UFUNCTION()
+    bool CheckForLedgeAbove(const FHitResult& InWallHit, FHitResult& OutLedgeHit, FLedgeDetectionData& OutData);
+    
+    UFUNCTION()
+    FVector CalculateIdealHangPosition();
 
-	UPROPERTY(EditDefaultsOnly)
-	float LedgeCheckUpwardsOffset = 50.0f;
-	
-	UPROPERTY(EditDefaultsOnly)
-	float LedgeCheckInwardsOffset = 25.0f;
+    UFUNCTION()
+    bool IsCloseEnoughToHang() const;
 
-	UPROPERTY(EditDefaultsOnly)
-	float LedgeCheckSideOffset = 45.0f;
+    // protected properties
+    
+    //Ledge climbing related
+    UPROPERTY(EditDefaultsOnly)
+    float TraceStartHeightOffset = 150.0f; //Aprox chest height
+    
+    UPROPERTY(EditDefaultsOnly)
+    float TraceForWallDistance = 100.0f; //Aprox chest height
 
-	UPROPERTY(EditDefaultsOnly)
-	float LedgeCheckDownwardTraceLength = 200.0f;
-	
-	UPROPERTY(EditDefaultsOnly)
-	float HangPositionHeightOffset = -100.0f;
+    UPROPERTY(EditDefaultsOnly)
+    float LedgeCheckUpwardsOffset = 50.0f;
+    
+    UPROPERTY(EditDefaultsOnly)
+    float LedgeCheckInwardsOffset = 25.0f;
 
-	UPROPERTY(EditDefaultsOnly)
-	float HangPositionWallOffset = 30.0f;
+    UPROPERTY(EditDefaultsOnly)
+    float LedgeCheckSideOffset = 45.0f;
 
-	UPROPERTY(EditDefaultsOnly)
-	float HangPositionTolerance = 100.0f;
-	
-	UFUNCTION()
-	bool CheckForWallInFront(FHitResult& OutHit);
-	
-	// Method declaration using the struct
-	UFUNCTION()
-	bool CheckForLedgeAbove(const FHitResult& InWallHit, FHitResult& OutLedgeHit, FLedgeDetectionData& OutData);
-	
-	UFUNCTION()
-	FVector CalculateIdealHangPosition();
+    UPROPERTY(EditDefaultsOnly)
+    float LedgeCheckDownwardTraceLength = 200.0f;
+    
+    UPROPERTY(EditDefaultsOnly)
+    float HangPositionHeightOffset = -100.0f;
 
-	UFUNCTION()
-	bool IsCloseEnoughToHang() const;
+    UPROPERTY(EditDefaultsOnly)
+    float HangPositionWallOffset = 30.0f;
+
+    UPROPERTY(EditDefaultsOnly)
+    float HangPositionTolerance = 100.0f;
+
+    UPROPERTY(EditDefaultsOnly)
+    float ClimbUpPositionWallOffset = 100.0f;
+
+    UPROPERTY(EditDefaultsOnly)
+    float ClimbUpPositionHeightOffset = 90.0f;
 
 private:
-	//Ledge climbing related
-	FHitResult WallHit;
-	FHitResult LedgeHit;
+    // private methods
 
-	// Member variable
-	FLedgeDetectionData LedgeData;
-	
+    // private properties
+    
+    //Ledge climbing related
+    FHitResult WallHit;
+    FHitResult LedgeHit;
+    FLedgeDetectionData LedgeData;
 };
