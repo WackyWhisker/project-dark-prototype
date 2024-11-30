@@ -25,6 +25,7 @@ enum EDkPlayerAnimationState
 	Fall,
 	Land,
 	Attack,
+	Hang,
 	Default
 };
 

@@ -61,8 +61,5 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Climbing")
 	float ClimbForwardCurve = 50.0f;  // How far forward during arc
-
-	
-
 	
 };

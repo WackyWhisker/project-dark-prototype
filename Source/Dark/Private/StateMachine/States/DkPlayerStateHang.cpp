@@ -39,6 +39,7 @@ void UDkPlayerStateHang::OnStateEnter(AActor* StateOwner)
 
 	if (!PlayerControllerRef) return;
 	PlayerControllerRef->SetMappingContext("LedgeHang", true);
+	PlayerRef->DkPlayerState = EDkPlayerAnimationState::Hang;
 }
 
 void UDkPlayerStateHang::TickState()
