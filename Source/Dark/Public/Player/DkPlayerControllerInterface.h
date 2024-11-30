@@ -13,6 +13,8 @@ DECLARE_MULTICAST_DELEGATE(FTargetStartSignature);
 DECLARE_MULTICAST_DELEGATE(FTargetEndSignature);
 DECLARE_MULTICAST_DELEGATE(FTargetCycleLeftSignature);
 DECLARE_MULTICAST_DELEGATE(FTargetCycleRightSignature);
+DECLARE_MULTICAST_DELEGATE(FDropSignature);
+DECLARE_MULTICAST_DELEGATE(FLiftSignature);
 
 
 // This class does not need to be modified.
@@ -39,4 +41,6 @@ public:
 	virtual FTargetEndSignature* GetTargetEndDelegate() = 0;
 	virtual FTargetCycleLeftSignature* GetTargetCycleLeftDelegate() = 0;
 	virtual FTargetCycleRightSignature* GetTargetCycleRightDelegate() = 0;
+	virtual FDropSignature* GetDropDelegate() = 0;
+	virtual FLiftSignature* GetLiftDelegate() = 0;
 };

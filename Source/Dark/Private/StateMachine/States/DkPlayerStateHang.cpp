@@ -32,6 +32,9 @@ void UDkPlayerStateHang::OnStateEnter(AActor* StateOwner)
 			}
 		}
 	}
+
+	if (!PlayerControllerRef) return;
+	PlayerControllerRef->SetMappingContext("LedgeHang", true);
 }
 
 void UDkPlayerStateHang::TickState()
@@ -64,5 +67,7 @@ void UDkPlayerStateHang::TickState()
 void UDkPlayerStateHang::OnStateExit()
 {
 	Super::OnStateExit();
+	if (!PlayerControllerRef) return;
+	PlayerControllerRef->SetMappingContext("LedgeHang", false);
 }
 

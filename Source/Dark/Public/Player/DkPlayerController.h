@@ -21,96 +21,115 @@ DECLARE_LOG_CATEGORY_EXTERN(LogDkPlayerController, Log, All);
 UCLASS()
 class DARK_API ADkPlayerController : public APlayerController, public IDkPlayerControllerInterface
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	//Input methods corresponding to the input action
-	void Jump();
-	void Dodge();
-	void Attack();
-	void TargetStart();
-	void TargetEnd();
-	void TargetCycleLeft();
-	void TargetCycleRight();
+    //public methods
+    void Jump();
+    void Dodge();
+    void Attack();
+    void TargetStart();
+    void TargetEnd();
+    void TargetCycleLeft();
+    void TargetCycleRight();
+    void Drop();
+    void Lift();
+    void SetMappingContext(const FName& ContextName, bool bEnable);
+    void ToggleLetterboxUI(bool bShowLetterboxUI);
 
-	//Targeting UI
-	UPROPERTY(EditDefaultsOnly, Category = UI_Targeting)
-	TSubclassOf<UUserWidget> LetterboxWidgetClass;
+public:
+    //public properties
+    UPROPERTY(EditDefaultsOnly, Category = UI_Targeting)
+    TSubclassOf<UUserWidget> LetterboxWidgetClass;
 
-	UFUNCTION(BlueprintCallable, Category = UI_Targeting)
-	void ToggleLetterboxUI(bool bShowLetterboxUI);
+    UPROPERTY()
+    USpringArmComponent* PlayerSpringArmRef;
 
-	UPROPERTY()
-	USpringArmComponent* PlayerSpringArmRef;
+    UPROPERTY()
+    float TargetingYawInputScale = 1.0f;
 
-	UPROPERTY()
-	float TargetingYawInputScale = 1.0f;
-	
 protected:
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
+    //protected methods
+    void Move(const FInputActionValue& Value);
+    void Look(const FInputActionValue& Value);
+    virtual void BeginPlay() override;
+    virtual void SetupInputComponent() override;
+    virtual FJumpSignature* GetJumpDelegate() override;
+    virtual FDodgeSignature* GetDodgeDelegate() override;
+    virtual FAttackSignature* GetAttackDelegate() override;
+    virtual FTargetStartSignature* GetTargetStartDelegate() override;
+    virtual FTargetEndSignature* GetTargetEndDelegate() override;
+    virtual FTargetCycleLeftSignature* GetTargetCycleLeftDelegate() override;
+    virtual FTargetCycleRightSignature* GetTargetCycleRightDelegate() override;
+    virtual FDropSignature* GetDropDelegate() override;
+    virtual FLiftSignature* GetLiftDelegate() override;
 
-	virtual void BeginPlay() override;
-	virtual void SetupInputComponent() override;
-
-	//Player Controller Interface Overrides
-	virtual FJumpSignature* GetJumpDelegate() override;
-	virtual FDodgeSignature* GetDodgeDelegate() override;
-	virtual FAttackSignature* GetAttackDelegate() override;
-	virtual FTargetStartSignature* GetTargetStartDelegate() override;
-	virtual FTargetEndSignature* GetTargetEndDelegate() override;
-	virtual FTargetCycleLeftSignature* GetTargetCycleLeftDelegate() override;
-	virtual FTargetCycleRightSignature* GetTargetCycleRightDelegate() override;
+protected:
+    //protected properties
 
 private:
-	//Controlled player
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
-	ADkCharacter* PlayerRef = nullptr;
-	
-	//Input actions and mappings
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputMappingContext* DefaultMappingContext;
+    //private methods
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputMappingContext* TargetMappingContext;
+private:
+    //private properties
+    UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
+    ADkCharacter* PlayerRef = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* MoveAction;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputMappingContext* DefaultMappingContext;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* LookAction;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputMappingContext* TargetMappingContext;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* JumpAction;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputMappingContext* LedgeHangMappingContext;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* DodgeAction;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* MoveAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* AttackAction;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* TargetAction;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* LookAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* TargetCycleLeftAction;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* JumpAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* TargetCycleRightAction;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* DodgeAction;
 
-	//Player Controller Interface Delegates
-	FJumpSignature JumpDelegate;
-	FDodgeSignature DodgeDelegate;
-	FAttackSignature AttackDelegate;
-	FTargetStartSignature TargetStartDelegate;
-	FTargetEndSignature TargetEndDelegate;
-	FTargetCycleLeftSignature TargetCycleLeftDelegate;
-	FTargetCycleRightSignature TargetCycleRightDelegate;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* AttackAction;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* TargetAction;
 
-	//Targeting UI
-	UPROPERTY()
-	UUserWidget* LetterboxWidget;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* TargetCycleLeftAction;
 
-	UPROPERTY()
-	float FadeDuration;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* TargetCycleRightAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* DropAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* LiftAction;
+
+    FJumpSignature JumpDelegate;
+    FDodgeSignature DodgeDelegate;
+    FAttackSignature AttackDelegate;
+    FTargetStartSignature TargetStartDelegate;
+    FTargetEndSignature TargetEndDelegate;
+    FTargetCycleLeftSignature TargetCycleLeftDelegate;
+    FTargetCycleRightSignature TargetCycleRightDelegate;
+    FDropSignature DropDelegate;
+    FLiftSignature LiftDelegate;
+
+    UPROPERTY()
+    UUserWidget* LetterboxWidget;
+
+    UPROPERTY()
+    float FadeDuration;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    TMap<FName, UInputMappingContext*> MappingContexts;
 };

@@ -12,219 +12,267 @@ DEFINE_LOG_CATEGORY(LogDkPlayerController);
 
 void ADkPlayerController::BeginPlay()
 {
-	Super::BeginPlay();
-	if (!PlayerRef)
-	{
-		PlayerRef = Cast<ADkCharacter>(GetPawn());
-		UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerRef set"));
-	}
-	if (PlayerRef)
-	{
-		PlayerSpringArmRef = PlayerRef->FindComponentByClass<USpringArmComponent>();
-	}
+    Super::BeginPlay();
+    if (!PlayerRef)
+    {
+        PlayerRef = Cast<ADkCharacter>(GetPawn());
+        UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerRef set"));
+    }
+    if (PlayerRef)
+    {
+        PlayerSpringArmRef = PlayerRef->FindComponentByClass<USpringArmComponent>();
+    }
 
-	//Targeting UI
-	if (LetterboxWidgetClass)
-	{
-		LetterboxWidget = CreateWidget<UUserWidget>(this, LetterboxWidgetClass);
-	}
+    //Targeting UI
+    if (LetterboxWidgetClass)
+    {
+        LetterboxWidget = CreateWidget<UUserWidget>(this, LetterboxWidgetClass);
+    }
 }
 
 void ADkPlayerController::SetupInputComponent()
 {
-	Super::SetupInputComponent();
-	// Add Input Mapping Context
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-	{
-		Subsystem->AddMappingContext(DefaultMappingContext, 0);
-	}
-	
-	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
-	{
-		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ADkPlayerController::Move);
+    Super::SetupInputComponent();
+    // Add Input Mapping Context
+    if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+    {
+        Subsystem->AddMappingContext(DefaultMappingContext, 0);
+    }
+    
+    // Set up action bindings
+    if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
+    {
+        // Moving
+        EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ADkPlayerController::Move);
 
-		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADkPlayerController::Look);
+        // Looking
+        EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADkPlayerController::Look);
 
-		//Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ADkPlayerController::Jump);
+        //Jumping
+        EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ADkPlayerController::Jump);
 
-		//Dodge
-		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, this, &ADkPlayerController::Dodge);
+        //Dodge
+        EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, this, &ADkPlayerController::Dodge);
 
-		//Attacking
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ADkPlayerController::Attack);
+        //Attacking
+        EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ADkPlayerController::Attack);
 
-		//Targeting
-		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetStart);
-		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ADkPlayerController::TargetEnd);
-		EnhancedInputComponent->BindAction(TargetCycleLeftAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetCycleLeft);
-		EnhancedInputComponent->BindAction(TargetCycleRightAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetCycleRight);
-	}
-	else
-	{
-		UE_LOG(LogDkPlayerController, Error, TEXT("'%s' Failed to find an Enhanced Input component!"), *GetNameSafe(this));
-	}
+        //Targeting
+        EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetStart);
+        EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ADkPlayerController::TargetEnd);
+        EnhancedInputComponent->BindAction(TargetCycleLeftAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetCycleLeft);
+        EnhancedInputComponent->BindAction(TargetCycleRightAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetCycleRight);
+
+        //Drop and Lift
+        EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Started, this, &ADkPlayerController::Drop);
+        EnhancedInputComponent->BindAction(LiftAction, ETriggerEvent::Started, this, &ADkPlayerController::Lift);
+    }
+    else
+    {
+        UE_LOG(LogDkPlayerController, Error, TEXT("'%s' Failed to find an Enhanced Input component!"), *GetNameSafe(this));
+    }
 }
 
 void ADkPlayerController::ToggleLetterboxUI(bool bShowLetterboxUI)
 {
-	if (!LetterboxWidget) {return;}
+    if (!LetterboxWidget) {return;}
 
-	if (bShowLetterboxUI)
-	{
-		if (!LetterboxWidget->IsInViewport())
-		{
-			LetterboxWidget->AddToViewport();
-		}
-	}
-	else
-	{
-		if(LetterboxWidget->IsInViewport())
-		{
-			LetterboxWidget->RemoveFromParent();
-		}
-	}
+    if (bShowLetterboxUI)
+    {
+        if (!LetterboxWidget->IsInViewport())
+        {
+            LetterboxWidget->AddToViewport();
+        }
+    }
+    else
+    {
+        if(LetterboxWidget->IsInViewport())
+        {
+            LetterboxWidget->RemoveFromParent();
+        }
+    }
+}
+
+void ADkPlayerController::SetMappingContext(const FName& ContextName, bool bEnable)
+{
+    if (UInputMappingContext* Context = MappingContexts.FindRef(ContextName))
+    {
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+        {
+            if (bEnable)
+            {
+                Subsystem->AddMappingContext(Context, 0);
+            }
+            else
+            {
+                Subsystem->RemoveMappingContext(Context);
+            }
+        }
+    }
 }
 
 void ADkPlayerController::Move(const FInputActionValue& Value)
 {
-	if (!PlayerRef)
-	{
-		UE_LOG(LogDkPlayerController, Warning, TEXT("No player ref when moving"));
-		return;
-	}
-	FVector2D MovementVector = Value.Get<FVector2D>();
-	const FRotator SpringArmRotation = PlayerSpringArmRef->GetTargetRotation();
-	// We only want the yaw component for horizontal movement
-	const FRotator YawRotation(0, SpringArmRotation.Yaw, 0);
+    if (!PlayerRef)
+    {
+        UE_LOG(LogDkPlayerController, Warning, TEXT("No player ref when moving"));
+        return;
+    }
+    FVector2D MovementVector = Value.Get<FVector2D>();
+    const FRotator SpringArmRotation = PlayerSpringArmRef->GetTargetRotation();
+    // We only want the yaw component for horizontal movement
+    const FRotator YawRotation(0, SpringArmRotation.Yaw, 0);
     
-	// Get the forward and right vectors based on the spring arm's rotation
-	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+    // Get the forward and right vectors based on the spring arm's rotation
+    const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+    const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
     
-	// Apply movement in the rotated directions
-	PlayerRef->AddMovementInput(ForwardDirection, MovementVector.Y);
-	PlayerRef->AddMovementInput(RightDirection, MovementVector.X);
+    // Apply movement in the rotated directions
+    PlayerRef->AddMovementInput(ForwardDirection, MovementVector.Y);
+    PlayerRef->AddMovementInput(RightDirection, MovementVector.X);
 }
 
 void ADkPlayerController::Look(const FInputActionValue& Value)
 {
-	if (!PlayerRef) {return;}
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
-	//UE_LOG(LogDkPlayerController, Warning, TEXT("LookAxisVector: %s"), *LookAxisVector.ToString());
-	
-	PlayerRef->AddControllerYawInput(LookAxisVector.X * TargetingYawInputScale);
-	PlayerRef->AddControllerPitchInput(LookAxisVector.Y);
-	 
+    if (!PlayerRef) {return;}
+    FVector2D LookAxisVector = Value.Get<FVector2D>();
+    //UE_LOG(LogDkPlayerController, Warning, TEXT("LookAxisVector: %s"), *LookAxisVector.ToString());
+    
+    PlayerRef->AddControllerYawInput(LookAxisVector.X * TargetingYawInputScale);
+    PlayerRef->AddControllerPitchInput(LookAxisVector.Y);
+     
 }
 
 void ADkPlayerController::TargetStart()
 {
-	if (TargetStartDelegate.IsBound())
-	{
-		TargetStartDelegate.Broadcast();
-		// Add additional mapping context for when targeting is active
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(TargetMappingContext, 0);
-		}
-	}
-	//UE_LOG(LogTemp, Warning, TEXT("Target Button Pressed"));
+    if (TargetStartDelegate.IsBound())
+    {
+        TargetStartDelegate.Broadcast();
+        // Add additional mapping context for when targeting is active
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+        {
+            Subsystem->AddMappingContext(TargetMappingContext, 0);
+        }
+    }
+    //UE_LOG(LogTemp, Warning, TEXT("Target Button Pressed"));
 }
 
 void ADkPlayerController::TargetEnd()
 {
-	if (TargetEndDelegate.IsBound())
-	{
-		TargetEndDelegate.Broadcast();
-		// Remove additional mapping context for when targeting is active
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-		{
-			Subsystem->RemoveMappingContext(TargetMappingContext);
-		}
-	}
-	//UE_LOG(LogTemp, Warning, TEXT("Target Button Released"));
+    if (TargetEndDelegate.IsBound())
+    {
+        TargetEndDelegate.Broadcast();
+        // Remove additional mapping context for when targeting is active
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+        {
+            Subsystem->RemoveMappingContext(TargetMappingContext);
+        }
+    }
+    //UE_LOG(LogTemp, Warning, TEXT("Target Button Released"));
 }
 
 void ADkPlayerController::TargetCycleLeft()
 {
-	if(TargetCycleLeftDelegate.IsBound())
-	{
-		TargetCycleLeftDelegate.Broadcast();
-	}
+    if(TargetCycleLeftDelegate.IsBound())
+    {
+        TargetCycleLeftDelegate.Broadcast();
+    }
 }
 
 void ADkPlayerController::TargetCycleRight()
 {
-	if(TargetCycleRightDelegate.IsBound())
-	{
-		TargetCycleRightDelegate.Broadcast();
-	}
+    if(TargetCycleRightDelegate.IsBound())
+    {
+        TargetCycleRightDelegate.Broadcast();
+    }
 }
 
 void ADkPlayerController::Jump()
 {
-	if (JumpDelegate.IsBound())
-	{
-		JumpDelegate.Broadcast();
-	}
-	//UE_LOG(LogTemp, Warning, TEXT("Jump Button Pressed"));
+    if (JumpDelegate.IsBound())
+    {
+        JumpDelegate.Broadcast();
+    }
+    //UE_LOG(LogTemp, Warning, TEXT("Jump Button Pressed"));
 }
 
 void ADkPlayerController::Dodge()
 {
-	if (DodgeDelegate.IsBound())
-	{
-		DodgeDelegate.Broadcast();
-	}
-	UE_LOG(LogTemp, Warning, TEXT("Dodge Button Pressed"));
+    if (DodgeDelegate.IsBound())
+    {
+        DodgeDelegate.Broadcast();
+    }
+    UE_LOG(LogTemp, Warning, TEXT("Dodge Button Pressed"));
 }
 
 void ADkPlayerController::Attack()
 {
-	if (AttackDelegate.IsBound())
-	{
-		AttackDelegate.Broadcast();
-	}
-	//UE_LOG(LogTemp, Warning, TEXT("Attack Button Pressed"));
+    if (AttackDelegate.IsBound())
+    {
+        AttackDelegate.Broadcast();
+    }
+    //UE_LOG(LogTemp, Warning, TEXT("Attack Button Pressed"));
+}
+
+void ADkPlayerController::Drop()
+{
+    if (DropDelegate.IsBound())
+    {
+        DropDelegate.Broadcast();
+    }
+    UE_LOG(LogTemp, Warning, TEXT("Drop Button Pressed"));
+}
+
+void ADkPlayerController::Lift()
+{
+    if (LiftDelegate.IsBound())
+    {
+        LiftDelegate.Broadcast();
+    }
+    UE_LOG(LogTemp, Warning, TEXT("Lift Button Pressed"));
 }
 
 FTargetStartSignature* ADkPlayerController::GetTargetStartDelegate()
 {
-	return &TargetStartDelegate;
-	
+    return &TargetStartDelegate;
 }
 
 FTargetEndSignature* ADkPlayerController::GetTargetEndDelegate()
 {
-	return &TargetEndDelegate;
+    return &TargetEndDelegate;
 }
 
 FTargetCycleLeftSignature* ADkPlayerController::GetTargetCycleLeftDelegate()
 {
-	return &TargetCycleLeftDelegate;
+    return &TargetCycleLeftDelegate;
 }
 
 FTargetCycleRightSignature* ADkPlayerController::GetTargetCycleRightDelegate()
 {
-	return &TargetCycleRightDelegate;
+    return &TargetCycleRightDelegate;
 }
 
 FJumpSignature* ADkPlayerController::GetJumpDelegate()
 {
-	return &JumpDelegate;
+    return &JumpDelegate;
 }
 
 FDodgeSignature* ADkPlayerController::GetDodgeDelegate()
 {
-	return &DodgeDelegate;
+    return &DodgeDelegate;
 }
 
 FAttackSignature* ADkPlayerController::GetAttackDelegate()
 {
-	return &AttackDelegate;
+    return &AttackDelegate;
 }
 
+FDropSignature* ADkPlayerController::GetDropDelegate()
+{
+    return &DropDelegate;
+}
+
+FLiftSignature* ADkPlayerController::GetLiftDelegate()
+{
+    return &LiftDelegate;
+}
