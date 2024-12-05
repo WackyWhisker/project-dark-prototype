@@ -132,6 +132,7 @@ void UDkPlayerStateHang::Lift()
 	{
 		PlayerControllerRef->PlayerSpringArmRef->bDoCollisionTest = false;
 	}
+	PlayerRef->DkPlayerState = EDkPlayerAnimationState::ClimbUp;
 }
 
 void UDkPlayerStateHang::OnStateExit()
@@ -145,6 +146,7 @@ void UDkPlayerStateHang::OnStateExit()
 	{
 		MovementComp->SetMovementMode(MOVE_Falling);
 		MovementComp->GravityScale = 1.0f;
+		MovementComp->Velocity = FVector::ZeroVector;
 	}
 }
 

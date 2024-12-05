@@ -3,6 +3,7 @@
 #include "StateMachine/DkStateManagerComponent.h"
 #include "StateMachine/States/DkStateBase.h"
 
+
 UDkStateManagerComponent::UDkStateManagerComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
@@ -92,6 +93,30 @@ void UDkStateManagerComponent::ExecuteStateTransition()
     }
     else
     {
+        // Find current state's key
+        FString CurrentStateKey;
+        for (const auto& StatePair : StateMap)
+        {
+            if (StatePair.Value == CurrentState)
+            {
+                CurrentStateKey = StatePair.Key;
+                break;
+            }
+        }
+
+        // Check if transition is restricted
+        if (NewState->RestrictedFromStates.Contains(CurrentStateKey))
+        {
+            if (bDebug)
+            {
+                GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, 
+                    this->GetOwner()->GetName() + "'s state switch failed, because transition from " + 
+                    CurrentStateKey + " is restricted!", true);
+            }
+            PendingStateTransition.ResetTransition();
+            return;
+        }
+
         // Check for non-repeatable state
         if (CurrentState->GetClass() == NewState->GetClass() && !CurrentState->bCanStateRepeat)
         {

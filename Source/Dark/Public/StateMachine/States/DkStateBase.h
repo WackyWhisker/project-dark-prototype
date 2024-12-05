@@ -28,6 +28,9 @@ public:
 	UPROPERTY()
 	TObjectPtr<UDkStateBase> PreviousState;
 
+	UPROPERTY(EditDefaultsOnly, Category = "State")
+	TArray<FString> RestrictedFromStates;
+
 	UFUNCTION(BlueprintCallable, Category = "State")
 	UDkStateBase* GetPreviousState() const {return PreviousState; }
 	
