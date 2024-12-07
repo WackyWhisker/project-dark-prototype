@@ -33,13 +33,11 @@ void ADkPlayerController::BeginPlay()
 void ADkPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
-    // Add Input Mapping Context
     if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
     {
         Subsystem->AddMappingContext(DefaultMappingContext, 0);
     }
     
-    // Set up action bindings
     if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
     {
         // Moving
@@ -57,11 +55,11 @@ void ADkPlayerController::SetupInputComponent()
         //Attacking
         EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ADkPlayerController::Attack);
 
-        //Targeting
-        EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetStart);
-        EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ADkPlayerController::TargetEnd);
-        EnhancedInputComponent->BindAction(TargetCycleLeftAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetCycleLeft);
-        EnhancedInputComponent->BindAction(TargetCycleRightAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetCycleRight);
+        // Store enhanced input component for rebinding
+        CachedEnhancedInputComponent = EnhancedInputComponent;
+        
+        // Setup initial targeting bindings
+        SetupTargetingBindings();
 
         //Drop and Lift
         EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Started, this, &ADkPlayerController::Drop);
@@ -91,6 +89,60 @@ void ADkPlayerController::ToggleLetterboxUI(bool bShowLetterboxUI)
             LetterboxWidget->RemoveFromParent();
         }
     }
+}
+
+void ADkPlayerController::SetupTargetingBindings()
+{
+    if (!CachedEnhancedInputComponent) return;
+    
+    // Clear existing targeting bindings if any
+    CachedEnhancedInputComponent->RemoveBindingByHandle(TargetStartHandle);
+    CachedEnhancedInputComponent->RemoveBindingByHandle(TargetEndHandle);
+    
+    // Set up main targeting binding based on mode
+    if (bUseToggleMode)
+    {
+        TargetStartHandle = CachedEnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetToggle).GetHandle();
+    }
+    else
+    {
+        TargetStartHandle = CachedEnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetStart).GetHandle();
+        TargetEndHandle = CachedEnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ADkPlayerController::TargetEnd).GetHandle();
+    }
+
+    // Always bind cycling actions regardless of mode
+    CachedEnhancedInputComponent->BindAction(TargetCycleLeftAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetCycleLeft);
+    CachedEnhancedInputComponent->BindAction(TargetCycleRightAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetCycleRight);
+}
+
+void ADkPlayerController::SetTargetingMode(bool bNewToggleMode)
+{
+    if (bUseToggleMode == bNewToggleMode) return;
+    
+    bUseToggleMode = bNewToggleMode;
+    
+    // If switching to hold mode while targeting is active, end targeting
+    if (!bUseToggleMode && bIsTargeting)
+    {
+        TargetEnd();
+        bIsTargeting = false;
+    }
+    
+    // Rebind the inputs for the new mode
+    SetupTargetingBindings();
+}
+
+void ADkPlayerController::TargetToggle()
+{
+    if (!bIsTargeting)
+    {
+        TargetStart();
+    }
+    else
+    {
+        TargetEnd();
+    }
+    bIsTargeting = !bIsTargeting;
 }
 
 void ADkPlayerController::SetMappingContext(const FName& ContextName, bool bEnable)
@@ -145,30 +197,40 @@ void ADkPlayerController::Look(const FInputActionValue& Value)
 
 void ADkPlayerController::TargetStart()
 {
-    if (TargetStartDelegate.IsBound())
+    if (!bIsTargeting || !bUseToggleMode)  // Allow start if not targeting or in hold mode
     {
-        TargetStartDelegate.Broadcast();
-        // Add additional mapping context for when targeting is active
-        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+        if (TargetStartDelegate.IsBound())
         {
-            Subsystem->AddMappingContext(TargetMappingContext, 0);
+            TargetStartDelegate.Broadcast();
+            if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+            {
+                Subsystem->AddMappingContext(TargetMappingContext, 0);
+            }
+        }
+        if (!bUseToggleMode)
+        {
+            bIsTargeting = true;
         }
     }
-    //UE_LOG(LogTemp, Warning, TEXT("Target Button Pressed"));
 }
 
 void ADkPlayerController::TargetEnd()
 {
-    if (TargetEndDelegate.IsBound())
+    if (bIsTargeting || !bUseToggleMode)  // Allow end if targeting or in hold mode
     {
-        TargetEndDelegate.Broadcast();
-        // Remove additional mapping context for when targeting is active
-        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+        if (TargetEndDelegate.IsBound())
         {
-            Subsystem->RemoveMappingContext(TargetMappingContext);
+            TargetEndDelegate.Broadcast();
+            if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+            {
+                Subsystem->RemoveMappingContext(TargetMappingContext);
+            }
+        }
+        if (!bUseToggleMode)
+        {
+            bIsTargeting = false;
         }
     }
-    //UE_LOG(LogTemp, Warning, TEXT("Target Button Released"));
 }
 
 void ADkPlayerController::TargetCycleLeft()

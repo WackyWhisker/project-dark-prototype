@@ -1,5 +1,3 @@
-// Copyright @ Christian Reichel
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -15,21 +13,20 @@ class USpringArmComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogDkPlayerController, Log, All);
-/**
- * 
- */
+
 UCLASS()
 class DARK_API ADkPlayerController : public APlayerController, public IDkPlayerControllerInterface
 {
     GENERATED_BODY()
 
 public:
-    //public methods
+    // public methods
     void Jump();
     void Dodge();
     void Attack();
     void TargetStart();
     void TargetEnd();
+    void TargetToggle();
     void TargetCycleLeft();
     void TargetCycleRight();
     void Drop();
@@ -37,8 +34,14 @@ public:
     void SetMappingContext(const FName& ContextName, bool bEnable);
     void ToggleLetterboxUI(bool bShowLetterboxUI);
 
+    UFUNCTION(BlueprintCallable, Category = "Targeting")
+    void SetTargetingMode(bool bNewToggleMode);
+
+    UFUNCTION(BlueprintPure, Category = "Targeting")
+    bool IsUsingToggleMode() const { return bUseToggleMode; }
+
 public:
-    //public properties
+    // public properties
     UPROPERTY(EditDefaultsOnly, Category = UI_Targeting)
     TSubclassOf<UUserWidget> LetterboxWidgetClass;
 
@@ -49,11 +52,12 @@ public:
     float TargetingYawInputScale = 1.0f;
 
 protected:
-    //protected methods
+    // protected methods
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
+    void SetupTargetingBindings();
     virtual FJumpSignature* GetJumpDelegate() override;
     virtual FDodgeSignature* GetDodgeDelegate() override;
     virtual FAttackSignature* GetAttackDelegate() override;
@@ -64,14 +68,8 @@ protected:
     virtual FDropSignature* GetDropDelegate() override;
     virtual FLiftSignature* GetLiftDelegate() override;
 
-protected:
-    //protected properties
-
 private:
-    //private methods
-
-private:
-    //private properties
+    // private properties
     UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
     ADkCharacter* PlayerRef = nullptr;
 
@@ -83,6 +81,18 @@ private:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputMappingContext* LedgeHangMappingContext;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    bool bUseToggleMode = true;
+
+    UPROPERTY()
+    bool bIsTargeting = false;
+
+    UPROPERTY()
+    UEnhancedInputComponent* CachedEnhancedInputComponent;
+
+    uint32 TargetStartHandle;
+    uint32 TargetEndHandle;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* MoveAction;
