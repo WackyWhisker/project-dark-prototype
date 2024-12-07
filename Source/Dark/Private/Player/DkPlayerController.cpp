@@ -91,6 +91,15 @@ void ADkPlayerController::ToggleLetterboxUI(bool bShowLetterboxUI)
     }
 }
 
+void ADkPlayerController::ToggleTargetMode()
+{
+    bUseToggleMode = !bUseToggleMode;
+    SetupTargetingBindings();
+    
+    FString Message = FString::Printf(TEXT("Target Mode: %s"), bUseToggleMode ? TEXT("Toggle") : TEXT("Hold"));
+    ClientMessage(Message);
+}
+
 void ADkPlayerController::SetupTargetingBindings()
 {
     if (!CachedEnhancedInputComponent) return;

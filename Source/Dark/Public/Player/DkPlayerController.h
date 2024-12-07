@@ -34,6 +34,9 @@ public:
     void SetMappingContext(const FName& ContextName, bool bEnable);
     void ToggleLetterboxUI(bool bShowLetterboxUI);
 
+    UFUNCTION(Exec)
+    void ToggleTargetMode();
+
     UFUNCTION(BlueprintCallable, Category = "Targeting")
     void SetTargetingMode(bool bNewToggleMode);
 
