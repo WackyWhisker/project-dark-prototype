@@ -6,7 +6,7 @@
 void UDkPlayerStateDodge::TickState()
 {
 	Super::TickState();
-	if (!bHasLaunched) {return;}
+	if (!bHasLaunched || !bCanTransition) {return;}
 	if (PlayerRef->GetCharacterMovement()->Velocity.Length() == 0.0f && PlayerRef->GetCharacterMovement()->IsMovingOnGround())
 	{
 		PlayerRef->StateManager->SwitchStateByKey("Idle");
@@ -21,6 +21,10 @@ void UDkPlayerStateDodge::OnStateEnter(AActor* StateOwner)
 {
 	Super::OnStateEnter(StateOwner);
 	DodgeLaunchCharacter();
+	// Set minimum time before state can transition using the configurable property
+	GetWorld()->GetTimerManager().SetTimer(DodgeTimerHandle, 
+		this, &UDkPlayerStateDodge::EnableStateTransition, MinStateTransitionTime, false);
+	bCanTransition = false;
 }
 
 void UDkPlayerStateDodge::OnStateExit()
@@ -47,4 +51,9 @@ void UDkPlayerStateDodge::DodgeLaunchCharacter()
 		PlayerRef->LaunchCharacter(LaunchVelocity, true, true);
 		bHasLaunched = true;
 	}
+}
+
+void UDkPlayerStateDodge::EnableStateTransition()
+{
+	bCanTransition = true;
 }

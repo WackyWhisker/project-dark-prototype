@@ -17,8 +17,6 @@ void UDkStateManagerComponent::BeginPlay()
 
 void UDkStateManagerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    
     // Handle any pending state transitions before ticking
     if (PendingStateTransition.IsValidTransition())
     {
@@ -32,24 +30,24 @@ void UDkStateManagerComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
     if (bDebug)
     {
-       // Start with oldest states at the top
-       int32 NumStatesToShow = FMath::Min(StateHistory.Num(), StateHistoryLength);
-       for (int32 i = NumStatesToShow - 1; i >= 0; i--)
-       {
-          FColor MessageColor = (i == 0) ? FColor::Orange : FColor::Yellow;
-          FString StateNum = FString::Printf(TEXT("previous state %d: "), i + 1);
-          GEngine->AddOnScreenDebugMessage(-1, 0.0f, MessageColor, 
-             this->GetOwner()->GetName() + "'s " + StateNum + 
-             StateHistory[i]->StateDisplayName.GetPlainNameString());
-       }
-    
-       // Current state displayed last (at the bottom)
-       if (CurrentState)
-       {
-          GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, 
-             this->GetOwner()->GetName() + "'s current state: " + 
-             CurrentState->StateDisplayName.GetPlainNameString());
-       }
+        // Current state displayed first (at the top)
+        if (CurrentState)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, 
+                this->GetOwner()->GetName() + "'s current state: " + 
+                CurrentState->StateDisplayName.GetPlainNameString());
+        }
+
+        // Show previous states newest to oldest
+        int32 NumStatesToShow = FMath::Min(StateHistory.Num(), StateHistoryLength);
+        for (int32 i = 0; i < NumStatesToShow; i++)
+        {
+            FColor MessageColor = FColor::Yellow;
+            FString StateNum = FString::Printf(TEXT("previous state %d: "), i + 1);
+            GEngine->AddOnScreenDebugMessage(-1, 0.0f, MessageColor, 
+                this->GetOwner()->GetName() + "'s " + StateNum + 
+                StateHistory[i]->StateDisplayName.GetPlainNameString());
+        }
     }
 }
 

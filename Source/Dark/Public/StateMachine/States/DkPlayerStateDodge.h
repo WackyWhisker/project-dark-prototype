@@ -12,12 +12,19 @@ class DARK_API UDkPlayerStateDodge : public UDkPlayerStateBase
 	GENERATED_BODY()
 
 public:
+	// Public methods
 	virtual void TickState() override;
 
+public:
+	// Public properties
+
 protected:
+	// Protected methods
 	virtual void OnStateEnter(AActor* StateOwner) override;
 	virtual void OnStateExit() override;
 
+protected:
+	// Protected properties
 	UPROPERTY(EditDefaultsOnly)
 	UAnimMontage* DodgeLeftMontage; 
 
@@ -30,13 +37,21 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float DodgeZStrength = 300.0f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Dodge", meta = (ToolTip = "Minimum time in seconds before state can transition"))
+	float MinStateTransitionTime = 1.0f;
+
 private:
+	// Private methods
+	void DodgeLaunchCharacter();
+	void EnableStateTransition();
+
+private:
+	// Private properties
 	UPROPERTY()
 	UAnimInstance* AnimInstance = nullptr;
 
-	void DodgeLaunchCharacter();
+	bool bCanTransition = false;
+	FTimerHandle DodgeTimerHandle;
 
 	bool bHasLaunched = false;
-
-	
 };
