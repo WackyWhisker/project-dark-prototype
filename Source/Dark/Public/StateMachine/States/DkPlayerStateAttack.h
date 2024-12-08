@@ -15,16 +15,22 @@ class DARK_API UDkPlayerStateAttack : public UDkPlayerStateBase
 	GENERATED_BODY()
 
 public:
+	// public methods
 	virtual void TickState() override;
 
+public:
+	// public properties
+
 protected:
+	// protected methods
 	virtual void Attack() override;
 	virtual void OnStateEnter(AActor* StateOwner) override;
 	virtual void OnStateExit() override;
-	
 
+protected:
+	// protected properties
 	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* AttackMontage; //TODO: Combat system likely needs an array or TMAP of anims
+	UAnimMontage* AttackMontage;
 
 	int32 AttackIndex = 0;
 
@@ -32,18 +38,18 @@ protected:
 	float AttackLaunchStrength = 1.0f;
 
 private:
+	// private methods
+	UFUNCTION()
+	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void AttackLaunchCharacter();
+
+private:
+	// private properties
 	bool IsAttacking = false;
 
 	UPROPERTY()
 	UAnimInstance* AnimInstance;
-	
-	UFUNCTION()
-	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
-	void AttackLaunchCharacter();
-
-	//Movement related
 	float PreviousBrakingFrictionFactor;
 	float PreviousBrakingDecelerationWalking;
-	
 };

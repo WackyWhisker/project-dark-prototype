@@ -89,7 +89,8 @@ void UDkPlayerStateAttack::AttackLaunchCharacter()
 	{
 		FloorNormal = HitResult.Normal;
 		FVector LaunchDir = FVector::VectorPlaneProject(PlayerVelocity, FloorNormal).GetSafeNormal();
-		FVector LaunchVelocity = LaunchDir * AttackLaunchStrength;
+		float NormalizedSpeed = PlayerVelocity.Size() / PlayerRef->GetCharacterMovement()->MaxWalkSpeed;
+		FVector LaunchVelocity = LaunchDir * AttackLaunchStrength * NormalizedSpeed;
 		PlayerRef->LaunchCharacter(LaunchVelocity, true, true);
 	}
 }
