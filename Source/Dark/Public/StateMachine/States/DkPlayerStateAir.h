@@ -45,14 +45,15 @@ class DARK_API UDkPlayerStateAir : public UDkPlayerStateBase
     GENERATED_BODY()
 
 public:
-    // public methods
+// ================================== Public Methods ==================================
     virtual void TickState() override;
-
     UFUNCTION()
     const FLedgeDetectionData& GetLedgeData() const { return LedgeData; }
-        
+
+// ================================== Public Properties ==================================
+
 protected:
-    // protected methods
+// ================================== Protected Methods ==================================
     virtual void OnStateEnter(AActor* StateOwner) override;
     virtual void OnStateExit() override;
 
@@ -68,9 +69,7 @@ protected:
     UFUNCTION()
     bool IsCloseEnoughToHang() const;
 
-    // protected properties
-    
-    //Ledge climbing related
+// ================================== Protected Properties ==================================
     UPROPERTY(EditDefaultsOnly)
     float TraceStartHeightOffset = 150.0f; //Aprox chest height
     
@@ -105,11 +104,9 @@ protected:
     float ClimbUpPositionHeightOffset = 90.0f;
 
 private:
-    // private methods
+// ================================== Private Methods ==================================
 
-    // private properties
-    
-    //Ledge climbing related
+// ================================== Private Properties ==================================
     FHitResult WallHit;
     FHitResult LedgeHit;
     FLedgeDetectionData LedgeData;
