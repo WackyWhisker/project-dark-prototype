@@ -4,6 +4,7 @@
 #include "Engine/LevelStreaming.h"
 #include "Kismet/GameplayStatics.h"
 #include "Data/CastleRoomData.h"
+#include "Engine/LevelStreamingDynamic.h"
 #include "WorldSetting/CastleWorldSettings.h"
 
 DEFINE_LOG_CATEGORY(CastleLog)
@@ -44,23 +45,18 @@ void UCastleSubsystem::TestSubsystemAccess()
 	UE_LOG(CastleLog, Warning, TEXT("Castle Subsystem accessed successfully"));
 }
 
-void UCastleSubsystem::LoadRoom(FName RoomLevelName)
-{
-	if (UWorld* World = GetWorld())
-	{
-		// Check if already loaded
-		if (!LoadedRooms.Contains(RoomLevelName))
-		{
-			// Create latent action info for the loading callback
-			FLatentActionInfo LatentInfo;
-			LatentInfo.CallbackTarget = this;
-			LatentInfo.ExecutionFunction = "OnRoomLoaded";
-			LatentInfo.Linkage = 0;
-			LatentInfo.UUID = FMath::Rand();  // Unique ID for this operation
+void UCastleSubsystem::LoadRoom(FName RoomLevelName) {
+	if (UWorld* TargetWorld = GetWorld()) {
+		if (!LoadedRooms.Contains(RoomLevelName)) {
+			bool bSucceeded = false;
+			ULevelStreamingDynamic* NewLevel = ULevelStreamingDynamic::LoadLevelInstance(TargetWorld, RoomLevelName.ToString(), FVector::ZeroVector, FRotator::ZeroRotator, /*out*/ bSucceeded);
 
-			// Start loading the level
-			UGameplayStatics::LoadStreamLevel(World, RoomLevelName, true, false, LatentInfo);
-			LoadedRooms.Add(RoomLevelName);
+			if (bSucceeded) {
+				LoadedRooms.Add(RoomLevelName);
+				UE_LOG(LogTemp, Log, TEXT("Successfully created level instance for room: %s"), *RoomLevelName.ToString());
+			} else {
+				UE_LOG(LogTemp, Warning, TEXT("Failed to create level instance for room: %s"), *RoomLevelName.ToString());
+			}
 		}
 	}
 }
