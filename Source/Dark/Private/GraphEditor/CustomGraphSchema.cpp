@@ -1,7 +1,7 @@
 ﻿// Copyright @ Christian Reichel
 
 
-#include "CustomGraphSchema.h"
+#include "GraphEditor/CustomGraphSchema.h"
 #include "GraphEditor/CustomNode.h"
 #include "EdGraph/EdGraph.h"
 #include "GraphEditorActions.h"
