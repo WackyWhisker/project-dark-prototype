@@ -19,7 +19,7 @@ public:
 	virtual const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const override;
     
 	// Helper functions for node creation
-	virtual class UEdGraphNode* CreateNode(UEdGraph* Graph, const FVector2D& Location, TSubclassOf<UEdGraphNode> NodeClass) const;
+	//virtual class UEdGraphNode* CreateNode(UEdGraph* Graph, const FVector2D& Location, TSubclassOf<UEdGraphNode> NodeClass) const;
 
 public:
 	// Public Properties

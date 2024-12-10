@@ -59,6 +59,8 @@ void SCastleRoomsNodeWidget::Construct(const FArguments& InArgs, UCastleRoomsNod
 
 TSharedRef<SWidget> SCastleRoomsNodeWidget::CreateNodeContentArea()
 {
+	UCastleRoomsNode* CastleRoomsNode = Cast<UCastleRoomsNode>(GraphNode);
+
 	return SNew(SBorder)
 		.BorderImage(FAppStyle::GetBrush("Graph.Node.Body"))
 		.Padding(5)
@@ -74,7 +76,7 @@ TSharedRef<SWidget> SCastleRoomsNodeWidget::CreateNodeContentArea()
 			[
 				// Room description area
 				SNew(STextBlock)
-				.Text(FText::FromString(Cast<UCastleRoomsNode>(GraphNode)->RoomDescription.ToString()))
+				.Text(CastleRoomsNode ? FText::FromString(CastleRoomsNode->RoomDescription.ToString()) : FText::GetEmpty())
 				.WrapTextAt(200.0f)
 			]
 		];

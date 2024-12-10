@@ -52,22 +52,3 @@ const FPinConnectionResponse UCastleRoomsSchema::CanCreateConnection(const UEdGr
     // We'll add more specific rules later
     return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, TEXT(""));
 }
-
-UEdGraphNode* UCastleRoomsSchema::CreateNode(UEdGraph* Graph, const FVector2D& Location, TSubclassOf<UEdGraphNode> NodeClass) const
-{
-    if (!Graph || !NodeClass)
-    {
-        return nullptr;
-    }
-
-    UEdGraphNode* NewNode = NewObject<UEdGraphNode>(Graph, NodeClass);
-    NewNode->CreateNewGuid();
-    NewNode->PostPlacedNewNode();
-    NewNode->NodePosX = Location.X;
-    NewNode->NodePosY = Location.Y;
-    
-    // Add to graph
-    Graph->AddNode(NewNode);
-    
-    return NewNode;
-}

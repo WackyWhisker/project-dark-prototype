@@ -54,10 +54,6 @@ void FCastleRoomsGraphEditor::InitCastleRoomsEditor(const TSharedPtr<IToolkitHos
        bCreateDefaultToolbar,
        bCreateDefaultStandaloneMenu,
        ObjectToEdit);
-   
-   GraphEditorPtr = SNew(SGraphEditor)
-       .GraphToEdit(GraphObj);
-   CASTLEROOMS_LOG(Warning, "GraphEditorPtr created: {0}", GraphEditorPtr.IsValid() ? TEXT("true") : TEXT("false"));
 }
 
 void FCastleRoomsGraphEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
@@ -95,6 +91,8 @@ FLinearColor FCastleRoomsGraphEditor::GetWorldCentricTabColorScale() const
 
 TSharedRef<SDockTab> FCastleRoomsGraphEditor::SpawnTab_GraphCanvas(const FSpawnTabArgs& Args)
 {
+   GraphEditorPtr = SNew(SGraphEditor)
+       .GraphToEdit(GraphObj);
    CASTLEROOMS_LOG(Warning, "SpawnTab_GraphCanvas called. GraphEditorPtr valid: {0}", GraphEditorPtr.IsValid() ? TEXT("true") : TEXT("false"));
    return SNew(SDockTab)
        [
