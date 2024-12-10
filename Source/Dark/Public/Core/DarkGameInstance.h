@@ -13,5 +13,7 @@ UCLASS()
 class DARK_API UDarkGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
+
+public:
 	
 };

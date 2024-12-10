@@ -4,36 +4,38 @@
 #include "Engine/LevelStreaming.h"
 #include "Kismet/GameplayStatics.h"
 #include "Data/CastleRoomData.h"
+#include "WorldSetting/CastleWorldSettings.h"
 
 DEFINE_LOG_CATEGORY(CastleLog)
 
 void UCastleSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	LoadedRooms.Empty();
 
-	if (!RoomData)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No Castle Room Data Asset configured in project settings!"));
-	}
+	CastleWorldSettings = Cast<ACastleWorldSettings>(GetWorld()->GetWorldSettings());
+	if (!CastleWorldSettings) return;
+	
+	LoadedRooms.Empty();
+	
 }
 
  
 void UCastleSubsystem::LoadRandomRoom()
 {
-	if (RoomData && RoomData->AvailableRooms.Num() > 0)
+	
+	if (CastleWorldSettings->RoomData && CastleWorldSettings->RoomData->AvailableRooms.Num() > 0)
 	{
 		// Get random index
-		int32 RandomIndex = FMath::RandRange(0, RoomData->AvailableRooms.Num() - 1);
-		FName RandomRoom = RoomData->AvailableRooms[RandomIndex];
+		int32 RandomIndex = FMath::RandRange(0, CastleWorldSettings->RoomData->AvailableRooms.Num() - 1);
+		FName RandomRoom = CastleWorldSettings->RoomData->AvailableRooms[RandomIndex];
         
 		// Load the random room
 		LoadRoom(RandomRoom);
-		UE_LOG(LogTemp, Log, TEXT("Loading random room: %s"), *RandomRoom.ToString());
+		UE_LOG(CastleLog, Log, TEXT("Loading random room: %s"), *RandomRoom.ToString());
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No available rooms configured in Room Data Asset!"));
+		UE_LOG(CastleLog, Warning, TEXT("No available rooms configured in Room Data Asset!"));
 	}
 }
 
@@ -99,11 +101,11 @@ bool UCastleSubsystem::IsRoomLoaded(FName RoomLevelName)
 void UCastleSubsystem::OnRoomLoaded()
 {
 	// Room has finished loading
-	UE_LOG(LogTemp, Log, TEXT("Room finished loading"));
+	UE_LOG(CastleLog, Log, TEXT("Room finished loading"));
 }
 
 void UCastleSubsystem::OnRoomUnloaded()
 {
 	// Room has finished unloading
-	UE_LOG(LogTemp, Log, TEXT("Room finished unloading"));
+	UE_LOG(CastleLog, Log, TEXT("Room finished unloading"));
 }

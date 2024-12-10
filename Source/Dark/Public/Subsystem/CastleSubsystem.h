@@ -3,16 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Subsystems/GameInstanceSubsystem.h"
-#include "Kismet/GameplayStatics.h"
+#include "Subsystems/WorldSubsystem.h"
+#include "Engine/World.h"
 #include "CastleSubsystem.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(CastleLog, Log, All);
 
 class UCastleRoomData;
+class ACastleWorldSettings;
 
 UCLASS()
-class DARK_API UCastleSubsystem : public UGameInstanceSubsystem
+class DARK_API UCastleSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
@@ -58,10 +59,10 @@ protected:
 
 protected:
 	/*--Protected Properties ------------*/
-
-	// Reference to our room configuration data
-	UPROPERTY(EditAnywhere, Category = "Castle Configuration")
-	TObjectPtr<UCastleRoomData> RoomData;
+	
+	//Reference to our Castle Room Settings
+	UPROPERTY(EditDefaultsOnly, Category = "Castle Configuration")
+	TObjectPtr<ACastleWorldSettings> CastleWorldSettings;
 	
 	// Track our active rooms
 	UPROPERTY()
