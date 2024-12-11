@@ -12,7 +12,7 @@ public:
 	// Override required functions from FAssetTypeActions_Base
     
 	// The name that appears in the editor
-	virtual FText GetName() const override { return FText::FromString(TEXT("Custom Graph")); }
+	virtual FText GetName() const override { return FText::FromString(TEXT("Secret Editor")); }
     
 	// The color of the asset in the content browser
 	virtual FColor GetTypeColor() const override { return FColor(129, 196, 115); }

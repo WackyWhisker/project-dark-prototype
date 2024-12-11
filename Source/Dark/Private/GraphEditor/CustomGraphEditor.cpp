@@ -20,7 +20,7 @@ void SCustomGraphEditor::Construct(const FArguments& InArgs, UCustomGraphAsset* 
 
     // Create the appearance info for the graph editor
     FGraphAppearanceInfo AppearanceInfo;
-    AppearanceInfo.CornerText = FText::FromString("Custom Graph");
+    AppearanceInfo.CornerText = FText::FromString("Castle Graph");
 
     // Initialize command list
     GraphEditorCommands = MakeShareable(new FUICommandList);

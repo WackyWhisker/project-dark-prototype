@@ -6,7 +6,7 @@
 
 UCustomNode::UCustomNode()
 {
-	NodeName = TEXT("New Node");
+	NodeName = TEXT("Secret Node");
 }
 
 void UCustomNode::AllocateDefaultPins()
@@ -22,7 +22,7 @@ void UCustomNode::AllocateDefaultPins()
 
 FText UCustomNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return FText::FromString(TEXT("Custom Node"));
+	return FText::FromString(TEXT("Castle Node"));
 }
 
 FLinearColor UCustomNode::GetNodeTitleColor() const

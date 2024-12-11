@@ -11,11 +11,11 @@
 void UCustomGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
 {
     // Create action to add new node
-    const FText MenuDesc = FText::FromString("Add Custom Node");
-    const FText ToolTip = FText::FromString("Add a new custom node to the graph");
+    const FText MenuDesc = FText::FromString("Add Castle Node");
+    const FText ToolTip = FText::FromString("Add a new Castle node to the graph");
     
     TSharedPtr<FEdGraphSchemaAction_NewNode> Action(new FEdGraphSchemaAction_NewNode(
-        FText::FromString("Custom Nodes"),
+        FText::FromString("Castle Nodes"),
         MenuDesc,
         ToolTip,
         0));
