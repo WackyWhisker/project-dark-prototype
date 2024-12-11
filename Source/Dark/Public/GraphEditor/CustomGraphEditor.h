@@ -9,7 +9,6 @@
 #include "EdGraphUtilities.h"
 #include "Framework/Commands/UICommandList.h"
 #include "Framework/Commands/Commands.h"
-#include "GenericPlatform/GenericPlatformApplicationMisc.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "GraphEditorActions.h"
 #include "HAL/PlatformApplicationMisc.h"
@@ -41,9 +40,16 @@ private:
 	void OnCopyNode();
 	void OnPasteNode();
 	void OnDuplicateNode();
+	void OnSelectAllNodes();
+	void OnCutNode();
 
 	bool CanDeleteNode() const;
 	bool CanCopyNode() const;
 	bool CanPasteNode() const;
 	bool CanDuplicateNode() const;
+	bool CanSelectAllNodes() const;
+	bool CanCutNode() const;
+
+	// Helper function to debug command execution
+	void LogCommandExecution(const FString& CommandName) const;
 };

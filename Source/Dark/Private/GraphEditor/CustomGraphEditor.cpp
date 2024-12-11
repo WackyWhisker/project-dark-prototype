@@ -11,22 +11,22 @@
 #include "SNodePanel.h"
 #include "Modules/ModuleManager.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
-#include "GenericPlatform/GenericPlatformApplicationMisc.h"
+#include "HAL/PlatformApplicationMisc.h"
 #include "EdGraphUtilities.h"
 
 void SCustomGraphEditor::Construct(const FArguments& InArgs, UCustomGraphAsset* InGraphAsset)
 {
     GraphAsset = InGraphAsset;
 
+    // Create the appearance info for the graph editor
+    FGraphAppearanceInfo AppearanceInfo;
+    AppearanceInfo.CornerText = FText::FromString("Custom Graph");
+
     // Initialize command list
     GraphEditorCommands = MakeShareable(new FUICommandList);
 
     // Bind commands
     BindCommands();
-
-    // Create the appearance info for the graph editor
-    FGraphAppearanceInfo AppearanceInfo;
-    AppearanceInfo.CornerText = FText::FromString("Custom Graph");
 
     // Create the graph editor widget
     GraphEditorWidget = SNew(SGraphEditor)
@@ -47,33 +47,57 @@ void SCustomGraphEditor::BindCommands()
     // First register the standard commands
     const FGenericCommands& GenericCommands = FGenericCommands::Get();
 
+    // Delete
     GraphEditorCommands->MapAction(
         GenericCommands.Delete,
         FExecuteAction::CreateSP(this, &SCustomGraphEditor::OnDeleteNode),
         FCanExecuteAction::CreateSP(this, &SCustomGraphEditor::CanDeleteNode)
     );
 
+    // Cut
+    GraphEditorCommands->MapAction(
+        GenericCommands.Cut,
+        FExecuteAction::CreateSP(this, &SCustomGraphEditor::OnCutNode),
+        FCanExecuteAction::CreateSP(this, &SCustomGraphEditor::CanCutNode)
+    );
+
+    // Copy
     GraphEditorCommands->MapAction(
         GenericCommands.Copy,
         FExecuteAction::CreateSP(this, &SCustomGraphEditor::OnCopyNode),
         FCanExecuteAction::CreateSP(this, &SCustomGraphEditor::CanCopyNode)
     );
 
+    // Paste
     GraphEditorCommands->MapAction(
         GenericCommands.Paste,
         FExecuteAction::CreateSP(this, &SCustomGraphEditor::OnPasteNode),
         FCanExecuteAction::CreateSP(this, &SCustomGraphEditor::CanPasteNode)
     );
 
+    // Duplicate
     GraphEditorCommands->MapAction(
         GenericCommands.Duplicate,
         FExecuteAction::CreateSP(this, &SCustomGraphEditor::OnDuplicateNode),
         FCanExecuteAction::CreateSP(this, &SCustomGraphEditor::CanDuplicateNode)
     );
+
+    // Select All
+    GraphEditorCommands->MapAction(
+        GenericCommands.SelectAll,
+        FExecuteAction::CreateSP(this, &SCustomGraphEditor::OnSelectAllNodes),
+        FCanExecuteAction::CreateSP(this, &SCustomGraphEditor::CanSelectAllNodes)
+    );
+}
+
+void SCustomGraphEditor::LogCommandExecution(const FString& CommandName) const
+{
+    UE_LOG(LogTemp, Display, TEXT("Executing command: %s"), *CommandName);
 }
 
 void SCustomGraphEditor::OnDeleteNode()
 {
+    LogCommandExecution(TEXT("Delete"));
     const FGraphPanelSelectionSet SelectedNodes = GraphEditorWidget->GetSelectedNodes();
     GraphEditorWidget->ClearSelectionSet();
 
@@ -85,65 +109,123 @@ void SCustomGraphEditor::OnDeleteNode()
             Node->DestroyNode();
         }
     }
+
+    // Notify graph changed
+    if (GraphAsset.IsValid() && GraphAsset->EdGraph)
+    {
+        GraphAsset->EdGraph->NotifyGraphChanged();
+    }
+}
+
+void SCustomGraphEditor::OnCutNode()
+{
+    LogCommandExecution(TEXT("Cut"));
+    // First copy
+    OnCopyNode();
+
+    // Then delete
+    const FGraphPanelSelectionSet SelectedNodes = GraphEditorWidget->GetSelectedNodes();
+    GraphEditorWidget->ClearSelectionSet();
+
+    for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
+    {
+        if (UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
+        {
+            Node->Modify();
+            Node->DestroyNode();
+        }
+    }
+
+    // Notify graph changed
+    if (GraphAsset.IsValid() && GraphAsset->EdGraph)
+    {
+        GraphAsset->EdGraph->NotifyGraphChanged();
+    }
 }
 
 void SCustomGraphEditor::OnCopyNode()
 {
-    // Exports the selected nodes to text
+    LogCommandExecution(TEXT("Copy"));
     const FGraphPanelSelectionSet SelectedNodes = GraphEditorWidget->GetSelectedNodes();
-    FString ExportedText;
-    FEdGraphUtilities::ExportNodesToText(SelectedNodes, ExportedText);
-    FGenericPlatformApplicationMisc::ClipboardCopy(*ExportedText);
+    if (SelectedNodes.Num() > 0)
+    {
+        FString ExportedText;
+        FEdGraphUtilities::ExportNodesToText(SelectedNodes, ExportedText);
+        FPlatformApplicationMisc::ClipboardCopy(*ExportedText);
+    }
 }
 
 void SCustomGraphEditor::OnPasteNode()
 {
-    // Grab the text to paste from the clipboard.
+    LogCommandExecution(TEXT("Paste"));
     FString TextToImport;
-    FGenericPlatformApplicationMisc::ClipboardPaste(TextToImport);
+    FPlatformApplicationMisc::ClipboardPaste(TextToImport);
 
-    // Import the nodes
-    const FVector2D PasteLocation = GraphEditorWidget->GetPasteLocation();
-    
-    // Create a set to store the pasted nodes
-    TSet<UEdGraphNode*> PastedNodes;
-    
-    // Import the nodes with the correct parameters
-    FEdGraphUtilities::ImportNodesFromText(GraphAsset->EdGraph, TextToImport, PastedNodes);
-    
-    // Optionally, you can adjust the location of pasted nodes
-    for (UEdGraphNode* Node : PastedNodes)
+    if (!TextToImport.IsEmpty() && GraphAsset.IsValid())
     {
-        Node->NodePosX += PasteLocation.X;
-        Node->NodePosY += PasteLocation.Y;
+        const FVector2D PasteLocation = GraphEditorWidget->GetPasteLocation();
+        TSet<UEdGraphNode*> PastedNodes;
+        FEdGraphUtilities::ImportNodesFromText(GraphAsset->EdGraph, TextToImport, PastedNodes);
+
+        // Offset the nodes that were just pasted
+        for (UEdGraphNode* Node : PastedNodes)
+        {
+            Node->NodePosX += PasteLocation.X;
+            Node->NodePosY += PasteLocation.Y;
+        }
+
+        // Notify graph changed
+        if (GraphAsset->EdGraph)
+        {
+            GraphAsset->EdGraph->NotifyGraphChanged();
+        }
+    }
+}
+
+void SCustomGraphEditor::OnSelectAllNodes()
+{
+    LogCommandExecution(TEXT("Select All"));
+    if (GraphEditorWidget.IsValid())
+    {
+        GraphEditorWidget->SelectAllNodes();
     }
 }
 
 void SCustomGraphEditor::OnDuplicateNode()
 {
-    // Copy and paste in one go
+    LogCommandExecution(TEXT("Duplicate"));
     OnCopyNode();
     OnPasteNode();
 }
 
 bool SCustomGraphEditor::CanDeleteNode() const
 {
-    return GraphEditorWidget->GetSelectedNodes().Num() > 0;
+    return GraphEditorWidget.IsValid() && GraphEditorWidget->GetSelectedNodes().Num() > 0;
+}
+
+bool SCustomGraphEditor::CanCutNode() const
+{
+    return CanCopyNode();
 }
 
 bool SCustomGraphEditor::CanCopyNode() const
 {
-    return GraphEditorWidget->GetSelectedNodes().Num() > 0;
+    return GraphEditorWidget.IsValid() && GraphEditorWidget->GetSelectedNodes().Num() > 0;
 }
 
 bool SCustomGraphEditor::CanPasteNode() const
 {
     FString ClipboardContent;
-    FGenericPlatformApplicationMisc::ClipboardPaste(ClipboardContent);
-    return !ClipboardContent.IsEmpty();
+    FPlatformApplicationMisc::ClipboardPaste(ClipboardContent);
+    return !ClipboardContent.IsEmpty() && GraphAsset.IsValid();
 }
 
 bool SCustomGraphEditor::CanDuplicateNode() const
 {
     return CanCopyNode();
+}
+
+bool SCustomGraphEditor::CanSelectAllNodes() const
+{
+    return GraphEditorWidget.IsValid() && GraphAsset.IsValid();
 }

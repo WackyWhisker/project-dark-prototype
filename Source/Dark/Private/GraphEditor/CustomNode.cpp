@@ -1,8 +1,8 @@
 ﻿// Copyright @ Christian Reichel
 
-
 #include "GraphEditor/CustomNode.h"
 #include "GraphEditor/CustomGraphNode.h"
+#include "EdGraph/EdGraph.h"
 
 UCustomNode::UCustomNode()
 {
@@ -12,7 +12,7 @@ UCustomNode::UCustomNode()
 void UCustomNode::AllocateDefaultPins()
 {
 	Super::AllocateDefaultPins();
-	
+    
 	// Create an input pin
 	CreatePin(EGPD_Input, TEXT("Default"), TEXT("Input"));
     
@@ -33,4 +33,22 @@ FLinearColor UCustomNode::GetNodeTitleColor() const
 TSharedPtr<SGraphNode> UCustomNode::CreateVisualWidget()
 {
 	return SNew(SCustomGraphNode, this);
+}
+
+void UCustomNode::PostEditUndo()
+{
+	Super::PostEditUndo();
+	if (UEdGraph* Graph = GetGraph())
+	{
+		Graph->NotifyGraphChanged();
+	}
+}
+
+void UCustomNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	if (UEdGraph* Graph = GetGraph())
+	{
+		Graph->NotifyGraphChanged();
+	}
 }

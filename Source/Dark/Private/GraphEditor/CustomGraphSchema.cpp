@@ -1,6 +1,5 @@
 ﻿// Copyright @ Christian Reichel
 
-
 #include "GraphEditor/CustomGraphSchema.h"
 #include "GraphEditor/CustomNode.h"
 #include "EdGraph/EdGraph.h"
@@ -59,4 +58,40 @@ const FPinConnectionResponse UCustomGraphSchema::CanCreateConnection(const UEdGr
 
     // For now, allow all other connections between different nodes
     return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, TEXT(""));
+}
+
+bool UCustomGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
+{
+    const FPinConnectionResponse Response = CanCreateConnection(A, B);
+    bool bModified = false;
+
+    if (Response.Response == CONNECT_RESPONSE_MAKE)
+    {
+        A->Modify();
+        B->Modify();
+        A->MakeLinkTo(B);
+        bModified = true;
+    }
+
+    return bModified;
+}
+
+void UCustomGraphSchema::BreakNodeLinks(UEdGraphNode& TargetNode) const
+{
+    Super::BreakNodeLinks(TargetNode);
+}
+
+void UCustomGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotification) const
+{
+    Super::BreakPinLinks(TargetPin, bSendsNodeNotification);
+}
+
+void UCustomGraphSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const
+{
+    Super::BreakSinglePinLink(SourcePin, TargetPin);
+}
+
+FLinearColor UCustomGraphSchema::GetPinTypeColor(const FEdGraphPinType& PinType) const
+{
+    return FLinearColor(1.0f, 1.0f, 1.0f); // Default white color for pins
 }
