@@ -20,6 +20,9 @@ public:
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual FLinearColor GetNodeTitleColor() const override;
 
+	// Override to specify our custom visualization
+	virtual TSharedPtr<SGraphNode> CreateVisualWidget() override;
+
 	// Add a custom property that we'll be able to edit
 	UPROPERTY(EditAnywhere, Category = "Node")
 	FString NodeName;

@@ -2,6 +2,7 @@
 
 
 #include "GraphEditor/CustomNode.h"
+#include "GraphEditor/CustomGraphNode.h"
 
 UCustomNode::UCustomNode()
 {
@@ -21,10 +22,15 @@ void UCustomNode::AllocateDefaultPins()
 
 FText UCustomNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return FText::FromString(NodeName);
+	return FText::FromString(TEXT("Custom Node"));
 }
 
 FLinearColor UCustomNode::GetNodeTitleColor() const
 {
-	return FLinearColor(0.6f, 0.6f, 1.0f); // Light blue color
+	return FLinearColor(0.6f, 0.6f, 0.6f); // Light gray
+}
+
+TSharedPtr<SGraphNode> UCustomNode::CreateVisualWidget()
+{
+	return SNew(SCustomGraphNode, this);
 }
