@@ -22,4 +22,8 @@ public:
     
 	// Which category this asset should appear in when right-clicking in the content browser
 	virtual uint32 GetCategories() override { return EAssetTypeCategories::Misc; }
+
+	//Handle opening the editor
+	virtual void OpenAssetEditor(const TArray<UObject*>& InObjects, TSharedPtr<IToolkitHost> EditWithinLevelEditor = TSharedPtr<IToolkitHost>()) override;
+
 };
