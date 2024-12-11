@@ -3,6 +3,7 @@ DerivedDataCache
 Intermediate
 Saved
 Build
+GraphEditorKnowledge
 .idea
 
 .vs
@@ -16,3 +17,4 @@ Build
 *.suo
 *.xcodeproj
 *.xcworkspace
+collect_graph_editor.bat
