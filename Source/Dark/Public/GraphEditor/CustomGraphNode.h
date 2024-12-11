@@ -23,8 +23,8 @@ public:
 private:
 	// Node Colors
 	const FLinearColor NodeBorderColor = FLinearColor(0.5f, 0.5f, 0.5f);    // Outer frame color
-	const FLinearColor NodeBodyColor = FLinearColor(0.5f, 0.5f, 0.5f);     // Main body fill color
-	const FLinearColor TitleBorderColor = FLinearColor(0.5f, 0.5f, 0.5f);   // Title section border
+	const FLinearColor NodeBodyColor = FLinearColor(0.5f, 0.5f, 0.5f);    // Main body fill color
+	const FLinearColor TitleBorderColor = FLinearColor(0.5f, 0.5f, 0.5f);    // Title section border
 	const FLinearColor TitleFillColor = FLinearColor(0.5f, 0.5f, 0.5f);     // Title section fill
 	const FLinearColor TitleTextColor = FLinearColor::White;  
 };

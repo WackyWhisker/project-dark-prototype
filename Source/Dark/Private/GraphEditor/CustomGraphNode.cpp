@@ -19,51 +19,67 @@ void SCustomGraphNode::UpdateGraphNode()
 {
     InputPins.Empty();
     OutputPins.Empty();
-    LeftNodeBox.Reset();
+
     RightNodeBox.Reset();
+    LeftNodeBox.Reset();
 
     this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
     this->GetOrAddSlot(ENodeZone::Center)
         .HAlign(HAlign_Fill)
         .VAlign(VAlign_Center)
         [
-            SNew(SBorder)
-            .BorderImage(FAppStyle::GetBrush("Graph.Node.Body"))
-            .Padding(FMargin(4.0f))
-            .BorderBackgroundColor(NodeBorderColor)     // Border/frame color
-            .ColorAndOpacity(NodeBodyColor)            // Body fill color
+            SNew(SOverlay)
+            +SOverlay::Slot()
+            [
+                SNew(SImage)
+                .Image(FAppStyle::GetBrush("Brushes.Header"))
+                .ColorAndOpacity(NodeBodyColor)
+            ]
+            +SOverlay::Slot()
             [
                 SNew(SVerticalBox)
-                // Title section with its own background
-                + SVerticalBox::Slot()
+                // Title area
+                +SVerticalBox::Slot()
                 .AutoHeight()
-                .Padding(FMargin(2.0f))
                 [
                     SNew(SBorder)
                     .BorderImage(FAppStyle::GetBrush("Graph.Node.TitleBackground"))
-                    .BorderBackgroundColor(TitleBorderColor)  // Title border color
-                    .ColorAndOpacity(TitleFillColor)         // Title fill color
+                    .BorderBackgroundColor(TitleFillColor)
                     .Padding(FMargin(8.0f))
                     [
-                        SNew(STextBlock)
-                        .Text(FText::FromString(GraphNode->GetNodeTitle(ENodeTitleType::FullTitle).ToString()))
-                        .ColorAndOpacity(TitleTextColor)
-                        .TextStyle(FAppStyle::Get(), "Graph.Node.NodeTitle")
+                        SNew(SHorizontalBox)
+                        +SHorizontalBox::Slot()
+                        .AutoWidth()
+                        .VAlign(VAlign_Center)
+                        [
+                            SNew(STextBlock)
+                            .Text(FText::FromString(GraphNode->GetNodeTitle(ENodeTitleType::FullTitle).ToString()))
+                            .ColorAndOpacity(TitleTextColor)
+                            .TextStyle(FAppStyle::Get(), "Graph.Node.NodeTitle")
+                        ]
+                        +SHorizontalBox::Slot()
+                        .HAlign(HAlign_Right)
+                        .VAlign(VAlign_Center)
+                        .AutoWidth()
+                        //[
+                            // Add right-aligned widgets here
+                        //]
                     ]
                 ]
-                // Pins section
-                + SVerticalBox::Slot()
+                // Pin area
+                +SVerticalBox::Slot()
                 .AutoHeight()
-                .Padding(FMargin(0.0f, 4.0f))
                 [
                     SNew(SHorizontalBox)
-                    + SHorizontalBox::Slot()
+                    +SHorizontalBox::Slot()
                     .HAlign(HAlign_Left)
+                    .VAlign(VAlign_Center)
                     [
                         SAssignNew(LeftNodeBox, SVerticalBox)
                     ]
-                    + SHorizontalBox::Slot()
+                    +SHorizontalBox::Slot()
                     .HAlign(HAlign_Right)
+                    .VAlign(VAlign_Center)
                     [
                         SAssignNew(RightNodeBox, SVerticalBox)
                     ]
@@ -71,6 +87,7 @@ void SCustomGraphNode::UpdateGraphNode()
             ]
         ];
 
+    // Create pin widgets
     CreatePinWidgets();
 }
 
