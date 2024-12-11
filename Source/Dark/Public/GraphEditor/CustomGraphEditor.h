@@ -52,4 +52,6 @@ private:
 
 	// Helper function to debug command execution
 	void LogCommandExecution(const FString& CommandName) const;
+
+	FVector2D LastCopyLocation;
 };

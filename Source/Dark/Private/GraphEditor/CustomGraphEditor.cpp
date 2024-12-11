@@ -149,6 +149,19 @@ void SCustomGraphEditor::OnCopyNode()
     const FGraphPanelSelectionSet SelectedNodes = GraphEditorWidget->GetSelectedNodes();
     if (SelectedNodes.Num() > 0)
     {
+        // Store the average position of copied nodes
+        FVector2D AveragePosition(0.0f, 0.0f);
+        for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
+        {
+            if (UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
+            {
+                AveragePosition.X += Node->NodePosX;
+                AveragePosition.Y += Node->NodePosY;
+            }
+        }
+        AveragePosition /= SelectedNodes.Num();
+        LastCopyLocation = AveragePosition;
+
         FString ExportedText;
         FEdGraphUtilities::ExportNodesToText(SelectedNodes, ExportedText);
         FPlatformApplicationMisc::ClipboardCopy(*ExportedText);
@@ -163,15 +176,54 @@ void SCustomGraphEditor::OnPasteNode()
 
     if (!TextToImport.IsEmpty() && GraphAsset.IsValid())
     {
-        const FVector2D PasteLocation = GraphEditorWidget->GetPasteLocation();
+        const FVector2D CursorPosition = GraphEditorWidget->GetPasteLocation();
+        
+        // Check if cursor is over any of the previously copied nodes
+        bool bCursorOverCopiedNode = false;
+        const FGraphPanelSelectionSet SelectedNodes = GraphEditorWidget->GetSelectedNodes();
+        for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
+        {
+            if (UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
+            {
+                // Create a rough bounding box for the node
+                const float NodeWidth = 200.0f;  // Approximate node width
+                const float NodeHeight = 100.0f; // Approximate node height
+                FBox2D NodeBounds(
+                    FVector2D(Node->NodePosX, Node->NodePosY),
+                    FVector2D(Node->NodePosX + NodeWidth, Node->NodePosY + NodeHeight)
+                );
+
+                if (NodeBounds.IsInside(CursorPosition))
+                {
+                    bCursorOverCopiedNode = true;
+                    break;
+                }
+            }
+        }
+
         TSet<UEdGraphNode*> PastedNodes;
         FEdGraphUtilities::ImportNodesFromText(GraphAsset->EdGraph, TextToImport, PastedNodes);
 
-        // Offset the nodes that were just pasted
+        // Calculate offset based on cursor position
+        const float OffsetAmount = 100.0f;
+        FVector2D Offset;
+        
+        if (bCursorOverCopiedNode)
+        {
+            // If cursor is over a copied node, use small fixed offset
+            Offset = FVector2D(OffsetAmount, OffsetAmount);
+        }
+        else
+        {
+            // If cursor is elsewhere, move to cursor position
+            Offset = CursorPosition - LastCopyLocation;
+        }
+
+        // Apply the offset to all pasted nodes
         for (UEdGraphNode* Node : PastedNodes)
         {
-            Node->NodePosX += PasteLocation.X;
-            Node->NodePosY += PasteLocation.Y;
+            Node->NodePosX += Offset.X;
+            Node->NodePosY += Offset.Y;
         }
 
         // Notify graph changed
