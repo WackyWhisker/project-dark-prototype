@@ -8,7 +8,7 @@ public class Dark : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate", "SlateCore", "GraphEditor", "ToolMenus", "KismetWidgets", "UnrealEd", "AssetTools"});
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate", "SlateCore", "GraphEditor", "ToolMenus", "KismetWidgets", "UnrealEd", "AssetTools", "ApplicationCore"});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
