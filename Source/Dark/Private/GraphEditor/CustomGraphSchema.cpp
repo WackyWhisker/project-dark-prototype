@@ -7,6 +7,7 @@
 #include "Framework/Commands/GenericCommands.h"
 #include "ToolMenuSection.h"
 #include "EdGraphNode_Comment.h"
+#include "GraphEditor/CustomConnectionDrawingPolicy.h"
 
 void UCustomGraphSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
 {
@@ -56,7 +57,8 @@ const FPinConnectionResponse UCustomGraphSchema::CanCreateConnection(const UEdGr
         return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, TEXT("Cannot connect a node to itself"));
     }
 
-    // For now, allow all other connections between different nodes
+    // Allow any pin to connect to any other pin regardless of direction
+    // This effectively makes all pins bidirectional
     return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, TEXT(""));
 }
 
@@ -67,6 +69,21 @@ bool UCustomGraphSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) con
 
     if (Response.Response == CONNECT_RESPONSE_MAKE)
     {
+        // When making the connection, determine which pin should be input and which should be output
+        if (A->LinkedTo.Num() == 0)  // If A has no connections, keep its current direction
+        {
+            if (B->LinkedTo.Num() > 0)  // If B is already connected, adapt A's direction
+            {
+                A->Direction = (B->Direction == EGPD_Input) ? EGPD_Output : EGPD_Input;
+            }
+            // Otherwise keep A's direction and adapt B
+            B->Direction = (A->Direction == EGPD_Input) ? EGPD_Output : EGPD_Input;
+        }
+        else  // A is already connected, adapt B's direction
+        {
+            B->Direction = (A->Direction == EGPD_Input) ? EGPD_Output : EGPD_Input;
+        }
+
         A->Modify();
         B->Modify();
         A->MakeLinkTo(B);
@@ -93,5 +110,11 @@ void UCustomGraphSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin*
 
 FLinearColor UCustomGraphSchema::GetPinTypeColor(const FEdGraphPinType& PinType) const
 {
-    return FLinearColor(1.0f, 1.0f, 1.0f); // Default white color for pins
+    // Use a distinctive color for our bidirectional pins
+    return FLinearColor(0.8f, 0.8f, 0.2f); // Gold-ish color to match the pin visuals
+}
+
+FConnectionDrawingPolicy* UCustomGraphSchema::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj) const
+{
+    return new FCustomConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
 }

@@ -4,27 +4,61 @@
 
 #include "CoreMinimal.h"
 #include "SGraphNode.h"
+#include "SGraphPin.h"
+#include "Widgets/SBoxPanel.h"
 
 class UCustomNode;
+
+// Custom Graph Pin for bidirectional visualization
+class SCustomGraphPin : public SGraphPin
+{
+public:
+    SLATE_BEGIN_ARGS(SCustomGraphPin) {}
+    SLATE_END_ARGS()
+
+    void Construct(const FArguments& InArgs, UEdGraphPin* InPin)
+    {
+        this->SGraphPin::Construct(SGraphPin::FArguments(), InPin);
+    }
+
+    // Override to provide custom pin appearance
+    virtual FSlateColor GetPinColor() const override 
+    { 
+        return FSlateColor(FLinearColor(0.8f, 0.8f, 0.2f)); 
+    }
+    
+    virtual const FSlateBrush* GetPinIcon() const override
+    {
+        return IsConnected() ? 
+            FAppStyle::GetBrush("Graph.Pin.Connected") : 
+            FAppStyle::GetBrush("Graph.Pin.Disconnected");
+    }
+};
 
 class SCustomGraphNode : public SGraphNode
 {
 public:
-	SLATE_BEGIN_ARGS(SCustomGraphNode) {}
-	SLATE_END_ARGS()
+    SLATE_BEGIN_ARGS(SCustomGraphNode) {}
+    SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, UCustomNode* InNode);
+    void Construct(const FArguments& InArgs, UCustomNode* InNode);
 
-	// Override appearance functions
-	virtual void UpdateGraphNode() override;
-	virtual void CreatePinWidgets() override;
-	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
+    // Override appearance functions
+    virtual void UpdateGraphNode() override;
+    virtual void CreatePinWidgets() override;
+    virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
 
 private:
-	// Node Colors
-	const FLinearColor NodeBorderColor = FLinearColor(0.5f, 0.5f, 0.5f);    // Outer frame color
-	const FLinearColor NodeBodyColor = FLinearColor(0.5f, 0.5f, 0.5f);    // Main body fill color
-	const FLinearColor TitleBorderColor = FLinearColor(0.5f, 0.5f, 0.5f);    // Title section border
-	const FLinearColor TitleFillColor = FLinearColor(0.5f, 0.5f, 0.5f);     // Title section fill
-	const FLinearColor TitleTextColor = FLinearColor::White;  
+    // Node Colors
+    const FLinearColor NodeBorderColor = FLinearColor(0.5f, 0.5f, 0.5f);    // Outer frame color
+    const FLinearColor NodeBodyColor = FLinearColor(0.5f, 0.5f, 0.5f);    // Main body fill color
+    const FLinearColor TitleBorderColor = FLinearColor(0.5f, 0.5f, 0.5f);    // Title section border
+    const FLinearColor TitleFillColor = FLinearColor(0.5f, 0.5f, 0.5f);     // Title section fill
+    const FLinearColor TitleTextColor = FLinearColor::White;
+
+    // Node boxes for pin placement
+    TSharedPtr<SHorizontalBox> TopNodeBox;
+    TSharedPtr<SHorizontalBox> BottomNodeBox;
+    TSharedPtr<SVerticalBox> LeftNodeBox;
+    TSharedPtr<SVerticalBox> RightNodeBox;
 };

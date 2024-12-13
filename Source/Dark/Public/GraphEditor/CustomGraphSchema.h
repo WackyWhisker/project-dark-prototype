@@ -37,4 +37,6 @@ public:
 
 	// Get the default color for a node
 	virtual FLinearColor GetPinTypeColor(const FEdGraphPinType& PinType) const override;
+
+	virtual FConnectionDrawingPolicy* CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj) const override;
 };

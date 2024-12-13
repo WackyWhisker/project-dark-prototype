@@ -13,11 +13,11 @@ void UCustomNode::AllocateDefaultPins()
 {
 	Super::AllocateDefaultPins();
     
-	// Create an input pin
-	CreatePin(EGPD_Input, TEXT("Default"), TEXT("Input"));
-    
-	// Create an output pin
-	CreatePin(EGPD_Output, TEXT("Default"), TEXT("Output"));
+	// Create single pins that can act as both input and output
+	CreatePin(EGPD_Input, TEXT("Default"), TEXT("Top"));
+	CreatePin(EGPD_Input, TEXT("Default"), TEXT("Right"));
+	CreatePin(EGPD_Input, TEXT("Default"), TEXT("Bottom"));
+	CreatePin(EGPD_Input, TEXT("Default"), TEXT("Left"));
 }
 
 FText UCustomNode::GetNodeTitle(ENodeTitleType::Type TitleType) const

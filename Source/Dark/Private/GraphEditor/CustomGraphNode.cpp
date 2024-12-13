@@ -1,10 +1,7 @@
 ﻿// Copyright @ Christian Reichel
 
-
-// SCustomGraphNode.cpp
 #include "GraphEditor/CustomGraphNode.h"
 #include "GraphEditor/CustomNode.h"
-#include "SGraphPin.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 #include "Styling/SlateStyleRegistry.h"
@@ -22,72 +19,81 @@ void SCustomGraphNode::UpdateGraphNode()
 
     RightNodeBox.Reset();
     LeftNodeBox.Reset();
+    TopNodeBox.Reset();
+    BottomNodeBox.Reset();
 
     this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
+
     this->GetOrAddSlot(ENodeZone::Center)
         .HAlign(HAlign_Fill)
-        .VAlign(VAlign_Center)
+        .VAlign(VAlign_Fill)
         [
-            SNew(SOverlay)
-            +SOverlay::Slot()
-            [
-                SNew(SImage)
-                .Image(FAppStyle::GetBrush("Brushes.Header"))
-                .ColorAndOpacity(NodeBodyColor)
-            ]
-            +SOverlay::Slot()
+            SNew(SBorder)
+            .BorderImage(FAppStyle::GetBrush("Graph.Node.Body"))
+            .BorderBackgroundColor(NodeBodyColor)
+            .Padding(0.0f)
             [
                 SNew(SVerticalBox)
-                // Title area
+                // Top pin
                 +SVerticalBox::Slot()
                 .AutoHeight()
+                .HAlign(HAlign_Center)
                 [
-                    SNew(SBorder)
-                    .BorderImage(FAppStyle::GetBrush("Graph.Node.TitleBackground"))
-                    .BorderBackgroundColor(TitleFillColor)
-                    .Padding(FMargin(8.0f))
+                    SAssignNew(TopNodeBox, SHorizontalBox)
+                ]
+                
+                // Middle section with Left/Right pins and title
+                +SVerticalBox::Slot()
+                .AutoHeight()
+                .Padding(10.0f)
+                [
+                    SNew(SHorizontalBox)
+                    
+                    // Left pin
+                    +SHorizontalBox::Slot()
+                    .AutoWidth()
                     [
-                        SNew(SHorizontalBox)
-                        +SHorizontalBox::Slot()
-                        .AutoWidth()
+                        SAssignNew(LeftNodeBox, SVerticalBox)
+                    ]
+                    
+                    // Title area
+                    +SHorizontalBox::Slot()
+                    .HAlign(HAlign_Center)
+                    .VAlign(VAlign_Center)
+                    .FillWidth(1.0f)
+                    [
+                        SNew(SBorder)
+                        .BorderImage(FAppStyle::GetBrush("Graph.Node.TitleBackground"))
+                        .BorderBackgroundColor(TitleFillColor)
+                        .HAlign(HAlign_Center)
                         .VAlign(VAlign_Center)
+                        .Padding(FMargin(10.0f))
                         [
                             SNew(STextBlock)
                             .Text(FText::FromString(GraphNode->GetNodeTitle(ENodeTitleType::FullTitle).ToString()))
                             .ColorAndOpacity(TitleTextColor)
                             .TextStyle(FAppStyle::Get(), "Graph.Node.NodeTitle")
                         ]
-                        +SHorizontalBox::Slot()
-                        .HAlign(HAlign_Right)
-                        .VAlign(VAlign_Center)
-                        .AutoWidth()
-                        //[
-                            // Add right-aligned widgets here
-                        //]
                     ]
-                ]
-                // Pin area
-                +SVerticalBox::Slot()
-                .AutoHeight()
-                [
-                    SNew(SHorizontalBox)
+                    
+                    // Right pin
                     +SHorizontalBox::Slot()
-                    .HAlign(HAlign_Left)
-                    .VAlign(VAlign_Center)
-                    [
-                        SAssignNew(LeftNodeBox, SVerticalBox)
-                    ]
-                    +SHorizontalBox::Slot()
-                    .HAlign(HAlign_Right)
-                    .VAlign(VAlign_Center)
+                    .AutoWidth()
                     [
                         SAssignNew(RightNodeBox, SVerticalBox)
                     ]
                 ]
+                
+                // Bottom pin
+                +SVerticalBox::Slot()
+                .AutoHeight()
+                .HAlign(HAlign_Center)
+                [
+                    SAssignNew(BottomNodeBox, SHorizontalBox)
+                ]
             ]
         ];
 
-    // Create pin widgets
     CreatePinWidgets();
 }
 
@@ -97,7 +103,8 @@ void SCustomGraphNode::CreatePinWidgets()
     
     for (UEdGraphPin* Pin : CustomNode->Pins)
     {
-        TSharedPtr<SGraphPin> NewPin = SNew(SGraphPin, Pin);
+        TSharedPtr<SGraphPin> NewPin = SNew(SCustomGraphPin, Pin);
+        NewPin->SetShowLabel(false);  // Hide the pin's built-in label
         AddPin(NewPin.ToSharedRef());
     }
 }
@@ -105,32 +112,133 @@ void SCustomGraphNode::CreatePinWidgets()
 void SCustomGraphNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 {
     PinToAdd->SetOwner(SharedThis(this));
-
     const UEdGraphPin* PinObj = PinToAdd->GetPinObj();
     
-    if (PinObj && PinObj->Direction == EGPD_Input)
+    if (PinObj)
     {
-        LeftNodeBox->AddSlot()
-            .AutoHeight()
-            .HAlign(HAlign_Left)
-            .VAlign(VAlign_Center)
-            .Padding(FMargin(2.0f))
-            [
-                PinToAdd
-            ];
-        InputPins.Add(PinToAdd);
-    }
-    else
-    {
-        RightNodeBox->AddSlot()
-            .AutoHeight()
-            .HAlign(HAlign_Right)
-            .VAlign(VAlign_Center)
-            .Padding(FMargin(2.0f))
-            [
-                PinToAdd
-            ];
-        OutputPins.Add(PinToAdd);
+        FString PinName = PinObj->PinName.ToString();
+        
+        if (PinName == TEXT("Top"))
+        {
+            TopNodeBox->AddSlot()
+                .HAlign(HAlign_Center)
+                .VAlign(VAlign_Top)
+                [
+                    SNew(SVerticalBox)
+                    
+                    // Pin first
+                    +SVerticalBox::Slot()
+                    .AutoHeight()
+                    .HAlign(HAlign_Center)
+                    .VAlign(VAlign_Top)
+                    [
+                        PinToAdd
+                    ]
+                    
+                    // Label below pin
+                    +SVerticalBox::Slot()
+                    .AutoHeight()
+                    .HAlign(HAlign_Center)
+                    .VAlign(VAlign_Center)
+                    .Padding(FMargin(0.0f, 4.0f, 0.0f, 0.0f))
+                    [
+                        SNew(STextBlock)
+                        .Text(FText::FromString(PinName))
+                    ]
+                ];
+            InputPins.Add(PinToAdd);
+        }
+        else if (PinName == TEXT("Bottom"))
+        {
+            BottomNodeBox->AddSlot()
+                .HAlign(HAlign_Center)
+                .VAlign(VAlign_Bottom)
+                [
+                    SNew(SVerticalBox)
+                    
+                    // Label first
+                    +SVerticalBox::Slot()
+                    .AutoHeight()
+                    .HAlign(HAlign_Center)
+                    .VAlign(VAlign_Center)
+                    .Padding(FMargin(0.0f, 0.0f, 0.0f, 4.0f))
+                    [
+                        SNew(STextBlock)
+                        .Text(FText::FromString(PinName))
+                    ]
+                    
+                    // Pin below label
+                    +SVerticalBox::Slot()
+                    .AutoHeight()
+                    .HAlign(HAlign_Center)
+                    .VAlign(VAlign_Bottom)
+                    [
+                        PinToAdd
+                    ]
+                ];
+            InputPins.Add(PinToAdd);
+        }
+        else if (PinName == TEXT("Right"))
+        {
+            RightNodeBox->AddSlot()
+                .AutoHeight()
+                .HAlign(HAlign_Right)
+                .VAlign(VAlign_Center)
+                [
+                    SNew(SHorizontalBox)
+                    
+                    // Label first
+                    +SHorizontalBox::Slot()
+                    .AutoWidth()
+                    .HAlign(HAlign_Right)
+                    .VAlign(VAlign_Center)
+                    .Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+                    [
+                        SNew(STextBlock)
+                        .Text(FText::FromString(PinName))
+                    ]
+                    
+                    // Pin second (at the edge)
+                    +SHorizontalBox::Slot()
+                    .AutoWidth()
+                    .HAlign(HAlign_Right)
+                    .VAlign(VAlign_Center)
+                    [
+                        PinToAdd
+                    ]
+                ];
+            InputPins.Add(PinToAdd);
+        }
+        else if (PinName == TEXT("Left"))
+        {
+            LeftNodeBox->AddSlot()
+                .AutoHeight()
+                .HAlign(HAlign_Left)
+                .VAlign(VAlign_Center)
+                [
+                    SNew(SHorizontalBox)
+                    
+                    // Pin first (at the edge)
+                    +SHorizontalBox::Slot()
+                    .AutoWidth()
+                    .HAlign(HAlign_Left)
+                    .VAlign(VAlign_Center)
+                    [
+                        PinToAdd
+                    ]
+                    
+                    // Label second
+                    +SHorizontalBox::Slot()
+                    .AutoWidth()
+                    .HAlign(HAlign_Left)
+                    .VAlign(VAlign_Center)
+                    .Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+                    [
+                        SNew(STextBlock)
+                        .Text(FText::FromString(PinName))
+                    ]
+                ];
+            InputPins.Add(PinToAdd);
+        }
     }
 }
-
