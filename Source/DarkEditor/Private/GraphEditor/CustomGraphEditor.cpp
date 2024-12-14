@@ -1,5 +1,7 @@
 ﻿// Copyright @ Christian Reichel
 
+#if WITH_EDITOR
+
 #include "GraphEditor/CustomGraphEditor.h"
 #include "GraphEditor/CustomGraphAsset.h"
 #include "GraphEditor/CustomNode.h"
@@ -268,3 +270,4 @@ bool SCustomGraphEditor::CanSelectAllNodes() const
 {
     return GraphEditorWidget.IsValid() && GraphAsset.IsValid();
 }
+#endif

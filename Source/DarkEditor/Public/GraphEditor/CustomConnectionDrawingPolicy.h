@@ -2,6 +2,8 @@
 
 #pragma once
 
+#if WITH_EDITOR
+
 #include "CoreMinimal.h"
 #include "ConnectionDrawingPolicy.h"
 
@@ -16,3 +18,4 @@ public:
 protected:
 	UEdGraph* GraphObj;
 };
+#endif

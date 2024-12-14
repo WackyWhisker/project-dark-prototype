@@ -1,5 +1,7 @@
 ﻿// Copyright @ Christian Reichel
 
+#if WITH_EDITOR
+
 #include "GraphEditor/CustomNode.h"
 #include "GraphEditor/CustomGraphNode.h"
 #include "EdGraph/EdGraph.h"
@@ -65,3 +67,4 @@ void UCustomNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedE
 		Graph->NotifyGraphChanged();
 	}
 }
+#endif

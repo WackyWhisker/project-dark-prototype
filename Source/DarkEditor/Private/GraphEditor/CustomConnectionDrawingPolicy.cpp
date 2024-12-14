@@ -1,5 +1,7 @@
 ﻿// Copyright @ Christian Reichel
 
+#if WITH_EDITOR
+
 #include "GraphEditor/CustomConnectionDrawingPolicy.h"
 #include "Rendering/DrawElements.h"
 
@@ -72,3 +74,4 @@ void FCustomConnectionDrawingPolicy::DrawConnection(int32 LayerId, const FVector
         );
     }
 }
+#endif

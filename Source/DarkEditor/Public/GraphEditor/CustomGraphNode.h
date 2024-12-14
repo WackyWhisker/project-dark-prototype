@@ -1,18 +1,7 @@
 ﻿// Copyright @ Christian Reichel
-
 #pragma once
 
-#include "CoreMinimal.h"
-#include "SGraphNode.h"
-#include "SGraphPin.h"
-#include "Widgets/SBoxPanel.h"
-
-class UCustomNode;
-
-// Copyright @ Christian Reichel
-
-#pragma once
-
+#if WITH_EDITOR
 #include "CoreMinimal.h"
 #include "SGraphNode.h"
 #include "SGraphPin.h"
@@ -80,7 +69,7 @@ public:
     }
 };
 
-class SCustomGraphNode : public SGraphNode
+class DARKEDITOR_API SCustomGraphNode : public SGraphNode
 {
 public:
     SLATE_BEGIN_ARGS(SCustomGraphNode) {}
@@ -107,3 +96,5 @@ private:
     TSharedPtr<SVerticalBox> LeftNodeBox;
     TSharedPtr<SVerticalBox> RightNodeBox;
 };
+
+#endif

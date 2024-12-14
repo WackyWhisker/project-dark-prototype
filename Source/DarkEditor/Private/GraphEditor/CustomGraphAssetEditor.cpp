@@ -1,5 +1,6 @@
 ﻿// Copyright @ Christian Reichel
 
+#if WITH_EDITOR
 
 #include "GraphEditor/CustomGraphAssetEditor.h"
 #include "GraphEditor/CustomGraphAsset.h"
@@ -92,3 +93,4 @@ TSharedRef<SDockTab> FCustomGraphAssetEditor::SpawnTab_GraphCanvas(const FSpawnT
             SNew(SCustomGraphEditor, EditedGraph)
         ];
 }
+#endif

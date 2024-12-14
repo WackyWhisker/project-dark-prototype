@@ -1,5 +1,6 @@
 ﻿// Copyright @ Christian Reichel
 
+#if WITH_EDITOR
 
 #include "GraphEditor/CustomGraphFactory.h"
 #include "GraphEditor/CustomGraphAsset.h"
@@ -7,13 +8,9 @@
 
 UCustomGraphFactory::UCustomGraphFactory()
 {
-	// This factory creates new assets
+	UE_LOG(LogTemp, Warning, TEXT("CustomGraphFactory Constructor"));
 	bCreateNew = true;
-    
-	// Open the editor after creating a new asset
 	bEditAfterNew = true;
-    
-	// This factory creates CustomGraphAsset objects
 	SupportedClass = UCustomGraphAsset::StaticClass();
 }
 
@@ -37,3 +34,4 @@ UObject* UCustomGraphFactory::FactoryCreateNew(UClass* Class, UObject* InParent,
     
 	return NewAsset;
 }
+#endif

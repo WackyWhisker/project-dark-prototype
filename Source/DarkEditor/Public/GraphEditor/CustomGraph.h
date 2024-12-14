@@ -8,13 +8,15 @@
 
 
 UCLASS()
-class DARK_API UCustomGraph : public UEdGraph
+class DARKEDITOR_API UCustomGraph : public UEdGraph
 {
 	GENERATED_BODY()
-	
+    
 public:
+#if WITH_EDITOR
 	UCustomGraph();
+#endif
 
-	// Optional: Add custom serialization if needed
+	// Serialization functions must not be inside preprocessor blocks
 	virtual void Serialize(FArchive& Ar) override;
 };

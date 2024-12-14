@@ -2,12 +2,14 @@
 
 #pragma once
 
+#if WITH_EDITOR
+
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraphNode.h"
 #include "CustomNode.generated.h"
 
 UCLASS()
-class DARK_API UCustomNode : public UEdGraphNode
+class DARKEDITOR_API UCustomNode : public UEdGraphNode
 {
 	GENERATED_BODY()
 
@@ -31,3 +33,4 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Node")
 	FString NodeName;
 };
+#endif

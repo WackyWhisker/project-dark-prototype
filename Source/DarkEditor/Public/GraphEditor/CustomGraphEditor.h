@@ -2,6 +2,8 @@
 
 #pragma once
 
+#if WITH_EDITOR
+
 #include "CoreMinimal.h"
 #include "GraphEditor.h"
 #include "Widgets/SCompoundWidget.h"
@@ -55,3 +57,4 @@ private:
 
 	FVector2D LastCopyLocation;
 };
+#endif

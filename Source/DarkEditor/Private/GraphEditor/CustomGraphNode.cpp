@@ -1,5 +1,7 @@
 ﻿// Copyright @ Christian Reichel
 
+#if WITH_EDITOR
+
 #include "GraphEditor/CustomGraphNode.h"
 #include "GraphEditor/CustomNode.h"
 #include "Widgets/SBoxPanel.h"
@@ -242,3 +244,4 @@ void SCustomGraphNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
         }
     }
 }
+#endif

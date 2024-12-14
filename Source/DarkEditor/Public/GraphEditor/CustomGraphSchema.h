@@ -2,6 +2,8 @@
 
 #pragma once
 
+#if WITH_EDITOR
+
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraphSchema.h"
 #include "Framework/Commands/UICommandList.h"
@@ -9,7 +11,7 @@
 #include "CustomGraphSchema.generated.h"
 
 UCLASS()
-class DARK_API UCustomGraphSchema : public UEdGraphSchema
+class DARKEDITOR_API UCustomGraphSchema : public UEdGraphSchema
 {
 	GENERATED_BODY()
 
@@ -40,3 +42,4 @@ public:
 
 	virtual FConnectionDrawingPolicy* CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj) const override;
 };
+#endif

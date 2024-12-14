@@ -2,6 +2,8 @@
 
 #pragma once
 
+#if WITH_EDITOR
+
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "CustomGraphAsset.generated.h"
@@ -9,7 +11,7 @@
 class UEdGraph;
 
 UCLASS()
-class DARK_API UCustomGraphAsset : public UObject
+class DARKEDITOR_API UCustomGraphAsset : public UObject
 {
 	GENERATED_BODY()
 
@@ -20,3 +22,5 @@ public:
 	UPROPERTY()
 	UEdGraph* EdGraph;
 };
+#endif
+

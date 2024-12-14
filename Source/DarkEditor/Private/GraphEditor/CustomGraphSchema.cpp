@@ -1,5 +1,7 @@
 ﻿// Copyright @ Christian Reichel
 
+#if WITH_EDITOR
+
 #include "GraphEditor/CustomGraphSchema.h"
 #include "GraphEditor/CustomNode.h"
 #include "EdGraph/EdGraph.h"
@@ -118,3 +120,4 @@ FConnectionDrawingPolicy* UCustomGraphSchema::CreateConnectionDrawingPolicy(int3
 {
     return new FCustomConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
 }
+#endif

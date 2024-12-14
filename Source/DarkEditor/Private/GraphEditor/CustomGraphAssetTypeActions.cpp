@@ -1,5 +1,6 @@
 ﻿// Copyright @ Christian Reichel
 
+#if WITH_EDITOR
 
 #include "GraphEditor/CustomGraphAssetTypeActions.h"
 #include "GraphEditor/CustomGraphAsset.h"
@@ -23,3 +24,4 @@ void FCustomGraphAssetTypeActions::OpenAssetEditor(const TArray<UObject*>& InObj
 		}
 	}
 }
+#endif
