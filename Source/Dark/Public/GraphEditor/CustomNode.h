@@ -13,6 +13,7 @@ class DARK_API UCustomNode : public UEdGraphNode
 
 public:
 	UCustomNode();
+	virtual void PostPasteNode() override;
 
 	// Override basic node functions
 	virtual void AllocateDefaultPins() override;

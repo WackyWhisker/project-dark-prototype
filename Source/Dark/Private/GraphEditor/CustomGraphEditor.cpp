@@ -178,52 +178,39 @@ void SCustomGraphEditor::OnPasteNode()
     {
         const FVector2D CursorPosition = GraphEditorWidget->GetPasteLocation();
         
-        // Check if cursor is over any of the previously copied nodes
-        bool bCursorOverCopiedNode = false;
-        const FGraphPanelSelectionSet SelectedNodes = GraphEditorWidget->GetSelectedNodes();
-        for (FGraphPanelSelectionSet::TConstIterator NodeIt(SelectedNodes); NodeIt; ++NodeIt)
-        {
-            if (UEdGraphNode* Node = Cast<UEdGraphNode>(*NodeIt))
-            {
-                // Create a rough bounding box for the node
-                const float NodeWidth = 200.0f;  // Approximate node width
-                const float NodeHeight = 100.0f; // Approximate node height
-                FBox2D NodeBounds(
-                    FVector2D(Node->NodePosX, Node->NodePosY),
-                    FVector2D(Node->NodePosX + NodeWidth, Node->NodePosY + NodeHeight)
-                );
-
-                if (NodeBounds.IsInside(CursorPosition))
-                {
-                    bCursorOverCopiedNode = true;
-                    break;
-                }
-            }
-        }
+        UE_LOG(LogTemp, Warning, TEXT("Starting paste operation at cursor position: %s"), *CursorPosition.ToString());
 
         TSet<UEdGraphNode*> PastedNodes;
         FEdGraphUtilities::ImportNodesFromText(GraphAsset->EdGraph, TextToImport, PastedNodes);
 
         // Calculate offset based on cursor position
         const float OffsetAmount = 100.0f;
-        FVector2D Offset;
-        
-        if (bCursorOverCopiedNode)
-        {
-            // If cursor is over a copied node, use small fixed offset
-            Offset = FVector2D(OffsetAmount, OffsetAmount);
-        }
-        else
-        {
-            // If cursor is elsewhere, move to cursor position
-            Offset = CursorPosition - LastCopyLocation;
-        }
+        FVector2D Offset = FVector2D(OffsetAmount, OffsetAmount);
 
         // Apply the offset to all pasted nodes
         for (UEdGraphNode* Node : PastedNodes)
         {
+            UE_LOG(LogTemp, Warning, TEXT("Pasted Node: %s (%p)"), *Node->GetName(), Node);
+            
             Node->NodePosX += Offset.X;
             Node->NodePosY += Offset.Y;
+
+            // Log information about each pin
+            for (UEdGraphPin* Pin : Node->Pins)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("  Pin: %s, Direction: %d"), 
+                    *Pin->PinName.ToString(),
+                    static_cast<int32>(Pin->Direction));
+            }
+
+            Node->ReconstructNode();
+        }
+
+        // Clear any existing selection and select the newly pasted nodes
+        GraphEditorWidget->ClearSelectionSet();
+        for (UEdGraphNode* Node : PastedNodes)
+        {
+            GraphEditorWidget->SetNodeSelection(Node, true);
         }
 
         // Notify graph changed

@@ -9,9 +9,21 @@ UCustomNode::UCustomNode()
 	NodeName = TEXT("Secret Node");
 }
 
+void UCustomNode::PostPasteNode()
+{
+	Super::PostPasteNode();
+    
+	// Clear existing pins
+	Pins.Empty();
+    
+	// Recreate pins with fresh GUIDs
+	AllocateDefaultPins();
+}
+
 void UCustomNode::AllocateDefaultPins()
 {
-	Super::AllocateDefaultPins();
+	// Clear any existing pins first
+	Pins.Empty();
     
 	// Create single pins that can act as both input and output
 	CreatePin(EGPD_Input, TEXT("Default"), TEXT("Top"));
@@ -19,6 +31,7 @@ void UCustomNode::AllocateDefaultPins()
 	CreatePin(EGPD_Input, TEXT("Default"), TEXT("Bottom"));
 	CreatePin(EGPD_Input, TEXT("Default"), TEXT("Left"));
 }
+
 
 FText UCustomNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
