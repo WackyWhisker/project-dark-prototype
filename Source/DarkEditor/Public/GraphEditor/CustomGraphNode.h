@@ -30,10 +30,6 @@ public:
             {
                 if (UEdGraphNode* Node = Pin->GetOwningNode())
                 {
-                    UE_LOG(LogTemp, Warning, TEXT("Pin MouseDown - Pin: %s, Node: %s (%p)"), 
-                        *Pin->PinName.ToString(),
-                        *Node->GetName(),
-                        Node);
                 }
             }
         }
@@ -46,10 +42,7 @@ public:
         {
             if (UEdGraphNode* Node = Pin->GetOwningNode())
             {
-                UE_LOG(LogTemp, Warning, TEXT("Pin DragDetected - Pin: %s, Node: %s (%p)"), 
-                    *Pin->PinName.ToString(),
-                    *Node->GetName(),
-                    Node);
+                    
             }
         }
         return SGraphPin::OnDragDetected(MyGeometry, MouseEvent);

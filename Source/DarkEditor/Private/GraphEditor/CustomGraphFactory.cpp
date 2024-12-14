@@ -8,7 +8,6 @@
 
 UCustomGraphFactory::UCustomGraphFactory()
 {
-	UE_LOG(LogTemp, Warning, TEXT("CustomGraphFactory Constructor"));
 	bCreateNew = true;
 	bEditAfterNew = true;
 	SupportedClass = UCustomGraphAsset::StaticClass();

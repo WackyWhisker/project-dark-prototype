@@ -94,7 +94,7 @@ void SCustomGraphEditor::BindCommands()
 
 void SCustomGraphEditor::LogCommandExecution(const FString& CommandName) const
 {
-    UE_LOG(LogTemp, Display, TEXT("Executing command: %s"), *CommandName);
+    
 }
 
 void SCustomGraphEditor::OnDeleteNode()
@@ -179,8 +179,6 @@ void SCustomGraphEditor::OnPasteNode()
     if (!TextToImport.IsEmpty() && GraphAsset.IsValid())
     {
         const FVector2D CursorPosition = GraphEditorWidget->GetPasteLocation();
-        
-        UE_LOG(LogTemp, Warning, TEXT("Starting paste operation at cursor position: %s"), *CursorPosition.ToString());
 
         TSet<UEdGraphNode*> PastedNodes;
         FEdGraphUtilities::ImportNodesFromText(GraphAsset->EdGraph, TextToImport, PastedNodes);
@@ -192,19 +190,9 @@ void SCustomGraphEditor::OnPasteNode()
         // Apply the offset to all pasted nodes
         for (UEdGraphNode* Node : PastedNodes)
         {
-            UE_LOG(LogTemp, Warning, TEXT("Pasted Node: %s (%p)"), *Node->GetName(), Node);
             
             Node->NodePosX += Offset.X;
             Node->NodePosY += Offset.Y;
-
-            // Log information about each pin
-            for (UEdGraphPin* Pin : Node->Pins)
-            {
-                UE_LOG(LogTemp, Warning, TEXT("  Pin: %s, Direction: %d"), 
-                    *Pin->PinName.ToString(),
-                    static_cast<int32>(Pin->Direction));
-            }
-
             Node->ReconstructNode();
         }
 

@@ -16,7 +16,6 @@ public:
 	// The name that appears in the editor
 	virtual FText GetName() const override 
 	{ 
-		UE_LOG(LogTemp, Warning, TEXT("GetName called for CustomGraphAssetTypeActions"));
 		return FText::FromString(TEXT("Secret Editor")); 
 	}
     
@@ -29,7 +28,6 @@ public:
 	// Which category this asset should appear in when right-clicking in the content browser
 	virtual uint32 GetCategories() override 
 	{ 
-		UE_LOG(LogTemp, Warning, TEXT("GetCategories called for CustomGraphAssetTypeActions"));
 		return EAssetTypeCategories::Misc; 
 	}
 
