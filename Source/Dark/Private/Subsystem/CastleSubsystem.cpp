@@ -162,112 +162,123 @@ void UCastleSubsystem::LoadRoom(const FString& RoomID, const FString& ConnectedT
     
     if (UWorld* World = GetWorld())
     {
-        if (!LoadedRooms.Contains(RoomID))
+        // Store all parameters in local variables to use in the lambda
+        FString LocalRoomID = RoomID;
+        FString LocalConnectedToRoomID = ConnectedToRoomID;
+        FName LocalConnectFromSocket = ConnectFromSocket;
+        FName LocalConnectToSocket = ConnectToSocket;
+
+        FTimerHandle TimerHandle;
+        World->GetTimerManager().SetTimer(TimerHandle, [this, LocalRoomID, LocalConnectedToRoomID, 
+            LocalConnectFromSocket, LocalConnectToSocket]()
         {
-            FName LevelName = GetLevelNameForRoom(RoomID);
-            if (LevelName == NAME_None) return;
-
-            FVector SpawnPosition = FVector::ZeroVector;
-            FRotator SpawnRotation = FRotator::ZeroRotator;
-
-            UE_LOG(CastleLog, Warning, TEXT("=== Loading Room: %s ==="), *RoomID);
-            UE_LOG(CastleLog, Warning, TEXT("Connected To: %s"), ConnectedToRoomID.IsEmpty() ? TEXT("None") : *ConnectedToRoomID);
-            UE_LOG(CastleLog, Warning, TEXT("Connect From Socket: %s"), *ConnectFromSocket.ToString());
-            UE_LOG(CastleLog, Warning, TEXT("Connect To Socket: %s"), *ConnectToSocket.ToString());
-
-            // If this isn't the entry room, get the world position from the connected room's socket
-            if (!ConnectedToRoomID.IsEmpty())
+            if (!LoadedRooms.Contains(LocalRoomID))
             {
-                FLoadedRoomInfo* ConnectedRoom = LoadedRooms.Find(ConnectedToRoomID);
-                if (ConnectedRoom)
+                FName LevelName = GetLevelNameForRoom(LocalRoomID);
+                if (LevelName == NAME_None) return;
+
+                FVector SpawnPosition = FVector::ZeroVector;
+                FRotator SpawnRotation = FRotator::ZeroRotator;
+
+                UE_LOG(CastleLog, Warning, TEXT("=== Loading Room: %s ==="), *LocalRoomID);
+                UE_LOG(CastleLog, Warning, TEXT("Connected To: %s"), LocalConnectedToRoomID.IsEmpty() ? TEXT("None") : *LocalConnectedToRoomID);
+                UE_LOG(CastleLog, Warning, TEXT("Connect From Socket: %s"), *LocalConnectFromSocket.ToString());
+                UE_LOG(CastleLog, Warning, TEXT("Connect To Socket: %s"), *LocalConnectToSocket.ToString());
+
+                // If this isn't the entry room, get the world position from the connected room's socket
+                if (!LocalConnectedToRoomID.IsEmpty())
                 {
-                    UE_LOG(CastleLog, Warning, TEXT("Found Connected Room: %s (Level: %s)"), 
-                        *ConnectedRoom->RoomID, *ConnectedRoom->LevelName.ToString());
-
-                    ULevelStreaming* ConnectedLevel = GetLevelByName(ConnectedRoom->LevelName);
-                    if (ConnectedLevel && ConnectedLevel->GetLoadedLevel())
+                    FLoadedRoomInfo* ConnectedRoom = LoadedRooms.Find(LocalConnectedToRoomID);
+                    if (ConnectedRoom)
                     {
-                        UE_LOG(CastleLog, Warning, TEXT("Connected Level Transform: %s"), 
-                            *ConnectedLevel->LevelTransform.ToString());
+                        UE_LOG(CastleLog, Warning, TEXT("Found Connected Room: %s (Level: %s)"), 
+                            *ConnectedRoom->RoomID, *ConnectedRoom->LevelName.ToString());
 
-                        // Find the socket in the connected room
-                        bool bFoundSocket = false;
-                        for (AActor* Actor : ConnectedLevel->GetLoadedLevel()->Actors)
+                        ULevelStreaming* ConnectedLevel = GetLevelByName(ConnectedRoom->LevelName);
+                        if (ConnectedLevel && ConnectedLevel->GetLoadedLevel())
                         {
-                            if (ACastleSocketActor* SocketActor = Cast<ACastleSocketActor>(Actor))
-                            {
-                                FVector ActorLocation = SocketActor->GetActorLocation();
-                                FTransform ActorTransform = SocketActor->GetActorTransform();
-    
-                                UE_LOG(CastleLog, Warning, TEXT("Found Socket: %s"), *SocketActor->SocketName.ToString());
-                                UE_LOG(CastleLog, Warning, TEXT("  Actor Location: %s"), *ActorLocation.ToString());
-                                UE_LOG(CastleLog, Warning, TEXT("  Actor Transform: %s"), *ActorTransform.ToString());
-                                UE_LOG(CastleLog, Warning, TEXT("  Level Transform: %s"), 
-                                    *ConnectedLevel->LevelTransform.ToString());
+                            UE_LOG(CastleLog, Warning, TEXT("Connected Level Transform: %s"), 
+                                *ConnectedLevel->LevelTransform.ToString());
 
-                                if (SocketActor->SocketName == ConnectFromSocket)
+                            // Find the socket in the connected room
+                            bool bFoundSocket = false;
+                            for (AActor* Actor : ConnectedLevel->GetLoadedLevel()->Actors)
+                            {
+                                if (ACastleSocketActor* SocketActor = Cast<ACastleSocketActor>(Actor))
                                 {
-                                    SpawnPosition = ActorLocation;
-                                    SpawnRotation = SocketActor->GetActorRotation() + FRotator(0, 180.0f, 0);
+                                    FVector ActorLocation = SocketActor->GetActorLocation();
+                                    FTransform ActorTransform = SocketActor->GetActorTransform();
         
-                                    UE_LOG(CastleLog, Warning, TEXT("Using Socket for Spawn - Position: %s, Rotation: %s"), 
-                                        *SpawnPosition.ToString(), *SpawnRotation.ToString());
-        
-                                    bFoundSocket = true;
-                                    break;
+                                    UE_LOG(CastleLog, Warning, TEXT("Found Socket: %s"), *SocketActor->SocketName.ToString());
+                                    UE_LOG(CastleLog, Warning, TEXT("  Actor Location: %s"), *ActorLocation.ToString());
+                                    UE_LOG(CastleLog, Warning, TEXT("  Actor Transform: %s"), *ActorTransform.ToString());
+                                    UE_LOG(CastleLog, Warning, TEXT("  Level Transform: %s"), 
+                                        *ConnectedLevel->LevelTransform.ToString());
+
+                                    if (SocketActor->SocketName == LocalConnectFromSocket)
+                                    {
+                                        SpawnPosition = ActorLocation;
+                                        SpawnRotation = SocketActor->GetActorRotation() + FRotator(0, 0.0f, 0);
+            
+                                        UE_LOG(CastleLog, Warning, TEXT("Using Socket for Spawn - Position: %s, Rotation: %s"), 
+                                            *SpawnPosition.ToString(), *SpawnRotation.ToString());
+            
+                                        bFoundSocket = true;
+                                        break;
+                                    }
                                 }
                             }
+                            
+                            if (!bFoundSocket)
+                            {
+                                UE_LOG(CastleLog, Error, TEXT("Failed to find socket %s in room %s"), 
+                                    *LocalConnectFromSocket.ToString(), *LocalConnectedToRoomID);
+                            }
                         }
-                        
-                        if (!bFoundSocket)
+                        else
                         {
-                            UE_LOG(CastleLog, Error, TEXT("Failed to find socket %s in room %s"), 
-                                *ConnectFromSocket.ToString(), *ConnectedToRoomID);
+                            UE_LOG(CastleLog, Error, TEXT("Connected level not found or not loaded"));
                         }
                     }
                     else
                     {
-                        UE_LOG(CastleLog, Error, TEXT("Connected level not found or not loaded"));
+                        UE_LOG(CastleLog, Error, TEXT("Connected room info not found: %s"), *LocalConnectedToRoomID);
                     }
                 }
                 else
                 {
-                    UE_LOG(CastleLog, Error, TEXT("Connected room info not found: %s"), *ConnectedToRoomID);
+                    UE_LOG(CastleLog, Warning, TEXT("Entry room - spawning at origin"));
+                }
+
+                bool bSucceeded = false;
+                ULevelStreamingDynamic* NewLevel = ULevelStreamingDynamic::LoadLevelInstance(
+                    GetWorld(),
+                    LevelName.ToString(),
+                    SpawnPosition,
+                    SpawnRotation,
+                    bSucceeded
+                );
+
+                if (bSucceeded)
+                {
+                    FLoadedRoomInfo RoomInfo;
+                    RoomInfo.RoomID = LocalRoomID;
+                    RoomInfo.LevelName = LevelName;
+                    RoomInfo.RoomType = CastleWorldSettings->RoomData->GetRoomType(LocalRoomID);
+                    LoadedRooms.Add(LocalRoomID, RoomInfo);
+
+                    NewLevel->OnLevelLoaded.AddDynamic(this, &UCastleSubsystem::OnRoomLoaded);
+                    
+                    UE_LOG(CastleLog, Warning, TEXT("=== Room %s spawn complete ==="), *LocalRoomID);
+                    UE_LOG(CastleLog, Warning, TEXT("Final Position: %s"), *SpawnPosition.ToString());
+                    UE_LOG(CastleLog, Warning, TEXT("Final Rotation: %s"), *SpawnRotation.ToString());
+                }
+                else
+                {
+                    UE_LOG(CastleLog, Error, TEXT("Failed to load level instance for room: %s"), *LocalRoomID);
                 }
             }
-            else
-            {
-                UE_LOG(CastleLog, Warning, TEXT("Entry room - spawning at origin"));
-            }
-
-            bool bSucceeded = false;
-            ULevelStreamingDynamic* NewLevel = ULevelStreamingDynamic::LoadLevelInstance(
-                World,
-                LevelName.ToString(),
-                SpawnPosition,
-                SpawnRotation,
-                bSucceeded
-            );
-
-            if (bSucceeded)
-            {
-                FLoadedRoomInfo RoomInfo;
-                RoomInfo.RoomID = RoomID;
-                RoomInfo.LevelName = LevelName;
-                RoomInfo.RoomType = CastleWorldSettings->RoomData->GetRoomType(RoomID);
-                LoadedRooms.Add(RoomID, RoomInfo);
-
-                NewLevel->OnLevelLoaded.AddDynamic(this, &UCastleSubsystem::OnRoomLoaded);
-                
-                UE_LOG(CastleLog, Warning, TEXT("=== Room %s spawn complete ==="), *RoomID);
-                UE_LOG(CastleLog, Warning, TEXT("Final Position: %s"), *SpawnPosition.ToString());
-                UE_LOG(CastleLog, Warning, TEXT("Final Rotation: %s"), *SpawnRotation.ToString());
-            }
-            else
-            {
-                UE_LOG(CastleLog, Error, TEXT("Failed to load level instance for room: %s"), *RoomID);
-            }
-        }
+        }, 0.5f, false);
     }
 }
 
@@ -457,7 +468,6 @@ FName UCastleSubsystem::GetLevelNameForRoom(const FString& RoomID)
 
 void UCastleSubsystem::OnRoomLoaded()
 {
-    // Process next room in queue if available
     ProcessingQueue.RemoveAt(0);
     
     if (ProcessingQueue.Num() > 0)
@@ -475,13 +485,15 @@ void UCastleSubsystem::OnRoomLoaded()
             {
                 ConnectToRoomID = LoadedRoom.Key;
                 
-                // Get connection points
+                // Get all connection points for both rooms
                 TArray<FName> SourcePoints = CastleWorldSettings->RoomData->GetRoomConnectionPoints(ConnectToRoomID);
                 TArray<FName> TargetPoints = CastleWorldSettings->RoomData->GetRoomConnectionPoints(NextRoomID);
                 
                 if (SourcePoints.Num() > 0 && TargetPoints.Num() > 0)
                 {
-                    SourceSocket = SourcePoints[0];
+                    // For rooms with multiple connection points, use the last one as source
+                    // and first one as target to establish direction
+                    SourceSocket = SourcePoints.Num() > 1 ? SourcePoints.Last() : SourcePoints[0];
                     TargetSocket = TargetPoints[0];
                 }
                 
@@ -489,7 +501,7 @@ void UCastleSubsystem::OnRoomLoaded()
             }
         }
 
-        LoadRoom(NextRoomID, ConnectToRoomID, TargetSocket, SourceSocket);
+        LoadRoom(NextRoomID, ConnectToRoomID, SourceSocket, TargetSocket);
     }
 }
 
