@@ -5,72 +5,170 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Engine/World.h"
+#include "Data/CastleRoomData.h"
 #include "CastleSubsystem.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(CastleLog, Log, All);
 
 class UCastleRoomData;
 class ACastleWorldSettings;
+class ACastleSocketActor;
+
+USTRUCT(BlueprintType)
+struct FSocketTransform
+{
+    GENERATED_BODY()
+
+    // The socket's transform in the level
+    UPROPERTY()
+    FTransform Transform;
+
+    // The socket's name
+    UPROPERTY()
+    FName SocketName;
+
+    FSocketTransform()
+        : Transform(FTransform::Identity)
+        , SocketName(NAME_None)
+    {}
+};
+
+USTRUCT(BlueprintType)
+struct FLoadedRoomInfo
+{
+    GENERATED_BODY()
+
+    FString RoomID;
+    FName LevelName;
+    ECastleRoomType RoomType;
+};
+
+// Add to CastleSubsystem.h
+USTRUCT()
+struct FPendingRoomConnection
+{
+    GENERATED_BODY()
+
+    FString RoomID;
+    FString ConnectedToRoomID;
+    FName ConnectFromSocket;
+    FName ConnectToSocket;
+
+    FPendingRoomConnection() {}
+    FPendingRoomConnection(FString InRoomID, FString InConnectedToRoomID, 
+        FName InConnectFromSocket, FName InConnectToSocket)
+        : RoomID(InRoomID)
+        , ConnectedToRoomID(InConnectedToRoomID)
+        , ConnectFromSocket(InConnectFromSocket)
+        , ConnectToSocket(InConnectToSocket)
+    {}
+};
+
+USTRUCT()
+struct FRoomLoadingInfo
+{
+    GENERATED_BODY()
+
+    FString RoomID;
+    FName LevelName;
+    ECastleRoomType RoomType;
+    FString ConnectedToRoomID;
+    FName ConnectFromSocket;
+    FName ConnectToSocket;
+
+    FRoomLoadingInfo()
+        : RoomType(ECastleRoomType::None)
+    {}
+};
 
 UCLASS()
 class DARK_API UCastleSubsystem : public UWorldSubsystem
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	/*--Public Methods --------------------*/
+    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+    
+    UFUNCTION(BlueprintCallable, Category = "Castle")
+    void TestSubsystemAccess();
 
-	// Initialize the subsystem
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	
-	// Simple function we can call to verify subsystem is accessible
-	UFUNCTION(BlueprintCallable, Category = "Castle")
-	void TestSubsystemAccess();
-	
-	// Load a random available room
-	UFUNCTION(BlueprintCallable, Category = "Castle")
-	void LoadRandomRoom();
+    // Main function to spawn the entire dungeon
+    UFUNCTION(BlueprintCallable, Category = "Castle")
+    void SpawnCompleteDungeon();
+    void ProcessNextRoom();
 
-	// Load a specific room level
-	UFUNCTION(BlueprintCallable, Category = "Castle Rooms")
-	void LoadRoom(FName RoomLevelName);
+    // Load the initial entry room
+    UFUNCTION(BlueprintCallable, Category = "Castle")
+    void LoadEntryRoom();
 
-	// Unload a specific room level
-	UFUNCTION(BlueprintCallable, Category = "Castle Rooms")
-	void UnloadRoom(FName RoomLevelName);
+    // Load a random connection room
+    UFUNCTION(BlueprintCallable, Category = "Castle")
+    void LoadRandomConnectionRoom(const FString& ConnectedToRoomID);
 
-	// Check if a room is currently loaded
-	UFUNCTION(BlueprintCallable, Category = "Castle Rooms")
-	bool IsRoomLoaded(FName RoomLevelName);
+    // Load a specific room level with optional connection info
+    UFUNCTION(BlueprintCallable, Category = "Castle Rooms")
+    void LoadRoom(const FString& RoomID, const FString& ConnectedToRoomID = "", 
+        FName ConnectFromSocket = NAME_None, FName ConnectToSocket = NAME_None);
 
-public:
-	/*--Public Properties ----------------*/
+    // Unload a specific room
+    UFUNCTION(BlueprintCallable, Category = "Castle Rooms")
+    void UnloadRoom(const FString& RoomID);
+
+    // Check if a room is currently loaded
+    UFUNCTION(BlueprintCallable, Category = "Castle Rooms")
+    bool IsRoomLoaded(const FString& RoomID) const;
+
+    // Get all currently loaded rooms
+    UFUNCTION(BlueprintCallable, Category = "Castle Rooms")
+    TArray<FString> GetLoadedRoomIDs() const;
+
+    // Debug function to visualize sockets
+    UFUNCTION(BlueprintCallable, Category = "Castle|Debug")
+    void DebugDrawSockets();
+    void LogSocketInfo(const FString& RoomID);
+    void ProcessPendingConnections();
+
+    UFUNCTION(BlueprintCallable, Category = "Castle|Debug")
+    void DebugLogAllSocketActors(const FString& RoomID);
 
 protected:
-	/*--Protected Methods ---------------*/
-	
-	// Callback for when room finishes loading
-	UFUNCTION()
-	void OnRoomLoaded();
+    UFUNCTION()
+    void OnRoomLoaded();
 
-	// Callback for when room finishes unloading
-	UFUNCTION()
-	void OnRoomUnloaded();
+    UFUNCTION()
+    void OnRoomUnloaded();
+
+    // Helper function to find entry point
+    FString FindEntryRoomID() const;
+    
+    // Helper function to get next rooms in sequence
+    TArray<FString> GetNextRooms(const FString& CurrentRoomID) const;
+
+    // Calculate transform for connecting rooms
+    FTransform CalculateRoomTransform(const FString& SourceRoomID, 
+        const FString& TargetRoomID, FName SourceSocket, FName TargetSocket);
+
+    // Helper to get streaming level by name
+    ULevelStreaming* GetLevelByName(const FName& LevelName) const;
 
 protected:
-	/*--Protected Properties ------------*/
-	
-	//Reference to our Castle Room Settings
-	UPROPERTY(EditDefaultsOnly, Category = "Castle Configuration")
-	TObjectPtr<ACastleWorldSettings> CastleWorldSettings;
-	
-	// Track our active rooms
-	UPROPERTY()
-	TArray<FName> LoadedRooms;
+    UPROPERTY()
+    TObjectPtr<ACastleWorldSettings> CastleWorldSettings;
+    
+    // Track loaded rooms with their info
+    UPROPERTY()
+    TMap<FString, FLoadedRoomInfo> LoadedRooms;
+
+    UPROPERTY()
+    TArray<FPendingRoomConnection> PendingConnections;
+    
+    UPROPERTY()
+    TArray<FString> ProcessingQueue;
 
 private:
-	/*--Private Methods ----------------*/
+    // Helper to get level name for a room
+    FName GetLevelNameForRoom(const FString& RoomID);
 
-private:
-	/*--Private Properties -------------*/
+    UPROPERTY()
+    TMap<ULevelStreaming*, FRoomLoadingInfo> PendingRoomLoads;
 };
