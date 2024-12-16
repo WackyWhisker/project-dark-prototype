@@ -18,7 +18,7 @@ void UCastleSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     CastleWorldSettings = Cast<ACastleWorldSettings>(GetWorld()->GetWorldSettings());
     if (!CastleWorldSettings || !CastleWorldSettings->RoomData)
     {
-        UE_LOG(CastleLog, Error, TEXT("Failed to initialize Castle Subsystem - Missing World Settings or Room Data"));
+        UE_LOG(CastleLog, Warning, TEXT("Failed to initialize Castle Subsystem - Missing World Settings or Room Data"));
         return;
     }
 
