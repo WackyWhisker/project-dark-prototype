@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "name": "roomType",
+      "type": "STRING",
+      "required": true
+    },
+    {
+      "name": "connectionPoints",
+      "type": "LIST",
+      "delimiter": ","
+    },
+    {
+      "name": "levelVariants",
+      "type": "LIST",
+      "delimiter": ","
+    }
+  ]
+}

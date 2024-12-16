@@ -1,0 +1,56 @@
+{
+  "nodes": {
+    "n0": {
+      "roomType": "entry",
+      "connectionPoints": [
+        "socket_1"
+      ],
+      "levelVariants": [
+        "L_Entry_01"
+      ]
+    },
+    "n1": {
+      "roomType": "connection",
+      "connectionPoints": [
+        "socket_1",
+        "socket_2"
+      ],
+      "levelVariants": [
+        "L_Connection_01",
+        "L_Connection_02",
+        "L_Connection_03"
+      ],
+      "description": null
+    },
+    "n2": {
+      "roomType": "exit",
+      "connectionPoints": [
+        "socket_1"
+      ],
+      "levelVariants": [
+        "L_Exit_01"
+      ],
+      "description": null
+    }
+  },
+  "edges": [
+    {
+      "source": "n0",
+      "target": "n1"
+    },
+    {
+      "source": "n1",
+      "target": "n2"
+    }
+  ],
+  "metadata": {
+    "property_types": {
+      "roomType": "STRING",
+      "connectionPoints": "LIST",
+      "levelVariants": "LIST",
+      "Description": "STRING",
+      "url": "STRING",
+      "description": "STRING"
+    }
+  }
+}
