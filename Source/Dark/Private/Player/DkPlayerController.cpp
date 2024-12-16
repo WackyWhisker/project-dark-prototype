@@ -13,6 +13,10 @@ DEFINE_LOG_CATEGORY(LogDkPlayerController);
 void ADkPlayerController::BeginPlay()
 {
     Super::BeginPlay();
+    FInputModeGameOnly InputMode;
+    SetInputMode(InputMode);
+    bShowMouseCursor = false;
+    
     if (!PlayerRef)
     {
         PlayerRef = Cast<ADkCharacter>(GetPawn());

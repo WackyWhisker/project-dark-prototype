@@ -26,6 +26,10 @@
 		{
 			"Name": "DataprepEditor",
 			"Enabled": true
+		},
+		{
+			"Name": "CommonUI",
+			"Enabled": true
 		}
 	]
 }
