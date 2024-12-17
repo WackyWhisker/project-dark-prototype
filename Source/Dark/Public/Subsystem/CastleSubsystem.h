@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/DkGameModeBase.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Engine/World.h"
 #include "Data/CastleRoomData.h"
@@ -87,6 +88,7 @@ class DARK_API UCastleSubsystem : public UWorldSubsystem
     GENERATED_BODY()
 
 public:
+     
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     
     UFUNCTION(BlueprintCallable, Category = "Castle")
