@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "DkPlayerControllerInterface.h"
+#include "LevelSequencePlayer.h"
+#include "LevelSequence.h"
 #include "GameFramework/PlayerController.h"
 #include "Subsystem/DkGameStateSubsystem.h"
 #include "DkPlayerController.generated.h"
@@ -153,4 +155,17 @@ private:
 
     // Optional: Keep track if we disabled input due to death
     bool bWasInputDisabledByDeath = false;
+
+private:
+    UPROPERTY(EditDefaultsOnly, Category = "Sequences")
+    ULevelSequence* DeathSequence;
+
+    // Keep track of sequence player
+    UPROPERTY()
+    ULevelSequencePlayer* ActiveSequencePlayer;
+
+    void PlayDeathSequence();
+    
+    UFUNCTION()
+    void OnDeathSequenceFinished();
 };
