@@ -304,12 +304,19 @@ void UCastleSubsystem::LoadRoom(const FString& RoomID, const FString& ConnectedT
 
 void UCastleSubsystem::UnloadRoom(const FString& RoomID)
 {
+    UE_LOG(CastleLog, Warning, TEXT("UnloadRoom - Attempting to unload room: %s"), *RoomID);
+    
     if (UWorld* World = GetWorld())
     {
         if (FLoadedRoomInfo* RoomInfo = LoadedRooms.Find(RoomID))
         {
             if (ULevelStreaming* Level = GetLevelByName(RoomInfo->LevelName))
             {
+                // Get the full package name from the streaming level
+                FString PackageName = Level->GetWorldAssetPackageName();
+                
+                UE_LOG(CastleLog, Warning, TEXT("  Found streaming level, unloading package: %s"), *PackageName);
+                
                 FLatentActionInfo LatentInfo;
                 LatentInfo.CallbackTarget = this;
                 LatentInfo.ExecutionFunction = "OnRoomUnloaded";
@@ -317,7 +324,11 @@ void UCastleSubsystem::UnloadRoom(const FString& RoomID)
                 LatentInfo.UUID = FMath::Rand();
 
                 Level->OnLevelUnloaded.AddDynamic(this, &UCastleSubsystem::OnRoomUnloaded);
-                UGameplayStatics::UnloadStreamLevel(World, RoomInfo->LevelName, LatentInfo, false);
+                UGameplayStatics::UnloadStreamLevel(World, FName(*PackageName), LatentInfo, false);
+            }
+            else
+            {
+                UE_LOG(CastleLog, Error, TEXT("  Failed to find streaming level for room: %s"), *RoomID);
             }
         }
     }
@@ -466,17 +477,38 @@ FTransform UCastleSubsystem::CalculateRoomTransform(const FString& SourceRoomID,
 
 ULevelStreaming* UCastleSubsystem::GetLevelByName(const FName& LevelName) const
 {
-   if (UWorld* World = GetWorld())
-   {
-       for (ULevelStreaming* Level : World->GetStreamingLevels())
-       {
-           if (Level && Level->GetWorldAssetPackageName().Contains(LevelName.ToString()))
-           {
-               return Level;
-           }
-       }
-   }
-   return nullptr;
+    if (UWorld* World = GetWorld())
+    {
+        UE_LOG(CastleLog, Warning, TEXT("GetLevelByName - Searching for level: %s"), *LevelName.ToString());
+        
+        TArray<ULevelStreaming*> StreamingLevels = World->GetStreamingLevels();
+        UE_LOG(CastleLog, Warning, TEXT("Found %d streaming levels in world"), StreamingLevels.Num());
+        
+        for (ULevelStreaming* Level : StreamingLevels)
+        {
+            if (Level)
+            {
+                FString PackageName = Level->GetWorldAssetPackageName();
+                UE_LOG(CastleLog, Warning, TEXT("  Checking Level - Package Name: %s"), *PackageName);
+                
+                if (PackageName.Contains(LevelName.ToString()))
+                {
+                    UE_LOG(CastleLog, Warning, TEXT("  Found matching level!"));
+                    return Level;
+                }
+            }
+            else
+            {
+                UE_LOG(CastleLog, Warning, TEXT("  Found null streaming level entry"));
+            }
+        }
+        UE_LOG(CastleLog, Warning, TEXT("No matching level found for: %s"), *LevelName.ToString());
+    }
+    else
+    {
+        UE_LOG(CastleLog, Error, TEXT("GetLevelByName - No valid World"));
+    }
+    return nullptr;
 }
 
 FName UCastleSubsystem::GetLevelNameForRoom(const FString& RoomID)
@@ -699,34 +731,18 @@ void UCastleSubsystem::ClearCompleteCastle()
                 UnloadRoom(RoomID);
             }
             
-            // Set up a timer to check when all rooms are unloaded
-            FTimerHandle TimerHandle;
-            World->GetTimerManager().SetTimer(TimerHandle, 
-                FTimerDelegate::CreateLambda([this]()
-                {
-                    if (!AreAnyRoomsUnloading())
-                    {
-                        UE_LOG(CastleLog, Log, TEXT("All rooms unloaded, clearing internal state"));
-                        
-                        // Clear all internal state
-                        LoadedRooms.Empty();
-                        ProcessingQueue.Empty();
-                        PendingConnections.Empty();
-                        PendingRoomLoads.Empty();
-                        
-                        UE_LOG(CastleLog, Log, TEXT("Castle cleanup complete"));
-                    }
-                }), 0.1f, true); // Check every 0.1 seconds
+            // Clear any existing timer first
+            World->GetTimerManager().ClearTimer(CleanupTimerHandle);
+            
+            // Set up new timer
+            World->GetTimerManager().SetTimer(CleanupTimerHandle, 
+                FTimerDelegate::CreateUObject(this, &UCastleSubsystem::CheckUnloadProgress), 
+                0.1f, true);
         }
         else
         {
             // If no rooms to unload, just clear the state
-            LoadedRooms.Empty();
-            ProcessingQueue.Empty();
-            PendingConnections.Empty();
-            PendingRoomLoads.Empty();
-            
-            UE_LOG(CastleLog, Log, TEXT("Castle cleanup complete"));
+            ClearInternalState();
         }
     }
 }
@@ -757,4 +773,29 @@ void UCastleSubsystem::OnGameStateChanged(EDkGameState NewState, EDkGameState Ol
         // Start the reset sequence
         ClearCompleteCastle();
     }
+}
+
+void UCastleSubsystem::CheckUnloadProgress()
+{
+    if (!AreAnyRoomsUnloading())
+    {
+        UE_LOG(CastleLog, Log, TEXT("All rooms unloaded, clearing internal state"));
+        ClearInternalState();
+        
+        // Clear the timer
+        if (UWorld* World = GetWorld())
+        {
+            World->GetTimerManager().ClearTimer(CleanupTimerHandle);
+        }
+    }
+}
+
+void UCastleSubsystem::ClearInternalState()
+{
+    LoadedRooms.Empty();
+    ProcessingQueue.Empty();
+    PendingConnections.Empty();
+    PendingRoomLoads.Empty();
+    
+    UE_LOG(CastleLog, Log, TEXT("Castle cleanup complete"));
 }

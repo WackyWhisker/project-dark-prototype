@@ -190,4 +190,14 @@ private:
     // Handler for game state changes
     UFUNCTION()
     void OnGameStateChanged(EDkGameState NewState, EDkGameState OldState);
+
+    // Handle for cleanup timer
+    FTimerHandle CleanupTimerHandle;
+
+    // Helper function to clear all internal data structures
+    void ClearInternalState();
+
+    // Helper function to check unload progress
+    UFUNCTION()
+    void CheckUnloadProgress();
 };
