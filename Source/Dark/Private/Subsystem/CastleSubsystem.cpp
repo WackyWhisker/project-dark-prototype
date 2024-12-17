@@ -769,6 +769,11 @@ void UCastleSubsystem::OnGameStateChanged(EDkGameState NewState, EDkGameState Ol
     if (NewState == EDkGameState::Resetting)
     {
         UE_LOG(CastleLog, Log, TEXT("Castle System detected reset state - Beginning castle reset sequence"));
+        // Register ourselves for reset tracking
+        if (GameStateSubsystem)
+        {
+            GameStateSubsystem->RegisterForReset(this);
+        }
         
         // Start the reset sequence
         ClearCompleteCastle();
@@ -797,5 +802,10 @@ void UCastleSubsystem::ClearInternalState()
     PendingConnections.Empty();
     PendingRoomLoads.Empty();
     
+    // Notify game state that we're done with reset
+    if (GameStateSubsystem)
+    {
+        GameStateSubsystem->NotifyResetComplete(this);
+    }
     UE_LOG(CastleLog, Log, TEXT("Castle cleanup complete"));
 }

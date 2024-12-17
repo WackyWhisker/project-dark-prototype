@@ -370,6 +370,11 @@ void ADkPlayerController::HandleGameStateChanged(EDkGameState NewState, EDkGameS
         bWasInputDisabledByDeath = true;
         PlayDeathSequence();
         break;
+
+
+    case EDkGameState::Respawning:
+        PlayRespawnSequence();
+        break;
             
     case EDkGameState::Playing:
         // Only re-enable if we were the ones who disabled it
@@ -413,10 +418,49 @@ void ADkPlayerController::PlayDeathSequence()
     }
     else
     {
-        UE_LOG(LogDkPlayerController, Warning, TEXT("Failed to create sequence player"));
+        UE_LOG(LogDkPlayerController, Warning, TEXT("Failed to create death sequence player"));
         if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
         {
             GameStateSubsystem->RequestStateChange(EDkGameState::Resetting);
+        }
+    }
+}
+
+void ADkPlayerController::PlayRespawnSequence()
+{
+    if (!RespawnSequence)
+    {
+        UE_LOG(LogDkPlayerController, Warning, TEXT("Respawn sequence not set in PlayerController"));
+        if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+        {
+            GameStateSubsystem->RequestStateChange(EDkGameState::Playing);
+        }
+        return;
+    }
+
+    // Create sequence player and bind to finish event
+    FMovieSceneSequencePlaybackSettings PlaybackSettings;
+    PlaybackSettings.bPauseAtEnd = true;
+    ALevelSequenceActor* LSActor;  // Will store the created actor
+    
+    ActiveSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
+        GetWorld(),
+        RespawnSequence,
+        PlaybackSettings,
+        LSActor  // Pass the actor reference
+    );
+
+    if (ActiveSequencePlayer)
+    {
+        ActiveSequencePlayer->OnFinished.AddDynamic(this, &ADkPlayerController::OnRespawnSequenceFinished);
+        ActiveSequencePlayer->Play();
+    }
+    else
+    {
+        UE_LOG(LogDkPlayerController, Warning, TEXT("Failed to create respawn sequence player"));
+        if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+        {
+            GameStateSubsystem->RequestStateChange(EDkGameState::Playing);
         }
     }
 }
@@ -437,3 +481,21 @@ void ADkPlayerController::OnDeathSequenceFinished()
         GameStateSubsystem->RequestStateChange(EDkGameState::Resetting);
     }
 }
+
+void ADkPlayerController::OnRespawnSequenceFinished()
+{
+    // Clean up
+    if (ActiveSequencePlayer)
+    {
+        ActiveSequencePlayer->OnFinished.RemoveDynamic(this, &ADkPlayerController::OnRespawnSequenceFinished);
+        ActiveSequencePlayer = nullptr;
+    }
+
+    // Proceed to next state
+    if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+    {
+        GameStateSubsystem->RequestStateChange(EDkGameState::Playing);
+    }
+}
+
+

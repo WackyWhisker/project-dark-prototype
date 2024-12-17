@@ -160,12 +160,19 @@ private:
     UPROPERTY(EditDefaultsOnly, Category = "Sequences")
     ULevelSequence* DeathSequence;
 
+    UPROPERTY(EditDefaultsOnly, Category = "Sequences")
+    ULevelSequence* RespawnSequence;
+
     // Keep track of sequence player
     UPROPERTY()
     ULevelSequencePlayer* ActiveSequencePlayer;
 
     void PlayDeathSequence();
+    void PlayRespawnSequence();
     
     UFUNCTION()
     void OnDeathSequenceFinished();
+
+    UFUNCTION()
+    void OnRespawnSequenceFinished();
 };

@@ -46,6 +46,15 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Dk|GameState")
 	FOnDkGameStateChanged OnGameStateChanged;
 
+	// Register anything that needs to be part of the reset process
+	void RegisterForReset(UObject* Object);
+    
+	// Called when any registered object completes its reset
+	void NotifyResetComplete(UObject* Object);
+    
+	// Helper to check if we're still waiting for resets
+	bool AreAnyResetsPending() const;
+
 protected:
 	// Validates if a state transition is allowed
 	bool IsValidStateTransition(EDkGameState NewState) const;
@@ -58,5 +67,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category = "Dk|Debug")
 	bool bShowDebugState = true;
+
+private:
+	// Track anything that needs to complete before reset is done
+	TSet<TWeakObjectPtr<UObject>> PendingResetObjects;
 };
 

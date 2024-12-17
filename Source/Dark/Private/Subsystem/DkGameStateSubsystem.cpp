@@ -67,6 +67,36 @@ void UDkGameStateSubsystem::BeginDeathSequence()
 	}
 }
 
+void UDkGameStateSubsystem::RegisterForReset(UObject* Object)
+{
+	if (Object)
+	{
+		PendingResetObjects.Add(Object);
+		UE_LOG(LogTemp, Log, TEXT("Object registered for reset: %s"), *Object->GetName());
+	}
+}
+
+void UDkGameStateSubsystem::NotifyResetComplete(UObject* Object)
+{
+	if (Object)
+	{
+		PendingResetObjects.Remove(Object);
+		UE_LOG(LogTemp, Log, TEXT("Reset complete for: %s. Remaining: %d"), 
+			*Object->GetName(), PendingResetObjects.Num());
+
+		if (PendingResetObjects.IsEmpty())
+		{
+			UE_LOG(LogTemp, Log, TEXT("All resets complete, transitioning to Respawning"));
+			RequestStateChange(EDkGameState::Respawning);
+		}
+	}
+}
+
+bool UDkGameStateSubsystem::AreAnyResetsPending() const
+{
+	return !PendingResetObjects.IsEmpty();
+}
+
 bool UDkGameStateSubsystem::IsValidStateTransition(EDkGameState NewState) const
 {
 	switch (CurrentGameState)
