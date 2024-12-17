@@ -14,6 +14,7 @@ DECLARE_LOG_CATEGORY_EXTERN(CastleLog, Log, All);
 class UCastleRoomData;
 class ACastleWorldSettings;
 class ACastleSocketActor;
+class UDkGameStateSubsystem;
 
 USTRUCT(BlueprintType)
 struct FSocketTransform
@@ -90,7 +91,7 @@ class DARK_API UCastleSubsystem : public UWorldSubsystem
 public:
      
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-    
+        
     UFUNCTION(BlueprintCallable, Category = "Castle")
     void TestSubsystemAccess();
 
@@ -133,6 +134,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Castle|Debug")
     void DebugLogAllSocketActors(const FString& RoomID);
 
+    // Completely clears the castle - unloads all rooms and resets internal state
+    UFUNCTION(BlueprintCallable, Category = "Castle")
+    void ClearCompleteCastle();
+
 protected:
     UFUNCTION()
     void OnRoomLoaded();
@@ -152,6 +157,9 @@ protected:
 
     // Helper to get streaming level by name
     ULevelStreaming* GetLevelByName(const FName& LevelName) const;
+
+    // Helper to check if any rooms are still in process of being unloaded
+    bool AreAnyRoomsUnloading() const;
 
 protected:
     UPROPERTY()
@@ -173,4 +181,13 @@ private:
 
     UPROPERTY()
     TMap<ULevelStreaming*, FRoomLoadingInfo> PendingRoomLoads;
+
+private:
+    // Reference to game state subsystem
+    UPROPERTY()
+    TObjectPtr<UDkGameStateSubsystem> GameStateSubsystem;
+
+    // Handler for game state changes
+    UFUNCTION()
+    void OnGameStateChanged(EDkGameState NewState, EDkGameState OldState);
 };

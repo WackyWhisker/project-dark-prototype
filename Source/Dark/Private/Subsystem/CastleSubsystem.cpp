@@ -8,12 +8,32 @@
 #include "WorldSetting/CastleWorldSettings.h"
 #include "DrawDebugHelpers.h"
 #include "Subsystem/CastleSocketActor.h"
+#include "Subsystem/DkGameStateSubsystem.h"
 
 DEFINE_LOG_CATEGORY(CastleLog);
 
 void UCastleSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
+    // Initialize dependency first
+    Collection.InitializeDependency<UDkGameStateSubsystem>();
+    
     Super::Initialize(Collection);
+
+    UE_LOG(CastleLog, Warning, TEXT("Castle Subsystem initialization starting"));
+
+    if (UWorld* World = GetWorld())
+    {
+        GameStateSubsystem = World->GetSubsystem<UDkGameStateSubsystem>();
+        if (GameStateSubsystem)
+        {
+            UE_LOG(CastleLog, Warning, TEXT("Found GameStateSubsystem, subscribing to events"));
+            GameStateSubsystem->OnGameStateChanged.AddDynamic(this, &UCastleSubsystem::OnGameStateChanged);
+        }
+        else
+        {
+            UE_LOG(CastleLog, Error, TEXT("GameStateSubsystem not found during Castle initialization - This should never happen due to dependency resolution"));
+        }
+    }
 
     CastleWorldSettings = Cast<ACastleWorldSettings>(GetWorld()->GetWorldSettings());
     if (!CastleWorldSettings || !CastleWorldSettings->RoomData)
@@ -657,5 +677,84 @@ void UCastleSubsystem::DebugLogAllSocketActors(const FString& RoomID)
                 UE_LOG(CastleLog, Warning, TEXT("Total socket actors found: %d"), SocketCount);
             }
         }
+    }
+}
+
+void UCastleSubsystem::ClearCompleteCastle()
+{
+    UE_LOG(CastleLog, Log, TEXT("Starting complete castle cleanup"));
+    
+    if (UWorld* World = GetWorld())
+    {
+        // First unload all rooms
+        TArray<FString> RoomIDsToUnload = GetLoadedRoomIDs();
+        
+        if (RoomIDsToUnload.Num() > 0)
+        {
+            UE_LOG(CastleLog, Log, TEXT("Unloading %d rooms"), RoomIDsToUnload.Num());
+            
+            // Unload each room
+            for (const FString& RoomID : RoomIDsToUnload)
+            {
+                UnloadRoom(RoomID);
+            }
+            
+            // Set up a timer to check when all rooms are unloaded
+            FTimerHandle TimerHandle;
+            World->GetTimerManager().SetTimer(TimerHandle, 
+                FTimerDelegate::CreateLambda([this]()
+                {
+                    if (!AreAnyRoomsUnloading())
+                    {
+                        UE_LOG(CastleLog, Log, TEXT("All rooms unloaded, clearing internal state"));
+                        
+                        // Clear all internal state
+                        LoadedRooms.Empty();
+                        ProcessingQueue.Empty();
+                        PendingConnections.Empty();
+                        PendingRoomLoads.Empty();
+                        
+                        UE_LOG(CastleLog, Log, TEXT("Castle cleanup complete"));
+                    }
+                }), 0.1f, true); // Check every 0.1 seconds
+        }
+        else
+        {
+            // If no rooms to unload, just clear the state
+            LoadedRooms.Empty();
+            ProcessingQueue.Empty();
+            PendingConnections.Empty();
+            PendingRoomLoads.Empty();
+            
+            UE_LOG(CastleLog, Log, TEXT("Castle cleanup complete"));
+        }
+    }
+}
+
+bool UCastleSubsystem::AreAnyRoomsUnloading() const
+{
+    if (UWorld* World = GetWorld())
+    {
+        // Check all streaming levels
+        for (ULevelStreaming* Level : World->GetStreamingLevels())
+        {
+            if (Level && Level->IsLevelLoaded() && Level->IsStreamingStatePending())
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void UCastleSubsystem::OnGameStateChanged(EDkGameState NewState, EDkGameState OldState)
+{
+    // We're specifically interested in the Resetting state
+    if (NewState == EDkGameState::Resetting)
+    {
+        UE_LOG(CastleLog, Log, TEXT("Castle System detected reset state - Beginning castle reset sequence"));
+        
+        // Start the reset sequence
+        ClearCompleteCastle();
     }
 }
