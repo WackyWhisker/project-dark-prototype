@@ -57,6 +57,6 @@ protected:
 	EDkGameState CurrentGameState = EDkGameState::Playing;
 	
 	UPROPERTY(EditAnywhere, Category = "Dk|Debug")
-	bool bShowDebugState = false;
+	bool bShowDebugState = true;
 };
 

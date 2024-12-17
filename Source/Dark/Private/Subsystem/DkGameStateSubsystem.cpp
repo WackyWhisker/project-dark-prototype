@@ -97,7 +97,7 @@ void UDkGameStateSubsystem::HandleStateChanged(EDkGameState NewState)
             
 		GEngine->AddOnScreenDebugMessage(
 			-1,             // Key (-1 for unique)
-			5.0f,          // Duration
+			15.0f,          // Duration
 			FColor::Green,
 			StateText);
 	}

@@ -4,6 +4,7 @@
 #include "Component/DkHealthComponent.h"
 
 #include "GameFramework/Character.h"
+#include "Subsystem/DkGameStateSubsystem.h"
 
 
 // Sets default values for this component's properties
@@ -46,7 +47,13 @@ void UDkHealthComponent::TakeDamage(float DamageAmount)
 	{
 		bIsDead = true;
 		OnHealthDepleted.Broadcast();
-		GetOwner()->Destroy(); //TODO: Get rid of this temp destroy asap
+
+		// Instead of Destroy, notify the GameStateSubsystem
+		if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+		{
+			GameStateSubsystem->BeginDeathSequence();
+			return;
+		}
 	}
 
 	// Start cooldown timer
