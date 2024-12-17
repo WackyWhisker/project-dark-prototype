@@ -3,6 +3,8 @@
 
 #include "Component/DkHealthComponent.h"
 
+#include "Character/DkCharacterBase.h"
+#include "Enemy/DkEnemyBase.h"
 #include "GameFramework/Character.h"
 #include "Subsystem/DkGameStateSubsystem.h"
 
@@ -48,11 +50,25 @@ void UDkHealthComponent::TakeDamage(float DamageAmount)
 		bIsDead = true;
 		OnHealthDepleted.Broadcast();
 
-		// Instead of Destroy, notify the GameStateSubsystem
-		if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+		// Handle death based on owner type
+		if (AActor* Owner = GetOwner())
 		{
-			GameStateSubsystem->BeginDeathSequence();
-			return;
+			// Check if owner is character
+			if (ADkCharacterBase* CharacterOwner = Cast<ADkCharacterBase>(Owner))
+			{
+				if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+				{
+					GameStateSubsystem->BeginDeathSequence();
+					return;
+				}
+			}
+			// Check if owner is enemy
+			else if (ADkEnemyBase* EnemyOwner = Cast<ADkEnemyBase>(Owner))
+			{
+				GetOwner()->Destroy();
+				//EnemyOwner->BeginDeathSequence();
+				//return;
+			}
 		}
 	}
 

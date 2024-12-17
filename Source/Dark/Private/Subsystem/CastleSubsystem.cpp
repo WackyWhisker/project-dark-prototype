@@ -19,33 +19,33 @@ void UCastleSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     
     Super::Initialize(Collection);
 
-    UE_LOG(CastleLog, Warning, TEXT("Castle Subsystem initialization starting"));
+    //UE_LOG(CastleLog, Warning, TEXT("Castle Subsystem initialization starting"));
 
     if (UWorld* World = GetWorld())
     {
         GameStateSubsystem = World->GetSubsystem<UDkGameStateSubsystem>();
         if (GameStateSubsystem)
         {
-            UE_LOG(CastleLog, Warning, TEXT("Found GameStateSubsystem, subscribing to events"));
+            //UE_LOG(CastleLog, Warning, TEXT("Found GameStateSubsystem, subscribing to events"));
             GameStateSubsystem->OnGameStateChanged.AddDynamic(this, &UCastleSubsystem::OnGameStateChanged);
         }
         else
         {
-            UE_LOG(CastleLog, Error, TEXT("GameStateSubsystem not found during Castle initialization - This should never happen due to dependency resolution"));
+            //UE_LOG(CastleLog, Error, TEXT("GameStateSubsystem not found during Castle initialization - This should never happen due to dependency resolution"));
         }
     }
 
     CastleWorldSettings = Cast<ACastleWorldSettings>(GetWorld()->GetWorldSettings());
     if (!CastleWorldSettings || !CastleWorldSettings->RoomData)
     {
-        UE_LOG(CastleLog, Warning, TEXT("Failed to initialize Castle Subsystem - Missing World Settings or Room Data"));
+        //UE_LOG(CastleLog, Warning, TEXT("Failed to initialize Castle Subsystem - Missing World Settings or Room Data"));
         return;
     }
 
     bool bSuccess = CastleWorldSettings->RoomData->LoadFromContentJSON("Data/dungeon_data.json");
     if (!bSuccess)
     {
-        UE_LOG(CastleLog, Error, TEXT("Failed to load dungeon data from JSON"));
+        //UE_LOG(CastleLog, Error, TEXT("Failed to load dungeon data from JSON"));
         return;
     }
 

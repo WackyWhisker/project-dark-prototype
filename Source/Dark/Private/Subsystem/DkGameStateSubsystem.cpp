@@ -12,24 +12,24 @@ bool UDkGameStateSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
 	if (const UWorld* World = Cast<UWorld>(Outer))
 	{
-		UE_LOG(LogTemp, Log, TEXT("DkGameStateSubsystem: Checking creation for world: %s"), *World->GetName());
+		//UE_LOG(LogTemp, Log, TEXT("DkGameStateSubsystem: Checking creation for world: %s"), *World->GetName());
 
 		AGameModeBase* GameMode = World->GetAuthGameMode();
 		if (GameMode)
 		{
-			UE_LOG(LogTemp, Log, TEXT("DkGameStateSubsystem: Found GameMode: %s"), *GameMode->GetClass()->GetName());
+			//UE_LOG(LogTemp, Log, TEXT("DkGameStateSubsystem: Found GameMode: %s"), *GameMode->GetClass()->GetName());
 			return GameMode->IsA<ADkGameModeBase>();
 		}
 		else
 		{
-			UE_LOG(LogTemp, Log, TEXT("DkGameStateSubsystem: No GameMode found yet"));
+			//UE_LOG(LogTemp, Log, TEXT("DkGameStateSubsystem: No GameMode found yet"));
 			// More permissive: Allow creation in game worlds even without GameMode
 			return World->WorldType == EWorldType::Game || 
 				   World->WorldType == EWorldType::PIE;
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("DkGameStateSubsystem: No valid World found"));
+	//UE_LOG(LogTemp, Log, TEXT("DkGameStateSubsystem: No valid World found"));
 	return false;
 }
 
@@ -39,7 +39,7 @@ void UDkGameStateSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     
 	if (const UWorld* World = GetWorld())
 	{
-		UE_LOG(LogTemp, Log, TEXT("DkGameStateSubsystem: Successfully initialized in world %s"), *World->GetName());
+		//UE_LOG(LogTemp, Log, TEXT("DkGameStateSubsystem: Successfully initialized in world %s"), *World->GetName());
 	}
 }
 
