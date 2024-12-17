@@ -32,6 +32,12 @@ void ADkPlayerController::BeginPlay()
     {
         LetterboxWidget = CreateWidget<UUserWidget>(this, LetterboxWidgetClass);
     }
+
+    //Subscribe to Castle Game State broadcasts
+    if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+    {
+        GameStateSubsystem->OnGameStateChanged.AddDynamic(this, &ADkPlayerController::HandleGameStateChanged);
+    }
 }
 
 void ADkPlayerController::SetupInputComponent()
@@ -350,4 +356,25 @@ FDropSignature* ADkPlayerController::GetDropDelegate()
 FLiftSignature* ADkPlayerController::GetLiftDelegate()
 {
     return &LiftDelegate;
+}
+
+void ADkPlayerController::HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState)
+{
+    switch (NewState)
+    {
+    case EDkGameState::Dying:
+        // Disable input
+            DisableInput(this);
+        bWasInputDisabledByDeath = true;
+        break;
+            
+    case EDkGameState::Playing:
+        // Only re-enable if we were the ones who disabled it
+            if (bWasInputDisabledByDeath)
+            {
+                EnableInput(this);
+                bWasInputDisabledByDeath = false;
+            }
+        break;
+    }
 }

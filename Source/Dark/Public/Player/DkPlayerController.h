@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "DkPlayerControllerInterface.h"
 #include "GameFramework/PlayerController.h"
+#include "Subsystem/DkGameStateSubsystem.h"
 #include "DkPlayerController.generated.h"
 
 class UInputMappingContext;
@@ -145,4 +146,11 @@ private:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     TMap<FName, UInputMappingContext*> MappingContexts;
+
+    //Castle Game State specifics
+    UFUNCTION()
+    void HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState);
+
+    // Optional: Keep track if we disabled input due to death
+    bool bWasInputDisabledByDeath = false;
 };
