@@ -67,7 +67,7 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category = "Dk|Debug")
 	bool bShowDebugState = true;
-
+	
 private:
 	// Track anything that needs to complete before reset is done
 	TSet<TWeakObjectPtr<UObject>> PendingResetObjects;

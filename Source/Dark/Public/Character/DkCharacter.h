@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Character/DkCharacterBase.h"
+#include "Interface/DkDeathHandlerInterface.h"
 #include "Logging/LogMacros.h"
 #include "StateMachine/DkStateManagerComponent.h"
 #include "DkCharacter.generated.h"
@@ -33,7 +34,7 @@ enum EDkPlayerAnimationState
 DECLARE_LOG_CATEGORY_EXTERN(LogDkCharacter, Log, All);
 
 UCLASS()
-class DARK_API ADkCharacter : public ADkCharacterBase
+class DARK_API ADkCharacter : public ADkCharacterBase, public IDkDeathHandlerInterface
 {
 	GENERATED_BODY()
 
@@ -50,6 +51,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = Combat)
 	void AttachWeaponToSocket(FName SocketName);
+
+	//Death Handler Interface
+	virtual void HandleDeath_Implementation() override;
 
 protected:
 	virtual void BeginPlay() override;

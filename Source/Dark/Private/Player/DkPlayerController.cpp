@@ -401,7 +401,7 @@ void ADkPlayerController::PlayDeathSequence()
 
     // Create sequence player and bind to finish event
     FMovieSceneSequencePlaybackSettings PlaybackSettings;
-    PlaybackSettings.bPauseAtEnd = true;
+    PlaybackSettings.bPauseAtEnd = false;
     ALevelSequenceActor* LSActor;  // Will store the created actor
     
     ActiveSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
@@ -440,7 +440,7 @@ void ADkPlayerController::PlayRespawnSequence()
 
     // Create sequence player and bind to finish event
     FMovieSceneSequencePlaybackSettings PlaybackSettings;
-    PlaybackSettings.bPauseAtEnd = true;
+    PlaybackSettings.bPauseAtEnd = false;
     ALevelSequenceActor* LSActor;  // Will store the created actor
     
     ActiveSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(

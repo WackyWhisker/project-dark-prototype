@@ -3,9 +3,8 @@
 
 #include "Component/DkHealthComponent.h"
 
-#include "Character/DkCharacterBase.h"
-#include "Enemy/DkEnemyBase.h"
 #include "GameFramework/Character.h"
+#include "Interface/DkDeathHandlerInterface.h"
 #include "Subsystem/DkGameStateSubsystem.h"
 
 
@@ -28,10 +27,17 @@ void UDkHealthComponent::InitializeComponent()
 void UDkHealthComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	AActor* Owner = GetOwner();
-	if (Owner)
+    
+	if (AActor* Owner = GetOwner())
+	{
 		Owner->OnTakeAnyDamage.AddDynamic(this, &UDkHealthComponent::HandleTakeAnyDamage);
-	
+	}
+    
+	// Subscribe to game state changes
+	if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+	{
+		GameStateSubsystem->OnGameStateChanged.AddDynamic(this, &UDkHealthComponent::HandleGameStateChanged);
+	}
 }
 
 void UDkHealthComponent::TakeDamage(float DamageAmount)
@@ -39,40 +45,28 @@ void UDkHealthComponent::TakeDamage(float DamageAmount)
 	if (DamageAmount <= 0.0f || bIsDead || !bCanTakeDamage) {return;}
 
 	bCanTakeDamage = false;
-
+    
 	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
-
+    
 	OnHealthChanged.Broadcast(CurrentHealth, -DamageAmount);
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, this->GetOwner()->GetName() + "'s Current health: " + FString::SanitizeFloat(CurrentHealth));
-	
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, 
+		GetOwner()->GetName() + "'s Current health: " + FString::SanitizeFloat(CurrentHealth));
+    
 	if (CurrentHealth <= 0.0f)
 	{
 		bIsDead = true;
 		OnHealthDepleted.Broadcast();
 
-		// Handle death based on owner type
+		// Use interface instead of type checking
 		if (AActor* Owner = GetOwner())
 		{
-			// Check if owner is character
-			if (ADkCharacterBase* CharacterOwner = Cast<ADkCharacterBase>(Owner))
+			if (Owner->Implements<UDkDeathHandlerInterface>())
 			{
-				if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
-				{
-					GameStateSubsystem->BeginDeathSequence();
-					return;
-				}
-			}
-			// Check if owner is enemy
-			else if (ADkEnemyBase* EnemyOwner = Cast<ADkEnemyBase>(Owner))
-			{
-				GetOwner()->Destroy();
-				//EnemyOwner->BeginDeathSequence();
-				//return;
+				IDkDeathHandlerInterface::Execute_HandleDeath(Owner);
 			}
 		}
 	}
 
-	// Start cooldown timer
 	GetWorld()->GetTimerManager().SetTimer(
 		DamageCooldownTimer,
 		this,
@@ -126,9 +120,52 @@ void UDkHealthComponent::ApplyDamagePushback(AActor* DamagedActor, float Damage,
 	OwningCharacter->LaunchCharacter(PushDirection * DamagePushbackStrength, false, false);
 }
 
+void UDkHealthComponent::HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState)
+{
+	if (NewState == EDkGameState::Resetting)
+	{
+		// Register for reset when entering reset state
+		if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+		{
+			GameStateSubsystem->RegisterForReset(this);
+			bIsRegisteredForReset = true;
+            
+			// Reset health
+			CurrentHealth = MaxHealth;
+			bIsDead = false;
+			bCanTakeDamage = true;
+            
+			// Broadcast the health change
+			OnHealthChanged.Broadcast(CurrentHealth, MaxHealth - CurrentHealth);
+            
+			// Notify reset complete immediately since we're done
+			GameStateSubsystem->NotifyResetComplete(this);
+			bIsRegisteredForReset = false;
+		}
+	}
+}
+
 void UDkHealthComponent::ResetDamageCooldown()
 {
 	bCanTakeDamage = true;
+}
+
+void UDkHealthComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+    
+	// Clean up subscription
+	if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+	{
+		GameStateSubsystem->OnGameStateChanged.RemoveDynamic(this, &UDkHealthComponent::HandleGameStateChanged);
+        
+		// If we're registered for reset, notify completion
+		if (bIsRegisteredForReset)
+		{
+			GameStateSubsystem->NotifyResetComplete(this);
+			bIsRegisteredForReset = false;
+		}
+	}
 }
 
 

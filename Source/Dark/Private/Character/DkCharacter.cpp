@@ -7,6 +7,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Subsystem/DkGameStateSubsystem.h"
 
 DEFINE_LOG_CATEGORY(LogDkCharacter);
 
@@ -50,6 +51,15 @@ void ADkCharacter::AttachWeaponToSocket(FName SocketName)
 	FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, true);
 	WeaponMesh->AttachToComponent(GetMesh(), AttachRules, SocketName);
 	WeaponMesh->ComponentTags.Add(FName("WeaponTag"));
+}
+
+void ADkCharacter::HandleDeath_Implementation()
+{
+	if (UDkGameStateSubsystem* GameStateSubsystem = 
+			GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+	{
+		GameStateSubsystem->BeginDeathSequence();
+	}
 }
 
 void ADkCharacter::BeginPlay()

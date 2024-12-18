@@ -40,6 +40,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	virtual void InitializeComponent() override;
 
@@ -56,6 +57,13 @@ protected:
 //TODO: PUSH BACK IN ITS OWN COMP
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Pushback")
 	float DamagePushbackStrength = 1000.0f;
+
+	// State change handler
+	UFUNCTION()
+	void HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState);
+    
+	// Track if we're registered for reset
+	bool bIsRegisteredForReset = false;
 
 private:
 	bool bIsDead;
