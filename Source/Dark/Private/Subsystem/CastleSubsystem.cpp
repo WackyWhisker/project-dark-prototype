@@ -41,10 +41,10 @@ void UCastleSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         return;
     }
 
-    bool bSuccess = CastleWorldSettings->RoomData->LoadFromContentJSON("Data/dungeon_data.json");
+    bool bSuccess = CastleWorldSettings->RoomData->LoadFromContentJSON("Data/castle_data.json");
     if (!bSuccess)
     {
-        //CASTLE_LOG(Error, TEXT("Failed to load dungeon data from JSON"));
+        //CASTLE_LOG(Error, TEXT("Failed to load castle data from JSON"));
         return;
     }
 
@@ -57,13 +57,17 @@ void UCastleSubsystem::TestSubsystemAccess()
    CASTLE_LOG(Warning, TEXT("Castle Subsystem accessed successfully"));
 }
 
-void UCastleSubsystem::SpawnCompleteDungeon()
+void UCastleSubsystem::SpawnCompleteCastle()
 {
+    if (bIsCastleSpawning) return;
+    
     if (!CastleWorldSettings || !CastleWorldSettings->RoomData)
     {
-        CASTLE_LOG(Error, TEXT("Cannot spawn dungeon - Missing Room Data"));
+        CASTLE_LOG(Error, TEXT("Cannot spawn castle - Missing Room Data"));
         return;
     }
+
+    bIsCastleSpawning = true;
 
     // Clear any existing state
     LoadedRooms.Empty();
@@ -73,7 +77,7 @@ void UCastleSubsystem::SpawnCompleteDungeon()
     FString EntryRoomID = FindEntryRoomID();
     if (EntryRoomID.IsEmpty())
     {
-        CASTLE_LOG(Error, TEXT("No entry room found in dungeon data"));
+        CASTLE_LOG(Error, TEXT("No entry room found in castle data"));
         return;
     }
 
@@ -495,7 +499,8 @@ ULevelStreaming* UCastleSubsystem::GetLevelByName(const FName& LevelName) const
                 CASTLE_LOG(Warning, TEXT("- Is Visible: %s"), Level->IsLevelVisible() ? TEXT("Yes") : TEXT("No"));
                 CASTLE_LOG(Warning, TEXT("- Streaming State: %s"), 
                     Level->IsStreamingStatePending() ? TEXT("Pending") : TEXT("Stable"));
-                CASTLE_LOG(Warning, TEXT("- Current State: %d"), static_cast<int>(Level->GetCurrentState()));
+                CASTLE_LOG(Warning, TEXT("- Current State: %d"), static_cast<int>(Level->GetLevelStreamingState()));
+
                 
                 if (Level->GetLoadedLevel())
                 {
@@ -848,6 +853,7 @@ void UCastleSubsystem::ClearInternalState()
     ProcessingQueue.Empty();
     PendingConnections.Empty();
     PendingRoomLoads.Empty();
+    bIsCastleSpawning = false;
     
     // Notify game state that we're done with reset
     if (GameStateSubsystem)

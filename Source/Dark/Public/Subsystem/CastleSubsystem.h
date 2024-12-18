@@ -95,7 +95,7 @@ public:
 
     // Main function to spawn the entire dungeon
     UFUNCTION(BlueprintCallable, Category = "Castle")
-    void SpawnCompleteDungeon();
+    void SpawnCompleteCastle();
     void ProcessNextRoom();
 
     // Load the initial entry room
@@ -198,4 +198,7 @@ private:
     // Helper function to check unload progress
     UFUNCTION()
     void CheckUnloadProgress();
+
+private:
+    bool bIsCastleSpawning = false;
 };
