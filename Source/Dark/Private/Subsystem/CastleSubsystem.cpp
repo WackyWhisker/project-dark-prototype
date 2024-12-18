@@ -7,10 +7,9 @@
 #include "Engine/LevelStreamingDynamic.h"
 #include "WorldSetting/CastleWorldSettings.h"
 #include "DrawDebugHelpers.h"
+#include "Helper/GameLogging.h"
 #include "Subsystem/CastleSocketActor.h"
 #include "Subsystem/DkGameStateSubsystem.h"
-
-DEFINE_LOG_CATEGORY(CastleLog);
 
 void UCastleSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -19,33 +18,33 @@ void UCastleSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     
     Super::Initialize(Collection);
 
-    //UE_LOG(CastleLog, Warning, TEXT("Castle Subsystem initialization starting"));
+    CASTLE_LOG(Warning, TEXT("Castle Subsystem initialization starting"));
 
     if (UWorld* World = GetWorld())
     {
         GameStateSubsystem = World->GetSubsystem<UDkGameStateSubsystem>();
         if (GameStateSubsystem)
         {
-            //UE_LOG(CastleLog, Warning, TEXT("Found GameStateSubsystem, subscribing to events"));
+            //CASTLE_LOG(Warning, TEXT("Found GameStateSubsystem, subscribing to events"));
             GameStateSubsystem->OnGameStateChanged.AddDynamic(this, &UCastleSubsystem::OnGameStateChanged);
         }
         else
         {
-            //UE_LOG(CastleLog, Error, TEXT("GameStateSubsystem not found during Castle initialization - This should never happen due to dependency resolution"));
+            //CASTLE_LOG(Error, TEXT("GameStateSubsystem not found during Castle initialization - This should never happen due to dependency resolution"));
         }
     }
 
     CastleWorldSettings = Cast<ACastleWorldSettings>(GetWorld()->GetWorldSettings());
     if (!CastleWorldSettings || !CastleWorldSettings->RoomData)
     {
-        //UE_LOG(CastleLog, Warning, TEXT("Failed to initialize Castle Subsystem - Missing World Settings or Room Data"));
+        //CASTLE_LOG(Warning, TEXT("Failed to initialize Castle Subsystem - Missing World Settings or Room Data"));
         return;
     }
 
     bool bSuccess = CastleWorldSettings->RoomData->LoadFromContentJSON("Data/dungeon_data.json");
     if (!bSuccess)
     {
-        //UE_LOG(CastleLog, Error, TEXT("Failed to load dungeon data from JSON"));
+        //CASTLE_LOG(Error, TEXT("Failed to load dungeon data from JSON"));
         return;
     }
 
@@ -55,14 +54,14 @@ void UCastleSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UCastleSubsystem::TestSubsystemAccess()
 {
-   UE_LOG(CastleLog, Warning, TEXT("Castle Subsystem accessed successfully"));
+   CASTLE_LOG(Warning, TEXT("Castle Subsystem accessed successfully"));
 }
 
 void UCastleSubsystem::SpawnCompleteDungeon()
 {
     if (!CastleWorldSettings || !CastleWorldSettings->RoomData)
     {
-        UE_LOG(CastleLog, Error, TEXT("Cannot spawn dungeon - Missing Room Data"));
+        CASTLE_LOG(Error, TEXT("Cannot spawn dungeon - Missing Room Data"));
         return;
     }
 
@@ -74,7 +73,7 @@ void UCastleSubsystem::SpawnCompleteDungeon()
     FString EntryRoomID = FindEntryRoomID();
     if (EntryRoomID.IsEmpty())
     {
-        UE_LOG(CastleLog, Error, TEXT("No entry room found in dungeon data"));
+        CASTLE_LOG(Error, TEXT("No entry room found in dungeon data"));
         return;
     }
 
@@ -200,10 +199,10 @@ void UCastleSubsystem::LoadRoom(const FString& RoomID, const FString& ConnectedT
                 FVector SpawnPosition = FVector::ZeroVector;
                 FRotator SpawnRotation = FRotator::ZeroRotator;
 
-                UE_LOG(CastleLog, Warning, TEXT("=== Loading Room: %s ==="), *LocalRoomID);
-                UE_LOG(CastleLog, Warning, TEXT("Connected To: %s"), LocalConnectedToRoomID.IsEmpty() ? TEXT("None") : *LocalConnectedToRoomID);
-                UE_LOG(CastleLog, Warning, TEXT("Connect From Socket: %s"), *LocalConnectFromSocket.ToString());
-                UE_LOG(CastleLog, Warning, TEXT("Connect To Socket: %s"), *LocalConnectToSocket.ToString());
+                CASTLE_LOG(Warning, TEXT("=== Loading Room: %s ==="), *LocalRoomID);
+                CASTLE_LOG(Warning, TEXT("Connected To: %s"), LocalConnectedToRoomID.IsEmpty() ? TEXT("None") : *LocalConnectedToRoomID);
+                CASTLE_LOG(Warning, TEXT("Connect From Socket: %s"), *LocalConnectFromSocket.ToString());
+                CASTLE_LOG(Warning, TEXT("Connect To Socket: %s"), *LocalConnectToSocket.ToString());
 
                 // If this isn't the entry room, get the world position from the connected room's socket
                 if (!LocalConnectedToRoomID.IsEmpty())
@@ -211,13 +210,13 @@ void UCastleSubsystem::LoadRoom(const FString& RoomID, const FString& ConnectedT
                     FLoadedRoomInfo* ConnectedRoom = LoadedRooms.Find(LocalConnectedToRoomID);
                     if (ConnectedRoom)
                     {
-                        UE_LOG(CastleLog, Warning, TEXT("Found Connected Room: %s (Level: %s)"), 
+                        CASTLE_LOG(Warning, TEXT("Found Connected Room: %s (Level: %s)"), 
                             *ConnectedRoom->RoomID, *ConnectedRoom->LevelName.ToString());
 
                         ULevelStreaming* ConnectedLevel = GetLevelByName(ConnectedRoom->LevelName);
                         if (ConnectedLevel && ConnectedLevel->GetLoadedLevel())
                         {
-                            UE_LOG(CastleLog, Warning, TEXT("Connected Level Transform: %s"), 
+                            CASTLE_LOG(Warning, TEXT("Connected Level Transform: %s"), 
                                 *ConnectedLevel->LevelTransform.ToString());
 
                             // Find the socket in the connected room
@@ -229,10 +228,10 @@ void UCastleSubsystem::LoadRoom(const FString& RoomID, const FString& ConnectedT
                                     FVector ActorLocation = SocketActor->GetActorLocation();
                                     FTransform ActorTransform = SocketActor->GetActorTransform();
         
-                                    UE_LOG(CastleLog, Warning, TEXT("Found Socket: %s"), *SocketActor->SocketName.ToString());
-                                    UE_LOG(CastleLog, Warning, TEXT("  Actor Location: %s"), *ActorLocation.ToString());
-                                    UE_LOG(CastleLog, Warning, TEXT("  Actor Transform: %s"), *ActorTransform.ToString());
-                                    UE_LOG(CastleLog, Warning, TEXT("  Level Transform: %s"), 
+                                    CASTLE_LOG(Warning, TEXT("Found Socket: %s"), *SocketActor->SocketName.ToString());
+                                    CASTLE_LOG(Warning, TEXT("  Actor Location: %s"), *ActorLocation.ToString());
+                                    CASTLE_LOG(Warning, TEXT("  Actor Transform: %s"), *ActorTransform.ToString());
+                                    CASTLE_LOG(Warning, TEXT("  Level Transform: %s"), 
                                         *ConnectedLevel->LevelTransform.ToString());
 
                                     if (SocketActor->SocketName == LocalConnectFromSocket)
@@ -240,7 +239,7 @@ void UCastleSubsystem::LoadRoom(const FString& RoomID, const FString& ConnectedT
                                         SpawnPosition = ActorLocation;
                                         SpawnRotation = SocketActor->GetActorRotation() + FRotator(0, 0.0f, 0);
             
-                                        UE_LOG(CastleLog, Warning, TEXT("Using Socket for Spawn - Position: %s, Rotation: %s"), 
+                                        CASTLE_LOG(Warning, TEXT("Using Socket for Spawn - Position: %s, Rotation: %s"), 
                                             *SpawnPosition.ToString(), *SpawnRotation.ToString());
             
                                         bFoundSocket = true;
@@ -251,23 +250,23 @@ void UCastleSubsystem::LoadRoom(const FString& RoomID, const FString& ConnectedT
                             
                             if (!bFoundSocket)
                             {
-                                UE_LOG(CastleLog, Error, TEXT("Failed to find socket %s in room %s"), 
+                                CASTLE_LOG(Error, TEXT("Failed to find socket %s in room %s"), 
                                     *LocalConnectFromSocket.ToString(), *LocalConnectedToRoomID);
                             }
                         }
                         else
                         {
-                            UE_LOG(CastleLog, Error, TEXT("Connected level not found or not loaded"));
+                            CASTLE_LOG(Error, TEXT("Connected level not found or not loaded"));
                         }
                     }
                     else
                     {
-                        UE_LOG(CastleLog, Error, TEXT("Connected room info not found: %s"), *LocalConnectedToRoomID);
+                        CASTLE_LOG(Error, TEXT("Connected room info not found: %s"), *LocalConnectedToRoomID);
                     }
                 }
                 else
                 {
-                    UE_LOG(CastleLog, Warning, TEXT("Entry room - spawning at origin"));
+                    CASTLE_LOG(Warning, TEXT("Entry room - spawning at origin"));
                 }
 
                 bool bSucceeded = false;
@@ -289,13 +288,13 @@ void UCastleSubsystem::LoadRoom(const FString& RoomID, const FString& ConnectedT
 
                     NewLevel->OnLevelLoaded.AddDynamic(this, &UCastleSubsystem::OnRoomLoaded);
                     
-                    UE_LOG(CastleLog, Warning, TEXT("=== Room %s spawn complete ==="), *LocalRoomID);
-                    UE_LOG(CastleLog, Warning, TEXT("Final Position: %s"), *SpawnPosition.ToString());
-                    UE_LOG(CastleLog, Warning, TEXT("Final Rotation: %s"), *SpawnRotation.ToString());
+                    CASTLE_LOG(Warning, TEXT("=== Room %s spawn complete ==="), *LocalRoomID);
+                    CASTLE_LOG(Warning, TEXT("Final Position: %s"), *SpawnPosition.ToString());
+                    CASTLE_LOG(Warning, TEXT("Final Rotation: %s"), *SpawnRotation.ToString());
                 }
                 else
                 {
-                    UE_LOG(CastleLog, Error, TEXT("Failed to load level instance for room: %s"), *LocalRoomID);
+                    CASTLE_LOG(Error, TEXT("Failed to load level instance for room: %s"), *LocalRoomID);
                 }
             }
         }, 0.5f, false);
@@ -304,7 +303,7 @@ void UCastleSubsystem::LoadRoom(const FString& RoomID, const FString& ConnectedT
 
 void UCastleSubsystem::UnloadRoom(const FString& RoomID)
 {
-    UE_LOG(CastleLog, Warning, TEXT("UnloadRoom - Attempting to unload room: %s"), *RoomID);
+    CASTLE_LOG(Warning, TEXT("UnloadRoom - Attempting to unload room: %s"), *RoomID);
     
     if (UWorld* World = GetWorld())
     {
@@ -315,7 +314,7 @@ void UCastleSubsystem::UnloadRoom(const FString& RoomID)
                 // Get the full package name from the streaming level
                 FString PackageName = Level->GetWorldAssetPackageName();
                 
-                UE_LOG(CastleLog, Warning, TEXT("  Found streaming level, unloading package: %s"), *PackageName);
+                CASTLE_LOG(Warning, TEXT("  Found streaming level, unloading package: %s"), *PackageName);
                 
                 FLatentActionInfo LatentInfo;
                 LatentInfo.CallbackTarget = this;
@@ -328,7 +327,7 @@ void UCastleSubsystem::UnloadRoom(const FString& RoomID)
             }
             else
             {
-                UE_LOG(CastleLog, Error, TEXT("  Failed to find streaming level for room: %s"), *RoomID);
+                CASTLE_LOG(Error, TEXT("  Failed to find streaming level for room: %s"), *RoomID);
             }
         }
     }
@@ -467,10 +466,10 @@ FTransform UCastleSubsystem::CalculateRoomTransform(const FString& SourceRoomID,
     ResultTransform.SetLocation(RequiredLevelPosition);
     ResultTransform.SetRotation(FRotator(0, 180.0f, 0).Quaternion());
 
-    UE_LOG(CastleLog, Warning, TEXT("=== Transform Calculation ==="));
-    UE_LOG(CastleLog, Warning, TEXT("Source Socket World Pos: %s"), *SourceSocketWorldPos.ToString());
-    UE_LOG(CastleLog, Warning, TEXT("Target Socket Local Pos: %s"), *TargetSocketLocalPos.ToString());
-    UE_LOG(CastleLog, Warning, TEXT("Required Level Position: %s"), *RequiredLevelPosition.ToString());
+    CASTLE_LOG(Warning, TEXT("=== Transform Calculation ==="));
+    CASTLE_LOG(Warning, TEXT("Source Socket World Pos: %s"), *SourceSocketWorldPos.ToString());
+    CASTLE_LOG(Warning, TEXT("Target Socket Local Pos: %s"), *TargetSocketLocalPos.ToString());
+    CASTLE_LOG(Warning, TEXT("Required Level Position: %s"), *RequiredLevelPosition.ToString());
     
     return ResultTransform;
 }
@@ -479,55 +478,55 @@ ULevelStreaming* UCastleSubsystem::GetLevelByName(const FName& LevelName) const
 {
     if (UWorld* World = GetWorld())
     {
-        UE_LOG(CastleLog, Warning, TEXT("=== GetLevelByName Detailed Analysis ==="));
-        UE_LOG(CastleLog, Warning, TEXT("Searching for level: %s"), *LevelName.ToString());
+        CASTLE_LOG(Warning, TEXT("=== GetLevelByName Detailed Analysis ==="));
+        CASTLE_LOG(Warning, TEXT("Searching for level: %s"), *LevelName.ToString());
         
         TArray<ULevelStreaming*> StreamingLevels = World->GetStreamingLevels();
-        UE_LOG(CastleLog, Warning, TEXT("Found %d streaming levels in world"), StreamingLevels.Num());
+        CASTLE_LOG(Warning, TEXT("Found %d streaming levels in world"), StreamingLevels.Num());
         
         for (ULevelStreaming* Level : StreamingLevels)
         {
             if (Level)
             {
                 FString PackageName = Level->GetWorldAssetPackageName();
-                UE_LOG(CastleLog, Warning, TEXT("\nAnalyzing Level:"));
-                UE_LOG(CastleLog, Warning, TEXT("- Package Name: %s"), *PackageName);
-                UE_LOG(CastleLog, Warning, TEXT("- Is Loaded: %s"), Level->IsLevelLoaded() ? TEXT("Yes") : TEXT("No"));
-                UE_LOG(CastleLog, Warning, TEXT("- Is Visible: %s"), Level->IsLevelVisible() ? TEXT("Yes") : TEXT("No"));
-                UE_LOG(CastleLog, Warning, TEXT("- Streaming State: %s"), 
+                CASTLE_LOG(Warning, TEXT("\nAnalyzing Level:"));
+                CASTLE_LOG(Warning, TEXT("- Package Name: %s"), *PackageName);
+                CASTLE_LOG(Warning, TEXT("- Is Loaded: %s"), Level->IsLevelLoaded() ? TEXT("Yes") : TEXT("No"));
+                CASTLE_LOG(Warning, TEXT("- Is Visible: %s"), Level->IsLevelVisible() ? TEXT("Yes") : TEXT("No"));
+                CASTLE_LOG(Warning, TEXT("- Streaming State: %s"), 
                     Level->IsStreamingStatePending() ? TEXT("Pending") : TEXT("Stable"));
-                UE_LOG(CastleLog, Warning, TEXT("- Current State: %d"), static_cast<int>(Level->GetCurrentState()));
+                CASTLE_LOG(Warning, TEXT("- Current State: %d"), static_cast<int>(Level->GetCurrentState()));
                 
                 if (Level->GetLoadedLevel())
                 {
-                    UE_LOG(CastleLog, Warning, TEXT("- Loaded Level Info:"));
-                    UE_LOG(CastleLog, Warning, TEXT("  - Level Name: %s"), *Level->GetLoadedLevel()->GetName());
-                    UE_LOG(CastleLog, Warning, TEXT("  - Outer Name: %s"), *Level->GetLoadedLevel()->GetOuter()->GetName());
-                    UE_LOG(CastleLog, Warning, TEXT("  - Transform: %s"), *Level->LevelTransform.ToString());
+                    CASTLE_LOG(Warning, TEXT("- Loaded Level Info:"));
+                    CASTLE_LOG(Warning, TEXT("  - Level Name: %s"), *Level->GetLoadedLevel()->GetName());
+                    CASTLE_LOG(Warning, TEXT("  - Outer Name: %s"), *Level->GetLoadedLevel()->GetOuter()->GetName());
+                    CASTLE_LOG(Warning, TEXT("  - Transform: %s"), *Level->LevelTransform.ToString());
                 }
                 else
                 {
-                    UE_LOG(CastleLog, Warning, TEXT("- Loaded Level: None"));
+                    CASTLE_LOG(Warning, TEXT("- Loaded Level: None"));
                 }
                 
                 if (PackageName.Contains(LevelName.ToString()))
                 {
-                    UE_LOG(CastleLog, Warning, TEXT("Found matching level!"));
-                    UE_LOG(CastleLog, Warning, TEXT("=== End Analysis ===\n"));
+                    CASTLE_LOG(Warning, TEXT("Found matching level!"));
+                    CASTLE_LOG(Warning, TEXT("=== End Analysis ===\n"));
                     return Level;
                 }
             }
             else
             {
-                UE_LOG(CastleLog, Warning, TEXT("\nFound null streaming level entry"));
+                CASTLE_LOG(Warning, TEXT("\nFound null streaming level entry"));
             }
         }
-        UE_LOG(CastleLog, Warning, TEXT("No matching level found for: %s"), *LevelName.ToString());
-        UE_LOG(CastleLog, Warning, TEXT("=== End Analysis ===\n"));
+        CASTLE_LOG(Warning, TEXT("No matching level found for: %s"), *LevelName.ToString());
+        CASTLE_LOG(Warning, TEXT("=== End Analysis ===\n"));
     }
     else
     {
-        UE_LOG(CastleLog, Error, TEXT("GetLevelByName - No valid World"));
+        CASTLE_LOG(Error, TEXT("GetLevelByName - No valid World"));
     }
     return nullptr;
 }
@@ -592,7 +591,7 @@ void UCastleSubsystem::OnRoomUnloaded()
                 {
                     UnloadedRoomID = It->Key;
                     LoadedRooms.Remove(It->Key);
-                    UE_LOG(CastleLog, Log, TEXT("Room %s successfully unloaded"), *UnloadedRoomID);
+                    CASTLE_LOG(Log, TEXT("Room %s successfully unloaded"), *UnloadedRoomID);
                     break;
                 }
             }
@@ -650,7 +649,7 @@ void UCastleSubsystem::LogSocketInfo(const FString& RoomID)
             {
                 if (ACastleSocketActor* SocketActor = Cast<ACastleSocketActor>(Actor))
                 {
-                    UE_LOG(CastleLog, Log, TEXT("Room %s has socket %s at location %s"), 
+                    CASTLE_LOG(Log, TEXT("Room %s has socket %s at location %s"), 
                         *RoomID,
                         *SocketActor->SocketName.ToString(),
                         *SocketActor->GetActorLocation().ToString());
@@ -683,7 +682,7 @@ void UCastleSubsystem::ProcessPendingConnections()
                 Level->LevelTransform = NewTransform;
                 PendingConnections.RemoveAt(i);
                 
-                UE_LOG(CastleLog, Log, TEXT("Updated transform for room %s connecting to %s"), 
+                CASTLE_LOG(Log, TEXT("Updated transform for room %s connecting to %s"), 
                     *Connection.RoomID,
                     *Connection.ConnectedToRoomID);
 
@@ -701,7 +700,7 @@ void UCastleSubsystem::DebugLogAllSocketActors(const FString& RoomID)
 {
     if (FLoadedRoomInfo* RoomInfo = LoadedRooms.Find(RoomID))
     {
-        UE_LOG(CastleLog, Warning, TEXT("=== Scanning for socket actors in room %s (Level: %s) ==="), 
+        CASTLE_LOG(Warning, TEXT("=== Scanning for socket actors in room %s (Level: %s) ==="), 
             *RoomID, *RoomInfo->LevelName.ToString());
 
         ULevelStreaming* Level = GetLevelByName(RoomInfo->LevelName);
@@ -713,21 +712,21 @@ void UCastleSubsystem::DebugLogAllSocketActors(const FString& RoomID)
                 if (ACastleSocketActor* SocketActor = Cast<ACastleSocketActor>(Actor))
                 {
                     SocketCount++;
-                    UE_LOG(CastleLog, Warning, TEXT("Found Socket Actor %d:"), SocketCount);
-                    UE_LOG(CastleLog, Warning, TEXT("  - Name: %s"), *SocketActor->GetName());
-                    UE_LOG(CastleLog, Warning, TEXT("  - Socket Name: %s"), *SocketActor->SocketName.ToString());
-                    UE_LOG(CastleLog, Warning, TEXT("  - Location: %s"), *SocketActor->GetActorLocation().ToString());
-                    UE_LOG(CastleLog, Warning, TEXT("  - Rotation: %s"), *SocketActor->GetActorRotation().ToString());
+                    CASTLE_LOG(Warning, TEXT("Found Socket Actor %d:"), SocketCount);
+                    CASTLE_LOG(Warning, TEXT("  - Name: %s"), *SocketActor->GetName());
+                    CASTLE_LOG(Warning, TEXT("  - Socket Name: %s"), *SocketActor->SocketName.ToString());
+                    CASTLE_LOG(Warning, TEXT("  - Location: %s"), *SocketActor->GetActorLocation().ToString());
+                    CASTLE_LOG(Warning, TEXT("  - Rotation: %s"), *SocketActor->GetActorRotation().ToString());
                 }
             }
             
             if (SocketCount == 0)
             {
-                UE_LOG(CastleLog, Warning, TEXT("No socket actors found in this level"));
+                CASTLE_LOG(Warning, TEXT("No socket actors found in this level"));
             }
             else
             {
-                UE_LOG(CastleLog, Warning, TEXT("Total socket actors found: %d"), SocketCount);
+                CASTLE_LOG(Warning, TEXT("Total socket actors found: %d"), SocketCount);
             }
         }
     }
@@ -735,20 +734,20 @@ void UCastleSubsystem::DebugLogAllSocketActors(const FString& RoomID)
 
 void UCastleSubsystem::ClearCompleteCastle()
 {
-    UE_LOG(CastleLog, Log, TEXT("Starting complete castle cleanup"));
+    CASTLE_LOG(Log, TEXT("Starting complete castle cleanup"));
     
     if (UWorld* World = GetWorld())
     {
         // Get all streaming levels before we start removing them
         TArray<ULevelStreaming*> LevelsToRemove = World->GetStreamingLevels();
-        UE_LOG(CastleLog, Warning, TEXT("Found %d streaming levels to clean up"), LevelsToRemove.Num());
+        CASTLE_LOG(Warning, TEXT("Found %d streaming levels to clean up"), LevelsToRemove.Num());
         
         // First unload all rooms and mark them for removal
         TArray<FString> RoomIDsToUnload = GetLoadedRoomIDs();
         
         if (RoomIDsToUnload.Num() > 0)
         {
-            UE_LOG(CastleLog, Log, TEXT("Unloading %d rooms"), RoomIDsToUnload.Num());
+            CASTLE_LOG(Log, TEXT("Unloading %d rooms"), RoomIDsToUnload.Num());
             
             // Unload each room
             for (const FString& RoomID : RoomIDsToUnload)
@@ -765,14 +764,14 @@ void UCastleSubsystem::ClearCompleteCastle()
                 {
                     if (!AreAnyRoomsUnloading())
                     {
-                        UE_LOG(CastleLog, Warning, TEXT("All rooms unloaded, removing %d streaming level instances"), LevelsToRemove.Num());
+                        CASTLE_LOG(Warning, TEXT("All rooms unloaded, removing %d streaming level instances"), LevelsToRemove.Num());
                         
                         // Now explicitly remove each streaming level
                         for (ULevelStreaming* Level : LevelsToRemove)
                         {
                             if (Level)
                             {
-                                UE_LOG(CastleLog, Warning, TEXT("Removing streaming level: %s"), *Level->GetWorldAssetPackageName());
+                                CASTLE_LOG(Warning, TEXT("Removing streaming level: %s"), *Level->GetWorldAssetPackageName());
                                 World->RemoveStreamingLevel(Level);
                             }
                         }
@@ -816,7 +815,7 @@ void UCastleSubsystem::OnGameStateChanged(EDkGameState NewState, EDkGameState Ol
     // We're specifically interested in the Resetting state
     if (NewState == EDkGameState::Resetting)
     {
-        UE_LOG(CastleLog, Log, TEXT("Castle System detected reset state - Beginning castle reset sequence"));
+        CASTLE_LOG(Log, TEXT("Castle System detected reset state - Beginning castle reset sequence"));
         // Register ourselves for reset tracking
         if (GameStateSubsystem)
         {
@@ -832,7 +831,7 @@ void UCastleSubsystem::CheckUnloadProgress()
 {
     if (!AreAnyRoomsUnloading())
     {
-        UE_LOG(CastleLog, Log, TEXT("All rooms unloaded, clearing internal state"));
+        CASTLE_LOG(Log, TEXT("All rooms unloaded, clearing internal state"));
         ClearInternalState();
         
         // Clear the timer
@@ -855,5 +854,5 @@ void UCastleSubsystem::ClearInternalState()
     {
         GameStateSubsystem->NotifyResetComplete(this);
     }
-    UE_LOG(CastleLog, Log, TEXT("Castle cleanup complete"));
+    CASTLE_LOG(Log, TEXT("Castle cleanup complete"));
 }

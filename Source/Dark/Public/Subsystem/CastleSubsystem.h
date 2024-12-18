@@ -9,8 +9,6 @@
 #include "Data/CastleRoomData.h"
 #include "CastleSubsystem.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(CastleLog, Log, All);
-
 class UCastleRoomData;
 class ACastleWorldSettings;
 class ACastleSocketActor;
