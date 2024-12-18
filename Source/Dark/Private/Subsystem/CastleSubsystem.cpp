@@ -479,7 +479,8 @@ ULevelStreaming* UCastleSubsystem::GetLevelByName(const FName& LevelName) const
 {
     if (UWorld* World = GetWorld())
     {
-        UE_LOG(CastleLog, Warning, TEXT("GetLevelByName - Searching for level: %s"), *LevelName.ToString());
+        UE_LOG(CastleLog, Warning, TEXT("=== GetLevelByName Detailed Analysis ==="));
+        UE_LOG(CastleLog, Warning, TEXT("Searching for level: %s"), *LevelName.ToString());
         
         TArray<ULevelStreaming*> StreamingLevels = World->GetStreamingLevels();
         UE_LOG(CastleLog, Warning, TEXT("Found %d streaming levels in world"), StreamingLevels.Num());
@@ -489,20 +490,40 @@ ULevelStreaming* UCastleSubsystem::GetLevelByName(const FName& LevelName) const
             if (Level)
             {
                 FString PackageName = Level->GetWorldAssetPackageName();
-                UE_LOG(CastleLog, Warning, TEXT("  Checking Level - Package Name: %s"), *PackageName);
+                UE_LOG(CastleLog, Warning, TEXT("\nAnalyzing Level:"));
+                UE_LOG(CastleLog, Warning, TEXT("- Package Name: %s"), *PackageName);
+                UE_LOG(CastleLog, Warning, TEXT("- Is Loaded: %s"), Level->IsLevelLoaded() ? TEXT("Yes") : TEXT("No"));
+                UE_LOG(CastleLog, Warning, TEXT("- Is Visible: %s"), Level->IsLevelVisible() ? TEXT("Yes") : TEXT("No"));
+                UE_LOG(CastleLog, Warning, TEXT("- Streaming State: %s"), 
+                    Level->IsStreamingStatePending() ? TEXT("Pending") : TEXT("Stable"));
+                UE_LOG(CastleLog, Warning, TEXT("- Current State: %d"), static_cast<int>(Level->GetCurrentState()));
+                
+                if (Level->GetLoadedLevel())
+                {
+                    UE_LOG(CastleLog, Warning, TEXT("- Loaded Level Info:"));
+                    UE_LOG(CastleLog, Warning, TEXT("  - Level Name: %s"), *Level->GetLoadedLevel()->GetName());
+                    UE_LOG(CastleLog, Warning, TEXT("  - Outer Name: %s"), *Level->GetLoadedLevel()->GetOuter()->GetName());
+                    UE_LOG(CastleLog, Warning, TEXT("  - Transform: %s"), *Level->LevelTransform.ToString());
+                }
+                else
+                {
+                    UE_LOG(CastleLog, Warning, TEXT("- Loaded Level: None"));
+                }
                 
                 if (PackageName.Contains(LevelName.ToString()))
                 {
-                    UE_LOG(CastleLog, Warning, TEXT("  Found matching level!"));
+                    UE_LOG(CastleLog, Warning, TEXT("Found matching level!"));
+                    UE_LOG(CastleLog, Warning, TEXT("=== End Analysis ===\n"));
                     return Level;
                 }
             }
             else
             {
-                UE_LOG(CastleLog, Warning, TEXT("  Found null streaming level entry"));
+                UE_LOG(CastleLog, Warning, TEXT("\nFound null streaming level entry"));
             }
         }
         UE_LOG(CastleLog, Warning, TEXT("No matching level found for: %s"), *LevelName.ToString());
+        UE_LOG(CastleLog, Warning, TEXT("=== End Analysis ===\n"));
     }
     else
     {
@@ -718,7 +739,11 @@ void UCastleSubsystem::ClearCompleteCastle()
     
     if (UWorld* World = GetWorld())
     {
-        // First unload all rooms
+        // Get all streaming levels before we start removing them
+        TArray<ULevelStreaming*> LevelsToRemove = World->GetStreamingLevels();
+        UE_LOG(CastleLog, Warning, TEXT("Found %d streaming levels to clean up"), LevelsToRemove.Num());
+        
+        // First unload all rooms and mark them for removal
         TArray<FString> RoomIDsToUnload = GetLoadedRoomIDs();
         
         if (RoomIDsToUnload.Num() > 0)
@@ -734,10 +759,33 @@ void UCastleSubsystem::ClearCompleteCastle()
             // Clear any existing timer first
             World->GetTimerManager().ClearTimer(CleanupTimerHandle);
             
-            // Set up new timer
+            // Set up new timer that will also handle level removal
             World->GetTimerManager().SetTimer(CleanupTimerHandle, 
-                FTimerDelegate::CreateUObject(this, &UCastleSubsystem::CheckUnloadProgress), 
-                0.1f, true);
+                FTimerDelegate::CreateLambda([this, World, LevelsToRemove]()
+                {
+                    if (!AreAnyRoomsUnloading())
+                    {
+                        UE_LOG(CastleLog, Warning, TEXT("All rooms unloaded, removing %d streaming level instances"), LevelsToRemove.Num());
+                        
+                        // Now explicitly remove each streaming level
+                        for (ULevelStreaming* Level : LevelsToRemove)
+                        {
+                            if (Level)
+                            {
+                                UE_LOG(CastleLog, Warning, TEXT("Removing streaming level: %s"), *Level->GetWorldAssetPackageName());
+                                World->RemoveStreamingLevel(Level);
+                            }
+                        }
+                        
+                        // Force a GC pass to clean up any remaining references
+                        GEngine->ForceGarbageCollection(true);
+                        
+                        ClearInternalState();
+                        
+                        // Clear our own timer
+                        World->GetTimerManager().ClearTimer(CleanupTimerHandle);
+                    }
+                }), 0.1f, true);
         }
         else
         {
