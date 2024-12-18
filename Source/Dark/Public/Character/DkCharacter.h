@@ -59,8 +59,6 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;
 
-	
-	
 private:
 	//Camera
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))

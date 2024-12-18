@@ -8,6 +8,12 @@ ADkEnemy::ADkEnemy()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
+void ADkEnemy::HandleDeath_Implementation()
+{
+	IDkDeathHandlerInterface::HandleDeath_Implementation();
+	Destroy(); //TODO: Replace with proper enemy death sequence
+}
+
 void ADkEnemy::BeginPlay()
 {
 	Super::BeginPlay();
