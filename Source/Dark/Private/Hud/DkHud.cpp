@@ -62,8 +62,9 @@ void ADkHUD::HandleTogglePauseMenu()
 			{
 				PC->SetPause(true);
 				PC->SetShowMouseCursor(true);
-               
+                
 				FInputModeGameAndUI InputMode;
+				// These settings should allow both UI and game input
 				InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 				InputMode.SetHideCursorDuringCapture(false);
 				PC->SetInputMode(InputMode);
