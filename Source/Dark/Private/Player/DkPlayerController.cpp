@@ -76,6 +76,9 @@ void ADkPlayerController::SetupInputComponent()
         //Drop and Lift
         EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Started, this, &ADkPlayerController::Drop);
         EnhancedInputComponent->BindAction(LiftAction, ETriggerEvent::Started, this, &ADkPlayerController::Lift);
+
+        //Pause Menu
+        EnhancedInputComponent->BindAction(TogglePauseMenuAction, ETriggerEvent::Started, this, &ADkPlayerController::TogglePauseMenu);
     }
     else
     {
@@ -315,6 +318,14 @@ void ADkPlayerController::Lift()
     UE_LOG(LogTemp, Warning, TEXT("Lift Button Pressed"));
 }
 
+void ADkPlayerController::TogglePauseMenu()
+{
+    if (TogglePauseMenuDelegate.IsBound())
+    {
+        TogglePauseMenuDelegate.Broadcast();
+    }
+}
+
 FTargetStartSignature* ADkPlayerController::GetTargetStartDelegate()
 {
     return &TargetStartDelegate;
@@ -358,6 +369,11 @@ FDropSignature* ADkPlayerController::GetDropDelegate()
 FLiftSignature* ADkPlayerController::GetLiftDelegate()
 {
     return &LiftDelegate;
+}
+
+FTogglePauseMenuSignature* ADkPlayerController::GetTogglePauseMenuDelegate()
+{
+    return &TogglePauseMenuDelegate;
 }
 
 void ADkPlayerController::HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState)
@@ -465,7 +481,6 @@ void ADkPlayerController::PlayRespawnSequence()
     }
 }
 
-
 void ADkPlayerController::OnDeathSequenceFinished()
 {
     // Clean up
@@ -497,5 +512,3 @@ void ADkPlayerController::OnRespawnSequenceFinished()
         GameStateSubsystem->RequestStateChange(EDkGameState::Playing);
     }
 }
-
-

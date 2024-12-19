@@ -34,6 +34,7 @@ public:
     void TargetCycleRight();
     void Drop();
     void Lift();
+    void TogglePauseMenu();
     void SetMappingContext(const FName& ContextName, bool bEnable);
     void ToggleLetterboxUI(bool bShowLetterboxUI);
 
@@ -57,13 +58,6 @@ public:
     UPROPERTY()
     float TargetingYawInputScale = 1.0f;
 
-protected:
-    // protected methods
-    void Move(const FInputActionValue& Value);
-    void Look(const FInputActionValue& Value);
-    virtual void BeginPlay() override;
-    virtual void SetupInputComponent() override;
-    void SetupTargetingBindings();
     virtual FJumpSignature* GetJumpDelegate() override;
     virtual FDodgeSignature* GetDodgeDelegate() override;
     virtual FAttackSignature* GetAttackDelegate() override;
@@ -73,6 +67,16 @@ protected:
     virtual FTargetCycleRightSignature* GetTargetCycleRightDelegate() override;
     virtual FDropSignature* GetDropDelegate() override;
     virtual FLiftSignature* GetLiftDelegate() override;
+    virtual FTogglePauseMenuSignature* GetTogglePauseMenuDelegate() override;
+
+protected:
+    // protected methods
+    void Move(const FInputActionValue& Value);
+    void Look(const FInputActionValue& Value);
+    virtual void BeginPlay() override;
+    virtual void SetupInputComponent() override;
+    void SetupTargetingBindings();
+    
 
 private:
     // private properties
@@ -130,6 +134,9 @@ private:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* LiftAction;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* TogglePauseMenuAction;
+
     FJumpSignature JumpDelegate;
     FDodgeSignature DodgeDelegate;
     FAttackSignature AttackDelegate;
@@ -139,6 +146,7 @@ private:
     FTargetCycleRightSignature TargetCycleRightDelegate;
     FDropSignature DropDelegate;
     FLiftSignature LiftDelegate;
+    FTogglePauseMenuSignature TogglePauseMenuDelegate;
 
     UPROPERTY()
     UUserWidget* LetterboxWidget;
