@@ -1,8 +1,11 @@
 ﻿// Copyright @ Christian Reichel
 
 #include "Hud/DkHUD.h"
-#include "Hud/DkPauseMenuWidget.h"
+#include "Hud/DkPauseMenuStack.h"
+#include "Hud/DkBaseMenuWidget.h"
+#include "Kismet/GameplayStatics.h"
 #include "Player/DkPlayerController.h"
+#include "Widgets/CommonActivatableWidgetContainer.h"
 
 ADkHUD::ADkHUD()
 {
@@ -10,65 +13,57 @@ ADkHUD::ADkHUD()
 
 void ADkHUD::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 
-	// Create the pause menu widget
-	if (PauseMenuClass)
-	{
-		PauseMenu = CreateWidget<UDkPauseMenuWidget>(GetOwningPlayerController(), PauseMenuClass);
+    // Create the pause menu stack widget
+    if (PauseMenuStackClass)
+    {
+       PauseMenuStack = CreateWidget<UDkPauseMenuStack>(GetOwningPlayerController(), PauseMenuStackClass);
+       PauseMenuStack->AddToViewport();  // We add the stack container immediately but it starts empty
 
-		// Bind to the pause menu delegate
-		if (ADkPlayerController* PC = Cast<ADkPlayerController>(GetOwningPlayerController()))
-		{
-			if (FTogglePauseMenuSignature* PauseDelegate = PC->GetTogglePauseMenuDelegate())
-			{
-				PauseDelegate->AddUObject(this, &ADkHUD::HandleTogglePauseMenu);
-			}
-		}
-	}
+       // Bind to the pause menu delegate
+       if (ADkPlayerController* PC = Cast<ADkPlayerController>(GetOwningPlayerController()))
+       {
+          if (!PlayerControllerInterface)
+          {
+             PlayerControllerInterface = Cast<IDkPlayerControllerInterface>(UGameplayStatics::GetPlayerController(this, 0));
+          }
+          if (PlayerControllerInterface)
+          {
+             PlayerControllerInterface->GetTogglePauseMenuDelegate()->AddUObject(this, &ADkHUD::HandleTogglePauseMenu);
+          }
+      }
+    }
 }
 
 void ADkHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (ADkPlayerController* PC = Cast<ADkPlayerController>(GetOwningPlayerController()))
-	{
-		if (FTogglePauseMenuSignature* PauseDelegate = PC->GetTogglePauseMenuDelegate())
-		{
-			PauseDelegate->RemoveAll(this);
-		}
-	}
-
-	Super::EndPlay(EndPlayReason);
+   if(PlayerControllerInterface)
+   {
+      PlayerControllerInterface->GetTogglePauseMenuDelegate()->RemoveAll(this);
+   }
+    Super::EndPlay(EndPlayReason);
 }
 
 void ADkHUD::HandleTogglePauseMenu()
 {
-	if (PauseMenu)
-	{
-		if (PauseMenu->IsInViewport())
-		{
-			PauseMenu->RemoveFromParent();
-			if (APlayerController* PC = GetOwningPlayerController())
-			{
-				PC->SetPause(false);
-				PC->SetShowMouseCursor(false);
-				PC->SetInputMode(FInputModeGameOnly());
-			}
-		}
-		else
-		{
-			PauseMenu->AddToViewport(100);
-			if (APlayerController* PC = GetOwningPlayerController())
-			{
-				PC->SetPause(true);
-				PC->SetShowMouseCursor(true);
-                
-				FInputModeGameAndUI InputMode;
-				// These settings should allow both UI and game input
-				InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-				InputMode.SetHideCursorDuringCapture(false);
-				PC->SetInputMode(InputMode);
-			}
-		}
-	}
+  // if (!PauseMenuStack) {return;}
+   if (!PlayerControllerInterface || !PlayerControllerInterface->GetTogglePauseMenuDelegate()->IsBoundToObject(this))
+   {
+      UE_LOG(LogTemp, Warning, TEXT("Delegate binding issue detected"));
+   }
+   UE_LOG(LogTemp, Warning, TEXT("Toggling shizzle ma nizzle"));
+   
+   if (bIsMenuVisible)
+   {
+     // PauseMenuStack->OnHideMenuWidget.Broadcast();
+      PauseMenuStack->OnHideMenuWidget();
+      bIsMenuVisible = false;
+   }
+   else
+   {
+      //PauseMenuStack->OnShowMenuWidget.Broadcast();
+      PauseMenuStack->OnShowMenuWidget();
+      bIsMenuVisible = true;
+   }
 }

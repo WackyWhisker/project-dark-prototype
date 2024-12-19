@@ -324,6 +324,7 @@ void ADkPlayerController::TogglePauseMenu()
     {
         TogglePauseMenuDelegate.Broadcast();
     }
+    UE_LOG(LogTemp, Warning, TEXT("Pause Menu Button Pressed"));
 }
 
 FTargetStartSignature* ADkPlayerController::GetTargetStartDelegate()

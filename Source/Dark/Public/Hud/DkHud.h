@@ -6,6 +6,8 @@
 #include "GameFramework/HUD.h"
 #include "DkHUD.generated.h"
 
+class IDkPlayerControllerInterface;
+
 UCLASS()
 class DARK_API ADkHUD : public AHUD
 {
@@ -19,11 +21,19 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<class UDkPauseMenuWidget> PauseMenuClass;
+	TSubclassOf<class UDkPauseMenuStack> PauseMenuStackClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UDkBaseMenuWidget> PauseMenuWidgetClass;
+
+	// protected properties
+	IDkPlayerControllerInterface* PlayerControllerInterface = nullptr;
 
 private:
 	UPROPERTY()
-	class UDkPauseMenuWidget* PauseMenu;
+	class UDkPauseMenuStack* PauseMenuStack;
 
 	void HandleTogglePauseMenu();
+
+	bool bIsMenuVisible;
 };
