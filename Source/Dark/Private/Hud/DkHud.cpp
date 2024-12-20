@@ -15,10 +15,10 @@ void ADkHUD::BeginPlay()
     Super::BeginPlay();
 
     // Create the pause menu stack widget
-    if (PauseMenuStackClass)
+    if (BaseMenuStackClass)
     {
-       PauseMenuStack = CreateWidget<UDkPauseMenuStack>(GetOwningPlayerController(), PauseMenuStackClass);
-       PauseMenuStack->AddToViewport();  // We add the stack container immediately but it starts empty
+       BaseMenuStack = CreateWidget<UDkBaseMenuStack>(GetOwningPlayerController(), BaseMenuStackClass);
+       BaseMenuStack->AddToViewport();  // We add the stack container immediately but it starts empty
 
        // Bind to the pause menu delegate
        if (ADkPlayerController* PC = Cast<ADkPlayerController>(GetOwningPlayerController()))
@@ -46,23 +46,30 @@ void ADkHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void ADkHUD::HandleTogglePauseMenu()
 {
-  // if (!PauseMenuStack) {return;}
-   if (!PlayerControllerInterface || !PlayerControllerInterface->GetTogglePauseMenuDelegate()->IsBoundToObject(this))
+   if (bIsPauseMenuVisible)
    {
-      UE_LOG(LogTemp, Warning, TEXT("Delegate binding issue detected"));
-   }
-   UE_LOG(LogTemp, Warning, TEXT("Toggling shizzle ma nizzle"));
-   
-   if (bIsMenuVisible)
-   {
-     // PauseMenuStack->OnHideMenuWidget.Broadcast();
-      PauseMenuStack->OnHideMenuWidget();
-      bIsMenuVisible = false;
+      BaseMenuStack->OnHidePauseMenuWidget();
+      bIsPauseMenuVisible = false;
    }
    else
    {
-      //PauseMenuStack->OnShowMenuWidget.Broadcast();
-      PauseMenuStack->OnShowMenuWidget();
-      bIsMenuVisible = true;
+      BaseMenuStack->OnShowPauseMenuWidget();
+      bIsPauseMenuVisible = true;
+   }
+}
+
+void ADkHUD::HandleToggleEndScreenMenu()
+{
+   if (bIsEndScreenMenuVisible)
+   {
+      BaseMenuStack->OnHideEndScreenMenuWidget();
+      bIsEndScreenMenuVisible = false;
+      UE_LOG(LogTemp, Warning, TEXT("Hide Endscreen menu"));
+   }
+   else
+   {
+      BaseMenuStack->OnShowEndScreenMenuWidget();
+      bIsEndScreenMenuVisible = true;
+      UE_LOG(LogTemp, Warning, TEXT("Show Endscreen menu"));
    }
 }

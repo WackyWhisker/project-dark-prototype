@@ -15,25 +15,28 @@ class DARK_API ADkHUD : public AHUD
 
 public:
 	ADkHUD();
+
+	UFUNCTION(BlueprintCallable)//should be called from level blueprint?
+	void HandleToggleEndScreenMenu();
     
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<class UDkPauseMenuStack> PauseMenuStackClass;
-
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<class UDkBaseMenuWidget> PauseMenuWidgetClass;
+	TSubclassOf<class UDkBaseMenuStack> BaseMenuStackClass;
 
 	// protected properties
 	IDkPlayerControllerInterface* PlayerControllerInterface = nullptr;
 
 private:
 	UPROPERTY()
-	class UDkPauseMenuStack* PauseMenuStack;
+	class UDkBaseMenuStack* BaseMenuStack;
 
 	void HandleTogglePauseMenu();
 
-	bool bIsMenuVisible;
+	
+
+	bool bIsPauseMenuVisible;
+	bool bIsEndScreenMenuVisible;
 };
