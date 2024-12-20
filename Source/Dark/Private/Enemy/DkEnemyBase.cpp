@@ -13,6 +13,7 @@ ADkEnemyBase::ADkEnemyBase()
 	// Create the widget component
 	TargetReticleWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("TargetReticleWidget"));
 	TargetReticleWidget->SetupAttachment(RootComponent);
+	TargetReticleWidget->SetVisibility(false);
     
 	// Configure the widget
 	TargetReticleWidget->SetWidgetSpace(EWidgetSpace::Screen); // Makes it face the camera
