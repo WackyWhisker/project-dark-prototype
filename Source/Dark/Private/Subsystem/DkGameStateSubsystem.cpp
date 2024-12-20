@@ -72,7 +72,7 @@ void UDkGameStateSubsystem::RegisterForReset(UObject* Object)
 	if (Object)
 	{
 		PendingResetObjects.Add(Object);
-		UE_LOG(LogTemp, Log, TEXT("Object registered for reset: %s"), *Object->GetName());
+		//UE_LOG(LogTemp, Log, TEXT("Object registered for reset: %s"), *Object->GetName());
 	}
 }
 

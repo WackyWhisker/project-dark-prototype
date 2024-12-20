@@ -66,7 +66,7 @@ protected:
 	EDkGameState CurrentGameState = EDkGameState::Playing;
 	
 	UPROPERTY(EditAnywhere, Category = "Dk|Debug")
-	bool bShowDebugState = true;
+	bool bShowDebugState = false;
 	
 private:
 	// Track anything that needs to complete before reset is done
