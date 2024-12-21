@@ -301,7 +301,7 @@ void UCastleSubsystem::LoadRoom(const FString& RoomID, const FString& ConnectedT
                     CASTLE_LOG(Error, TEXT("Failed to load level instance for room: %s"), *LocalRoomID);
                 }
             }
-        }, 0.5f, false);
+        }, 0.25f, false);
     }
 }
 
