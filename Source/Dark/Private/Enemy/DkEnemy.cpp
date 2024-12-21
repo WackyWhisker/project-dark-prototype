@@ -17,11 +17,54 @@ void ADkEnemy::HandleDeath_Implementation()
 void ADkEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-	
+    
+	StartLocation = GetActorLocation();
+	GenerateNewTargetPoint();
 }
 
 void ADkEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+    
+	if (HasReachedTarget())
+	{
+		GenerateNewTargetPoint();
+	}
+    
+	MoveTowardsTarget(DeltaTime);
+}
+
+void ADkEnemy::GenerateNewTargetPoint()
+{
+	// Generate random point within circle
+	float RandomAngle = FMath::RandRange(0.0f, 2.0f * PI);
+	float RandomRadius = FMath::RandRange(0.0f, MovementRadius);
+    
+	FVector RandomOffset(
+		RandomRadius * FMath::Cos(RandomAngle),
+		RandomRadius * FMath::Sin(RandomAngle),
+		0.0f
+	);
+    
+	CurrentTargetPoint = StartLocation + RandomOffset;
+}
+
+void ADkEnemy::MoveTowardsTarget(float DeltaTime)
+{
+	FVector CurrentLocation = GetActorLocation();
+	FVector DirectionToTarget = (CurrentTargetPoint - CurrentLocation).GetSafeNormal();
+    
+	// Calculate new position
+	FVector NewLocation = CurrentLocation + DirectionToTarget * MovementSpeed * DeltaTime;
+    
+	// Optional: Look at movement direction
+	FRotator NewRotation = DirectionToTarget.Rotation();
+    
+	SetActorLocationAndRotation(NewLocation, NewRotation);
+}
+
+bool ADkEnemy::HasReachedTarget() const
+{
+	return FVector::Distance(GetActorLocation(), CurrentTargetPoint) < AcceptanceRadius;
 }
 
