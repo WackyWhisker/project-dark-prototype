@@ -1,79 +1,120 @@
 ﻿// Copyright @ Christian Reichel
 
-
 #include "Component/DkHealthComponent.h"
-
 #include "GameFramework/Character.h"
 #include "Interface/DkDeathHandlerInterface.h"
 #include "Subsystem/DkGameStateSubsystem.h"
 
-
-// Sets default values for this component's properties
 UDkHealthComponent::UDkHealthComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
-	// Set default values
-	MaxHealth = 100.0f;
-	CurrentHealth = MaxHealth;
-	bIsDead = false;
+    PrimaryComponentTick.bCanEverTick = false;
+    MaxHealth = 100.0f;
+    CurrentHealth = MaxHealth;
+    bIsDead = false;
 }
 
 void UDkHealthComponent::InitializeComponent()
 {
-	Super::InitializeComponent();
-	CurrentHealth = MaxHealth; 
+    Super::InitializeComponent();
+    CurrentHealth = MaxHealth; 
 }
 
 void UDkHealthComponent::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
     
-	if (AActor* Owner = GetOwner())
-	{
-		Owner->OnTakeAnyDamage.AddDynamic(this, &UDkHealthComponent::HandleTakeAnyDamage);
-	}
+    // Setup damage handling
+    if (AActor* Owner = GetOwner())
+    {
+        Owner->OnTakeAnyDamage.AddDynamic(this, &UDkHealthComponent::HandleTakeAnyDamage);
+        
+        // Cache the mesh and material for hit flash
+        if (ACharacter* Character = Cast<ACharacter>(Owner))
+        {
+            OwnerMesh = Character->GetMesh();
+            if (OwnerMesh)
+            {
+                OriginalMaterial = OwnerMesh->GetMaterial(0);
+            }
+        }
+    }
     
-	// Subscribe to game state changes
-	if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+    // Subscribe to game state changes
+    if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+    {
+        GameStateSubsystem->OnGameStateChanged.AddDynamic(this, &UDkHealthComponent::HandleGameStateChanged);
+    }
+}
+
+void UDkHealthComponent::PlayHitFlash()
+{
+	// Early out if we don't have required components
+	if (!OwnerMesh || !OriginalMaterial) return;
+   
+	// Create dynamic material instance if needed
+	UMaterialInstanceDynamic* DynamicMat = UMaterialInstanceDynamic::Create(OriginalMaterial, this);
+	if (!DynamicMat) return;
+   
+	// Set flash intensity and color
+	DynamicMat->SetScalarParameterValue(FlashIntensityParam, 1.0f);
+	DynamicMat->SetVectorParameterValue(FlashColorParam, FlashColor);
+	OwnerMesh->SetMaterial(0, DynamicMat);
+   
+	// Clear any existing timer
+	if (GetWorld()->GetTimerManager().IsTimerActive(HitFlashTimerHandle))
 	{
-		GameStateSubsystem->OnGameStateChanged.AddDynamic(this, &UDkHealthComponent::HandleGameStateChanged);
+		GetWorld()->GetTimerManager().ClearTimer(HitFlashTimerHandle);
 	}
+   
+	// Reset after delay
+	GetWorld()->GetTimerManager().SetTimer(
+		HitFlashTimerHandle,
+		[this, DynamicMat]()
+		{
+			if (DynamicMat)
+			{
+				DynamicMat->SetScalarParameterValue(FlashIntensityParam, 0.0f);
+			}
+		},
+		HitFlashDuration,
+		false
+	);
 }
 
 void UDkHealthComponent::TakeDamage(float DamageAmount)
 {
-	if (DamageAmount <= 0.0f || bIsDead || !bCanTakeDamage) {return;}
+    if (DamageAmount <= 0.0f || bIsDead || !bCanTakeDamage) {return;}
 
-	bCanTakeDamage = false;
+    bCanTakeDamage = false;
     
-	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+    CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
     
-	OnHealthChanged.Broadcast(CurrentHealth, -DamageAmount);
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, 
-		GetOwner()->GetName() + "'s Current health: " + FString::SanitizeFloat(CurrentHealth));
+    // Play hit flash effect
+    PlayHitFlash();
     
-	if (CurrentHealth <= 0.0f)
-	{
-		bIsDead = true;
-		OnHealthDepleted.Broadcast();
+    OnHealthChanged.Broadcast(CurrentHealth, -DamageAmount);
+    
+    if (CurrentHealth <= 0.0f)
+    {
+        bIsDead = true;
+        OnHealthDepleted.Broadcast();
 
-		// Use interface instead of type checking
-		if (AActor* Owner = GetOwner())
-		{
-			if (Owner->Implements<UDkDeathHandlerInterface>())
-			{
-				IDkDeathHandlerInterface::Execute_HandleDeath(Owner);
-			}
-		}
-	}
+        if (AActor* Owner = GetOwner())
+        {
+            if (Owner->Implements<UDkDeathHandlerInterface>())
+            {
+                IDkDeathHandlerInterface::Execute_HandleDeath(Owner);
+            }
+        }
+    }
 
-	GetWorld()->GetTimerManager().SetTimer(
-		DamageCooldownTimer,
-		this,
-		&UDkHealthComponent::ResetDamageCooldown,
-		DamageCooldownDuration,
-		false
-	);
+    GetWorld()->GetTimerManager().SetTimer(
+        DamageCooldownTimer,
+        this,
+        &UDkHealthComponent::ResetDamageCooldown,
+        DamageCooldownDuration,
+        false
+    );
 }
 
 void UDkHealthComponent::Heal(float HealAmount)
