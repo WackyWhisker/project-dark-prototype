@@ -48,6 +48,10 @@ public:
     bool IsUsingToggleMode() const { return bUseToggleMode; }
 
 public:
+    UFUNCTION(BlueprintCallable, Category = "Targeting")
+    void ResetTargetingState();
+
+public:
     // public properties
     UPROPERTY(EditDefaultsOnly, Category = UI_Targeting)
     TSubclassOf<UUserWidget> LetterboxWidgetClass;

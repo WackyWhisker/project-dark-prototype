@@ -156,6 +156,18 @@ void ADkPlayerController::SetTargetingMode(bool bNewToggleMode)
     SetupTargetingBindings();
 }
 
+void ADkPlayerController::ResetTargetingState()
+{
+    bIsTargeting = false;
+    
+    // If using toggle mode, ensure we're in a clean state
+    if (bUseToggleMode)
+    {
+        // Re-setup bindings to ensure clean state
+        SetupTargetingBindings();
+    }
+}
+
 void ADkPlayerController::TargetToggle()
 {
     if (!bIsTargeting)

@@ -60,6 +60,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void InitializeComponent() override;
 	IDkPlayerControllerInterface* PlayerControllerInterface = nullptr;
 
@@ -153,6 +154,10 @@ private:
 
 	UFUNCTION()
 	void OnCurrentTargetHealthDepleted();
+
+private:
+	UFUNCTION()
+	void HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState);
 
 	
 	

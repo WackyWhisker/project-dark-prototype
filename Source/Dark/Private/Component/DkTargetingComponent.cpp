@@ -60,7 +60,24 @@ void UDkTargetingComponent::BeginPlay()
 		PlayerControllerInterface->GetTargetCycleRightDelegate()->AddUObject(this, &UDkTargetingComponent::OnTargetCycleRight);
 		
 	}
+
+	if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+	{
+		GameStateSubsystem->OnGameStateChanged.AddDynamic(this, &UDkTargetingComponent::HandleGameStateChanged);
+	}
 }
+
+void UDkTargetingComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+    
+	// Clean up game state subscription
+	if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+	{
+		GameStateSubsystem->OnGameStateChanged.RemoveDynamic(this, &UDkTargetingComponent::HandleGameStateChanged);
+	}
+}
+
 
 void UDkTargetingComponent::InitializeComponent()
 {
@@ -547,4 +564,26 @@ void UDkTargetingComponent::OnCurrentTargetHealthDepleted()
 	});
 }
 
+void UDkTargetingComponent::HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState)
+{
+	switch (NewState)
+	{
+	case EDkGameState::Dying:
+		// If we're currently targeting, end it properly
+			if (bIsTargeting)
+			{
+				OnTargetEnd();
+			}
+		break;
+            
+	case EDkGameState::Respawning:
+		// Reset targeting state in both components
+			bIsTargeting = false;
+		if (PlayerControllerRef)
+		{
+			PlayerControllerRef->ResetTargetingState();
+		}
+		break;
+	}
+}
 
