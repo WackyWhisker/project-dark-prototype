@@ -122,13 +122,13 @@ void UDkHealthComponent::ApplyDamagePushback(AActor* DamagedActor, float Damage,
 
 void UDkHealthComponent::HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState)
 {
-	if (NewState == EDkGameState::Resetting)
+	if (NewState == EDkGameState::Respawning)
 	{
 		// Register for reset when entering reset state
 		if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
 		{
-			GameStateSubsystem->RegisterForReset(this);
-			bIsRegisteredForReset = true;
+			//GameStateSubsystem->RegisterForReset(this);
+			//bIsRegisteredForReset = true;
             
 			// Reset health
 			CurrentHealth = MaxHealth;
@@ -139,8 +139,8 @@ void UDkHealthComponent::HandleGameStateChanged(EDkGameState NewState, EDkGameSt
 			OnHealthChanged.Broadcast(CurrentHealth, MaxHealth - CurrentHealth);
             
 			// Notify reset complete immediately since we're done
-			GameStateSubsystem->NotifyResetComplete(this);
-			bIsRegisteredForReset = false;
+			//GameStateSubsystem->NotifyResetComplete(this);
+			//bIsRegisteredForReset = false;
 		}
 	}
 }
