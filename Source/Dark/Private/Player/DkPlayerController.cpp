@@ -4,7 +4,6 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "MovieSceneSequencePlaybackSettings.h"
-#include "LevelSequenceActor.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/SpringArmComponent.h"
 
@@ -66,6 +65,9 @@ void ADkPlayerController::SetupInputComponent()
 
         //Attacking
         EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ADkPlayerController::Attack);
+
+        //Interact
+        EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADkPlayerController::Interact);
 
         // Store enhanced input component for rebinding
         CachedEnhancedInputComponent = EnhancedInputComponent;
@@ -312,6 +314,15 @@ void ADkPlayerController::Attack()
     //UE_LOG(LogTemp, Warning, TEXT("Attack Button Pressed"));
 }
 
+void ADkPlayerController::Interact()
+{
+    if (InteractDelegate.IsBound())
+    {
+        InteractDelegate.Broadcast();
+    }
+    UE_LOG(LogTemp, Warning, TEXT("Interact Button Pressed"));
+}
+
 void ADkPlayerController::Drop()
 {
     if (DropDelegate.IsBound())
@@ -374,6 +385,11 @@ FAttackSignature* ADkPlayerController::GetAttackDelegate()
     return &AttackDelegate;
 }
 
+FInteractSignature* ADkPlayerController::GetInteractDelegate()
+{
+    return &InteractDelegate;
+}
+
 FDropSignature* ADkPlayerController::GetDropDelegate()
 {
     return &DropDelegate;
@@ -418,110 +434,110 @@ void ADkPlayerController::HandleGameStateChanged(EDkGameState NewState, EDkGameS
 
 void ADkPlayerController::PlayDeathSequence()
 {
-    if (!DeathSequence)
-    {
-        UE_LOG(LogDkPlayerController, Warning, TEXT("Death sequence not set in PlayerController"));
-        if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
-        {
-            GameStateSubsystem->RequestStateChange(EDkGameState::Resetting);
-        }
-        return;
-    }
+   if (!DeathSequence)
+   {
+       UE_LOG(LogDkPlayerController, Warning, TEXT("Death sequence not set in PlayerController"));
+       if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+       {
+           GameStateSubsystem->RequestStateChange(EDkGameState::Resetting);
+       }
+       return;
+   }
 
-    // Create sequence player and bind to finish event
-    FMovieSceneSequencePlaybackSettings PlaybackSettings;
-    PlaybackSettings.bPauseAtEnd = false;
-    ALevelSequenceActor* LSActor;  // Will store the created actor
-    
-    ActiveSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
-        GetWorld(),
-        DeathSequence,
-        PlaybackSettings,
-        LSActor  // Pass the actor reference
-    );
+   // Create sequence player and bind to finish event
+   FMovieSceneSequencePlaybackSettings PlaybackSettings;
+   PlaybackSettings.bPauseAtEnd = false;
+   ALevelSequenceActor* LSActor;  // Will store the created actor
+   
+   ActiveSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
+       GetWorld(),
+       DeathSequence,
+       PlaybackSettings,
+       LSActor  // Pass the actor reference
+   );
 
-    if (ActiveSequencePlayer)
-    {
-        ActiveSequencePlayer->OnFinished.AddDynamic(this, &ADkPlayerController::OnDeathSequenceFinished);
-        ActiveSequencePlayer->Play();
-    }
-    else
-    {
-        UE_LOG(LogDkPlayerController, Warning, TEXT("Failed to create death sequence player"));
-        if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
-        {
-            GameStateSubsystem->RequestStateChange(EDkGameState::Resetting);
-        }
-    }
+   if (ActiveSequencePlayer)
+   {
+       ActiveSequencePlayer->OnFinished.AddDynamic(this, &ADkPlayerController::OnDeathSequenceFinished);
+       ActiveSequencePlayer->Play();
+   }
+   else
+   {
+       UE_LOG(LogDkPlayerController, Warning, TEXT("Failed to create death sequence player"));
+       if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+       {
+           GameStateSubsystem->RequestStateChange(EDkGameState::Resetting);
+       }
+   }
 }
 
 void ADkPlayerController::PlayRespawnSequence()
 {
-    if (!RespawnSequence)
-    {
-        UE_LOG(LogDkPlayerController, Warning, TEXT("Respawn sequence not set in PlayerController"));
-        if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
-        {
-            GameStateSubsystem->RequestStateChange(EDkGameState::Playing);
-        }
-        return;
-    }
+   if (!RespawnSequence)
+   {
+       UE_LOG(LogDkPlayerController, Warning, TEXT("Respawn sequence not set in PlayerController"));
+       if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+       {
+           GameStateSubsystem->RequestStateChange(EDkGameState::Playing);
+       }
+       return;
+   }
 
-    // Create sequence player and bind to finish event
-    FMovieSceneSequencePlaybackSettings PlaybackSettings;
-    PlaybackSettings.bPauseAtEnd = false;
-    ALevelSequenceActor* LSActor;  // Will store the created actor
-    
-    ActiveSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
-        GetWorld(),
-        RespawnSequence,
-        PlaybackSettings,
-        LSActor  // Pass the actor reference
-    );
+   // Create sequence player and bind to finish event
+   FMovieSceneSequencePlaybackSettings PlaybackSettings;
+   PlaybackSettings.bPauseAtEnd = false;
+   ALevelSequenceActor* LSActor;  // Will store the created actor
+   
+   ActiveSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
+       GetWorld(),
+       RespawnSequence,
+       PlaybackSettings,
+       LSActor  // Pass the actor reference
+   );
 
-    if (ActiveSequencePlayer)
-    {
-        ActiveSequencePlayer->OnFinished.AddDynamic(this, &ADkPlayerController::OnRespawnSequenceFinished);
-        ActiveSequencePlayer->Play();
-    }
-    else
-    {
-        UE_LOG(LogDkPlayerController, Warning, TEXT("Failed to create respawn sequence player"));
-        if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
-        {
-            GameStateSubsystem->RequestStateChange(EDkGameState::Playing);
-        }
-    }
+   if (ActiveSequencePlayer)
+   {
+       ActiveSequencePlayer->OnFinished.AddDynamic(this, &ADkPlayerController::OnRespawnSequenceFinished);
+       ActiveSequencePlayer->Play();
+   }
+   else
+   {
+       UE_LOG(LogDkPlayerController, Warning, TEXT("Failed to create respawn sequence player"));
+       if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+       {
+           GameStateSubsystem->RequestStateChange(EDkGameState::Playing);
+       }
+   }
 }
 
 void ADkPlayerController::OnDeathSequenceFinished()
 {
-    // Clean up
-    if (ActiveSequencePlayer)
-    {
-        ActiveSequencePlayer->OnFinished.RemoveDynamic(this, &ADkPlayerController::OnDeathSequenceFinished);
-        ActiveSequencePlayer = nullptr;
-    }
+   // Clean up
+   if (ActiveSequencePlayer)
+   {
+       ActiveSequencePlayer->OnFinished.RemoveDynamic(this, &ADkPlayerController::OnDeathSequenceFinished);
+       ActiveSequencePlayer = nullptr;
+   }
 
-    // Proceed to next state
-    if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
-    {
-        GameStateSubsystem->RequestStateChange(EDkGameState::Resetting);
-    }
+   // Proceed to next state
+   if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+   {
+       GameStateSubsystem->RequestStateChange(EDkGameState::Resetting);
+   }
 }
 
 void ADkPlayerController::OnRespawnSequenceFinished()
 {
-    // Clean up
-    if (ActiveSequencePlayer)
-    {
-        ActiveSequencePlayer->OnFinished.RemoveDynamic(this, &ADkPlayerController::OnRespawnSequenceFinished);
-        ActiveSequencePlayer = nullptr;
-    }
+   // Clean up
+   if (ActiveSequencePlayer)
+   {
+       ActiveSequencePlayer->OnFinished.RemoveDynamic(this, &ADkPlayerController::OnRespawnSequenceFinished);
+       ActiveSequencePlayer = nullptr;
+   }
 
-    // Proceed to next state
-    if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
-    {
-        GameStateSubsystem->RequestStateChange(EDkGameState::Playing);
-    }
+   // Proceed to next state
+   if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+   {
+       GameStateSubsystem->RequestStateChange(EDkGameState::Playing);
+   }
 }
