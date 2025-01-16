@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interface/DkInteractableInterface.h"
 #include "DkNpcBase.generated.h"
 
 class UWidgetComponent;
 class UUserWidget;
 
 UCLASS()
-class DARK_API ADkNpcBase : public ACharacter
+class DARK_API ADkNpcBase : public ACharacter, public IDkInteractableInterface
 {
 	GENERATED_BODY()
 
@@ -28,6 +29,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = UI_Targeting)
 	void ToggleDialoguePrompt(bool bShowDialoguePrompt);
+
+	// Implement the interface functions
+	virtual bool CanInteract_Implementation(APawn* Interactor) const override;
+	virtual void Interact_Implementation(APawn* Interactor) override;
+	virtual FText GetInteractPrompt_Implementation() const override;
 
 protected:
 	virtual void BeginPlay() override;
