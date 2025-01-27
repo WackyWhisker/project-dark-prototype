@@ -16,6 +16,7 @@ DECLARE_MULTICAST_DELEGATE(FTargetCycleRightSignature);
 DECLARE_MULTICAST_DELEGATE(FDropSignature);
 DECLARE_MULTICAST_DELEGATE(FLiftSignature);
 DECLARE_MULTICAST_DELEGATE(FTogglePauseMenuSignature);
+DECLARE_MULTICAST_DELEGATE(FInteractSignature);
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
@@ -24,9 +25,7 @@ class UDkPlayerControllerInterface : public UInterface
 	GENERATED_BODY()
 };
 
-/**
- * 
- */
+
 class DARK_API IDkPlayerControllerInterface
 {
 	GENERATED_BODY()
@@ -44,4 +43,5 @@ public:
 	virtual FDropSignature* GetDropDelegate() = 0;
 	virtual FLiftSignature* GetLiftDelegate() = 0;
 	virtual FTogglePauseMenuSignature* GetTogglePauseMenuDelegate() = 0;
+	virtual FInteractSignature* GetInteractDelegate() = 0;
 };

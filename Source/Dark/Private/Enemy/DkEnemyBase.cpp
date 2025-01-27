@@ -35,7 +35,7 @@ void ADkEnemyBase::BeginPlay()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Something not set correctly on the widget class"));
+		UE_LOG(LogTemp, Warning, TEXT("Something not set correctly on the target reticle widget class"));
 	}
 
 	if (FlashComponent)
