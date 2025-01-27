@@ -1,5 +1,6 @@
 Binaries
 DerivedDataCache
+Import
 Intermediate
 Saved
 Build
@@ -17,3 +18,4 @@ Build
 *.xcodeproj
 *.xcworkspace
 Dark.uproject.DotSettings.user
+
