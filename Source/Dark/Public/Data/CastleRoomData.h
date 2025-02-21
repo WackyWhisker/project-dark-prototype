@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "Json.h"
-#include "JsonUtilities.h"
 #include "CastleRoomData.generated.h"
 
 // Define the room types we support

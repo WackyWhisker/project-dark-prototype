@@ -1,4 +1,4 @@
-﻿// Copyright @ Christian Reichel
+﻿/*// Copyright @ Christian Reichel
 
 #pragma once
 
@@ -87,7 +87,8 @@ class DARK_API UCastleSubsystem : public UWorldSubsystem
     GENERATED_BODY()
 
 public:
-     
+
+    virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
         
     UFUNCTION(BlueprintCallable, Category = "Castle")
@@ -201,4 +202,4 @@ private:
 
 private:
     bool bIsCastleSpawning = false;
-};
+};*/

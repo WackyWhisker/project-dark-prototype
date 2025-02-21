@@ -1,4 +1,5 @@
-﻿// Copyright @ Christian Reichel
+﻿/*
+// Copyright @ Christian Reichel
 
 #include "Subsystem/CastleSubsystem.h"
 #include "Engine/LevelStreaming.h"
@@ -10,6 +11,12 @@
 #include "Helper/GameLogging.h"
 #include "Subsystem/CastleSocketActor.h"
 #include "Subsystem/DkGameStateSubsystem.h"
+
+
+bool UCastleSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+    return false;
+}
 
 void UCastleSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -862,3 +869,4 @@ void UCastleSubsystem::ClearInternalState()
     }
     CASTLE_LOG(Log, TEXT("Castle cleanup complete"));
 }
+*/
