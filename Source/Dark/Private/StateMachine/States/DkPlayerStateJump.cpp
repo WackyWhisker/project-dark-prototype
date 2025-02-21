@@ -3,6 +3,13 @@
 
 #include "StateMachine/States/DkPlayerStateJump.h"
 
+void UDkPlayerStateJump::OnStateEnter(AActor* StateOwner)
+{
+	Super::OnStateEnter(StateOwner);
+	PlayerRef->DkPlayerState = EDkPlayerAnimationState::Jump;
+	PlayerRef->GetCharacterMovement()->RotationRate = FRotator(0, AirYaw, 0.0f);
+}
+
 void UDkPlayerStateJump::TickState()
 {
 	Super::TickState();
@@ -12,9 +19,11 @@ void UDkPlayerStateJump::TickState()
 	}
 }
 
-void UDkPlayerStateJump::OnStateEnter(AActor* StateOwner)
+void UDkPlayerStateJump::Jump()
 {
-	Super::OnStateEnter(StateOwner);
-	PlayerRef->DkPlayerState = EDkPlayerAnimationState::Jump;
-	PlayerRef->GetCharacterMovement()->RotationRate = FRotator(0, AirYaw, 0.0f);
+	Super::Jump();
+	UE_LOG(LogTemp, Warning, TEXT("Executing Jump in again in jump State"));
+	PlayerRef->Jump();
+	PlayerRef->StateManager->SwitchStateByKey("Jump");
 }
+

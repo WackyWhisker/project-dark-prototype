@@ -17,6 +17,7 @@ public:
 	
 protected:
 	virtual void OnStateEnter(AActor* StateOwner) override;
+	virtual void Jump() override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float AirYaw = 150.0f;
