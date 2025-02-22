@@ -1,4 +1,4 @@
-﻿/*// Copyright @ Christian Reichel
+﻿// Copyright @ Christian Reichel
 
 #pragma once
 
@@ -202,4 +202,4 @@ private:
 
 private:
     bool bIsCastleSpawning = false;
-};*/
+};
