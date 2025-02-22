@@ -1,9 +1,8 @@
-﻿// Copyright @ Christian Reichel
+﻿/*// Copyright @ Christian Reichel
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Core/DkGameModeBase.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Engine/World.h"
 #include "Data/CastleRoomData.h"
@@ -123,15 +122,8 @@ public:
     // Get all currently loaded rooms
     UFUNCTION(BlueprintCallable, Category = "Castle Rooms")
     TArray<FString> GetLoadedRoomIDs() const;
-
-    // Debug function to visualize sockets
-    UFUNCTION(BlueprintCallable, Category = "Castle|Debug")
-    void DebugDrawSockets();
-    void LogSocketInfo(const FString& RoomID);
+   
     void ProcessPendingConnections();
-
-    UFUNCTION(BlueprintCallable, Category = "Castle|Debug")
-    void DebugLogAllSocketActors(const FString& RoomID);
 
     // Completely clears the castle - unloads all rooms and resets internal state
     UFUNCTION(BlueprintCallable, Category = "Castle")
@@ -202,4 +194,4 @@ private:
 
 private:
     bool bIsCastleSpawning = false;
-};
+};*/
