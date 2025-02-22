@@ -70,14 +70,6 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "Castle Rooms")
     TArray<FCastleRoomConnection> Connections;
 
-    // Load JSON data from Content folder
-    UFUNCTION(BlueprintCallable, Category = "Castle Rooms")
-    bool LoadFromContentJSON(const FString& RelativeJSONPath);
-
-    // Load JSON data from Config folder
-    UFUNCTION(BlueprintCallable, Category = "Castle Rooms")
-    bool LoadFromConfigJSON(const FString& RelativeJSONPath);
-
     // Get a random level variant for a room
     UFUNCTION(BlueprintPure, Category = "Castle Rooms")
     FName GetRandomLevelVariantForRoom(const FString& RoomID) const;
@@ -97,11 +89,4 @@ public:
     // Get connected room IDs
     UFUNCTION(BlueprintPure, Category = "Castle Rooms")
     TArray<FString> GetConnectedRooms(const FString& RoomID) const;
-
-private:
-    // Internal function to load JSON from a file path
-    bool LoadFromJSON(const FString& JSONFilePath);
-
-    // Helper function to convert path to level name
-    static FName ConvertPathToLevelName(const FString& Path);
 };

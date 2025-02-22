@@ -3,7 +3,6 @@
 #include "Subsystem/CastleSubsystem.h"
 #include "Engine/LevelStreaming.h"
 #include "Kismet/GameplayStatics.h"
-#include "Data/CastleRoomData.h"
 #include "Engine/LevelStreamingDynamic.h"
 #include "WorldSetting/CastleWorldSettings.h"
 #include "DrawDebugHelpers.h"
@@ -30,26 +29,14 @@ void UCastleSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         GameStateSubsystem = World->GetSubsystem<UDkGameStateSubsystem>();
         if (GameStateSubsystem)
         {
-            //CASTLE_LOG(Warning, TEXT("Found GameStateSubsystem, subscribing to events"));
             GameStateSubsystem->OnGameStateChanged.AddDynamic(this, &UCastleSubsystem::OnGameStateChanged);
-        }
-        else
-        {
-            //CASTLE_LOG(Error, TEXT("GameStateSubsystem not found during Castle initialization - This should never happen due to dependency resolution"));
         }
     }
 
     CastleWorldSettings = Cast<ACastleWorldSettings>(GetWorld()->GetWorldSettings());
     if (!CastleWorldSettings || !CastleWorldSettings->RoomData)
     {
-        //CASTLE_LOG(Warning, TEXT("Failed to initialize Castle Subsystem - Missing World Settings or Room Data"));
-        return;
-    }
-
-    bool bSuccess = CastleWorldSettings->RoomData->LoadFromContentJSON("Data/castle_data.json");
-    if (!bSuccess)
-    {
-        //CASTLE_LOG(Error, TEXT("Failed to load castle data from JSON"));
+        CASTLE_LOG(Warning, TEXT("Failed to initialize Castle Subsystem - Missing World Settings or Room Data"));
         return;
     }
 
@@ -158,7 +145,6 @@ void UCastleSubsystem::ProcessNextRoom()
         LoadRoom(RoomToLoad, ConnectToRoomID, SourceSocket, TargetSocket);
     }
 }
-
 
 void UCastleSubsystem::LoadEntryRoom()
 {
@@ -543,9 +529,9 @@ ULevelStreaming* UCastleSubsystem::GetLevelByName(const FName& LevelName) const
 
 FName UCastleSubsystem::GetLevelNameForRoom(const FString& RoomID)
 {
-   if (!CastleWorldSettings || !CastleWorldSettings->RoomData) return NAME_None;
+    if (!CastleWorldSettings || !CastleWorldSettings->RoomData) return NAME_None;
 
-   return CastleWorldSettings->RoomData->GetRandomLevelVariantForRoom(RoomID);
+    return CastleWorldSettings->RoomData->GetRandomLevelVariantForRoom(RoomID);
 }
 
 void UCastleSubsystem::OnRoomLoaded()
