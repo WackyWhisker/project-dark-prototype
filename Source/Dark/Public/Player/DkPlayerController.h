@@ -38,15 +38,26 @@ public:
    void TogglePauseMenu();
    void SetMappingContext(const FName& ContextName, bool bEnable);
    void ToggleLetterboxUI(bool bShowLetterboxUI);
+   void ScanModeStart();
+   void ScanModeEnd();
+   void ScanModeToggle();
+   void ScanExecuteStart();
+   void ScanExecuteEnd();
 
    UFUNCTION(Exec)
    void ToggleTargetMode();
+
+   UFUNCTION(Exec)
+   void ToggleScanMode();
+
+   UFUNCTION(BlueprintCallable, Category = "Scanning")
+   void SetScanModeToggle(bool bNewToggleMode);
 
    UFUNCTION(BlueprintCallable, Category = "Targeting")
    void SetTargetingMode(bool bNewToggleMode);
 
    UFUNCTION(BlueprintPure, Category = "Targeting")
-   bool IsUsingToggleMode() const { return bUseToggleMode; }
+   bool IsUsingToggleMode() const { return bUseTargetModeToggle; }
 
 public:
    UFUNCTION(BlueprintCallable, Category = "Targeting")
@@ -74,6 +85,10 @@ public:
    virtual FLiftSignature* GetLiftDelegate() override;
    virtual FTogglePauseMenuSignature* GetTogglePauseMenuDelegate() override;
    virtual FInteractSignature* GetInteractDelegate() override;
+   virtual FScanModeStartSignature* GetScanModeStartDelegate() override;
+   virtual FScanModeEndSignature* GetScanModeEndDelegate() override;
+   virtual FScanExecuteStartSignature* GetScanExecuteStartDelegate() override;
+   virtual FScanExecuteEndSignature* GetScanExecuteEndDelegate() override;
 
 protected:
    // protected methods
@@ -82,6 +97,7 @@ protected:
    virtual void BeginPlay() override;
    virtual void SetupInputComponent() override;
    void SetupTargetingBindings();
+   void SetupScanBindings();
    
 
 private:
@@ -99,7 +115,10 @@ private:
    UInputMappingContext* LedgeHangMappingContext;
 
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   bool bUseToggleMode = true;
+   UInputMappingContext* ScanMappingContext;
+
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+   bool bUseTargetModeToggle = true;
 
    UPROPERTY()
    bool bIsTargeting = false;
@@ -109,6 +128,9 @@ private:
 
    uint32 TargetStartHandle;
    uint32 TargetEndHandle;
+
+   uint32 ScanStartHandle;
+   uint32 ScanEndHandle;
 
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputAction* MoveAction;
@@ -146,6 +168,18 @@ private:
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputAction* InteractAction;
 
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+   UInputAction* ScanModeAction;
+
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) 
+   UInputAction* ScanExecuteAction;
+
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+   bool bUseScanModeToggle = true;
+
+   UPROPERTY()
+   bool bIsScanning = false;
+
    FJumpSignature JumpDelegate;
    FDodgeSignature DodgeDelegate;
    FAttackSignature AttackDelegate;
@@ -157,6 +191,10 @@ private:
    FLiftSignature LiftDelegate;
    FTogglePauseMenuSignature TogglePauseMenuDelegate;
    FInteractSignature InteractDelegate;
+   FScanModeStartSignature ScanModeStartDelegate;
+   FScanModeEndSignature ScanModeEndDelegate;
+   FScanExecuteStartSignature ScanExecuteStartDelegate;
+   FScanExecuteEndSignature ScanExecuteEndDelegate;
 
    UPROPERTY()
    UUserWidget* LetterboxWidget;

@@ -17,6 +17,10 @@ DECLARE_MULTICAST_DELEGATE(FDropSignature);
 DECLARE_MULTICAST_DELEGATE(FLiftSignature);
 DECLARE_MULTICAST_DELEGATE(FTogglePauseMenuSignature);
 DECLARE_MULTICAST_DELEGATE(FInteractSignature);
+DECLARE_MULTICAST_DELEGATE(FScanModeStartSignature);
+DECLARE_MULTICAST_DELEGATE(FScanModeEndSignature);
+DECLARE_MULTICAST_DELEGATE(FScanExecuteStartSignature);
+DECLARE_MULTICAST_DELEGATE(FScanExecuteEndSignature);
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
@@ -44,4 +48,8 @@ public:
 	virtual FLiftSignature* GetLiftDelegate() = 0;
 	virtual FTogglePauseMenuSignature* GetTogglePauseMenuDelegate() = 0;
 	virtual FInteractSignature* GetInteractDelegate() = 0;
+	virtual FScanModeStartSignature* GetScanModeStartDelegate() = 0;
+	virtual FScanModeEndSignature* GetScanModeEndDelegate() = 0;
+	virtual FScanExecuteStartSignature* GetScanExecuteStartDelegate() = 0;
+	virtual FScanExecuteEndSignature* GetScanExecuteEndDelegate() = 0;
 };

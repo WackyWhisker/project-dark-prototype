@@ -69,11 +69,26 @@ void ADkPlayerController::SetupInputComponent()
         //Interact
         EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADkPlayerController::Interact);
 
+        // Scanning
+        if (bUseScanModeToggle)
+        {
+            EnhancedInputComponent->BindAction(ScanModeAction, ETriggerEvent::Started, this, &ADkPlayerController::ScanModeToggle);
+        }
+        else
+        {
+            EnhancedInputComponent->BindAction(ScanModeAction, ETriggerEvent::Started, this, &ADkPlayerController::ScanModeStart);
+            EnhancedInputComponent->BindAction(ScanModeAction, ETriggerEvent::Completed, this, &ADkPlayerController::ScanModeEnd);
+        }
+
+        EnhancedInputComponent->BindAction(ScanExecuteAction, ETriggerEvent::Started, this, &ADkPlayerController::ScanExecuteStart);
+        EnhancedInputComponent->BindAction(ScanExecuteAction, ETriggerEvent::Completed, this, &ADkPlayerController::ScanExecuteEnd);
+
         // Store enhanced input component for rebinding
         CachedEnhancedInputComponent = EnhancedInputComponent;
         
-        // Setup initial targeting bindings
+        // Setup initial targeting and scanning bindings
         SetupTargetingBindings();
+        SetupScanBindings();
 
         //Drop and Lift
         EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Started, this, &ADkPlayerController::Drop);
@@ -110,10 +125,19 @@ void ADkPlayerController::ToggleLetterboxUI(bool bShowLetterboxUI)
 
 void ADkPlayerController::ToggleTargetMode()
 {
-    bUseToggleMode = !bUseToggleMode;
+    bUseTargetModeToggle = !bUseTargetModeToggle;
     SetupTargetingBindings();
     
-    FString Message = FString::Printf(TEXT("Target Mode: %s"), bUseToggleMode ? TEXT("Toggle") : TEXT("Hold"));
+    FString Message = FString::Printf(TEXT("Target Mode: %s"), bUseTargetModeToggle ? TEXT("Toggle") : TEXT("Hold"));
+    ClientMessage(Message);
+}
+
+void ADkPlayerController::ToggleScanMode()
+{
+    bUseScanModeToggle = !bUseScanModeToggle;
+    SetupScanBindings();
+    
+    FString Message = FString::Printf(TEXT("Scan Mode: %s"), bUseScanModeToggle ? TEXT("Toggle") : TEXT("Hold"));
     ClientMessage(Message);
 }
 
@@ -126,7 +150,7 @@ void ADkPlayerController::SetupTargetingBindings()
     CachedEnhancedInputComponent->RemoveBindingByHandle(TargetEndHandle);
     
     // Set up main targeting binding based on mode
-    if (bUseToggleMode)
+    if (bUseTargetModeToggle)
     {
         TargetStartHandle = CachedEnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetToggle).GetHandle();
     }
@@ -141,14 +165,38 @@ void ADkPlayerController::SetupTargetingBindings()
     CachedEnhancedInputComponent->BindAction(TargetCycleRightAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetCycleRight);
 }
 
+void ADkPlayerController::SetupScanBindings()
+{
+    if (!CachedEnhancedInputComponent) return;
+    
+    // Clear existing bindings if any
+    CachedEnhancedInputComponent->RemoveBindingByHandle(ScanStartHandle);
+    CachedEnhancedInputComponent->RemoveBindingByHandle(ScanEndHandle);
+    
+    // Set up main scanning binding based on mode
+    if (bUseScanModeToggle)
+    {
+        ScanStartHandle = CachedEnhancedInputComponent->BindAction(ScanModeAction, ETriggerEvent::Started, this, &ADkPlayerController::ScanModeToggle).GetHandle();
+    }
+    else
+    {
+        ScanStartHandle = CachedEnhancedInputComponent->BindAction(ScanModeAction, ETriggerEvent::Started, this, &ADkPlayerController::ScanModeStart).GetHandle();
+        ScanEndHandle = CachedEnhancedInputComponent->BindAction(ScanModeAction, ETriggerEvent::Completed, this, &ADkPlayerController::ScanModeEnd).GetHandle();
+    }
+
+    // Always bind execute scan
+    CachedEnhancedInputComponent->BindAction(ScanExecuteAction, ETriggerEvent::Started, this, &ADkPlayerController::ScanExecuteStart);
+    CachedEnhancedInputComponent->BindAction(ScanExecuteAction, ETriggerEvent::Completed, this, &ADkPlayerController::ScanExecuteEnd);
+}
+
 void ADkPlayerController::SetTargetingMode(bool bNewToggleMode)
 {
-    if (bUseToggleMode == bNewToggleMode) return;
+    if (bUseTargetModeToggle == bNewToggleMode) return;
     
-    bUseToggleMode = bNewToggleMode;
+    bUseTargetModeToggle = bNewToggleMode;
     
     // If switching to hold mode while targeting is active, end targeting
-    if (!bUseToggleMode && bIsTargeting)
+    if (!bUseTargetModeToggle && bIsTargeting)
     {
         TargetEnd();
         bIsTargeting = false;
@@ -163,7 +211,7 @@ void ADkPlayerController::ResetTargetingState()
     bIsTargeting = false;
     
     // If using toggle mode, ensure we're in a clean state
-    if (bUseToggleMode)
+    if (bUseTargetModeToggle)
     {
         // Re-setup bindings to ensure clean state
         SetupTargetingBindings();
@@ -235,7 +283,7 @@ void ADkPlayerController::Look(const FInputActionValue& Value)
 
 void ADkPlayerController::TargetStart()
 {
-    if (!bIsTargeting || !bUseToggleMode)  // Allow start if not targeting or in hold mode
+    if (!bIsTargeting || !bUseTargetModeToggle)  // Allow start if not targeting or in hold mode
     {
         if (TargetStartDelegate.IsBound())
         {
@@ -245,7 +293,7 @@ void ADkPlayerController::TargetStart()
                 Subsystem->AddMappingContext(TargetMappingContext, 0);
             }
         }
-        if (!bUseToggleMode)
+        if (!bUseTargetModeToggle)
         {
             bIsTargeting = true;
         }
@@ -254,7 +302,7 @@ void ADkPlayerController::TargetStart()
 
 void ADkPlayerController::TargetEnd()
 {
-    if (bIsTargeting || !bUseToggleMode)  // Allow end if targeting or in hold mode
+    if (bIsTargeting || !bUseTargetModeToggle)  // Allow end if targeting or in hold mode
     {
         if (TargetEndDelegate.IsBound())
         {
@@ -264,7 +312,7 @@ void ADkPlayerController::TargetEnd()
                 Subsystem->RemoveMappingContext(TargetMappingContext);
             }
         }
-        if (!bUseToggleMode)
+        if (!bUseTargetModeToggle)
         {
             bIsTargeting = false;
         }
@@ -405,6 +453,110 @@ FTogglePauseMenuSignature* ADkPlayerController::GetTogglePauseMenuDelegate()
     return &TogglePauseMenuDelegate;
 }
 
+FScanModeStartSignature* ADkPlayerController::GetScanModeStartDelegate()
+{
+    return &ScanModeStartDelegate;
+}
+
+FScanModeEndSignature* ADkPlayerController::GetScanModeEndDelegate()
+{
+    return &ScanModeEndDelegate;
+}
+
+FScanExecuteStartSignature* ADkPlayerController::GetScanExecuteStartDelegate()
+{
+    return &ScanExecuteStartDelegate;
+}
+
+FScanExecuteEndSignature* ADkPlayerController::GetScanExecuteEndDelegate()
+{
+    return &ScanExecuteEndDelegate;
+}
+
+void ADkPlayerController::ScanModeStart()
+{
+    if (!bIsScanning || !bUseScanModeToggle)
+    {
+        if (ScanModeStartDelegate.IsBound())
+        {
+            ScanModeStartDelegate.Broadcast();
+            if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+            {
+                Subsystem->AddMappingContext(ScanMappingContext, 0);
+            }
+        }
+        if (!bUseScanModeToggle)
+        {
+            bIsScanning = true;
+        }
+    }
+}
+
+void ADkPlayerController::ScanModeEnd()
+{
+    if (bIsScanning || !bUseScanModeToggle)
+    {
+        if (ScanModeEndDelegate.IsBound())
+        {
+            ScanModeEndDelegate.Broadcast();
+            if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+            {
+                Subsystem->RemoveMappingContext(ScanMappingContext);
+            }
+        }
+        if (!bUseScanModeToggle)
+        {
+            bIsScanning = false;
+        }
+    }
+}
+
+void ADkPlayerController::ScanModeToggle()
+{
+    if (!bIsScanning)
+    {
+        ScanModeStart();
+    }
+    else
+    {
+        ScanModeEnd();
+    }
+    bIsScanning = !bIsScanning;
+}
+
+void ADkPlayerController::ScanExecuteStart()
+{
+    if (!bIsScanning) return;
+    
+    if (ScanExecuteStartDelegate.IsBound())
+    {
+        ScanExecuteStartDelegate.Broadcast();
+    }
+}
+
+void ADkPlayerController::ScanExecuteEnd()
+{
+    if (!bIsScanning) return;
+    
+    if (ScanExecuteEndDelegate.IsBound())
+    {
+        ScanExecuteEndDelegate.Broadcast();
+    }
+}
+
+void ADkPlayerController::SetScanModeToggle(bool bNewToggleMode)
+{
+    if (bUseScanModeToggle == bNewToggleMode) return;
+    
+    bUseScanModeToggle = bNewToggleMode;
+    
+    if (!bUseScanModeToggle && bIsScanning)
+    {
+        ScanModeEnd();
+        bIsScanning = false;
+    }
+}
+
 void ADkPlayerController::HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState)
 {
     switch (NewState)
@@ -541,3 +693,4 @@ void ADkPlayerController::OnRespawnSequenceFinished()
        GameStateSubsystem->RequestStateChange(EDkGameState::Playing);
    }
 }
+
