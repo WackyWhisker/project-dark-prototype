@@ -68,21 +68,7 @@ void ADkPlayerController::SetupInputComponent()
 
         //Interact
         EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADkPlayerController::Interact);
-
-        // Scanning
-        if (bUseScanModeToggle)
-        {
-            EnhancedInputComponent->BindAction(ScanModeAction, ETriggerEvent::Started, this, &ADkPlayerController::ScanModeToggle);
-        }
-        else
-        {
-            EnhancedInputComponent->BindAction(ScanModeAction, ETriggerEvent::Started, this, &ADkPlayerController::ScanModeStart);
-            EnhancedInputComponent->BindAction(ScanModeAction, ETriggerEvent::Completed, this, &ADkPlayerController::ScanModeEnd);
-        }
-
-        EnhancedInputComponent->BindAction(ScanExecuteAction, ETriggerEvent::Started, this, &ADkPlayerController::ScanExecuteStart);
-        EnhancedInputComponent->BindAction(ScanExecuteAction, ETriggerEvent::Completed, this, &ADkPlayerController::ScanExecuteEnd);
-
+        
         // Store enhanced input component for rebinding
         CachedEnhancedInputComponent = EnhancedInputComponent;
         
@@ -350,7 +336,7 @@ void ADkPlayerController::Dodge()
     {
         DodgeDelegate.Broadcast();
     }
-    UE_LOG(LogTemp, Warning, TEXT("Dodge Button Pressed"));
+   // UE_LOG(LogTemp, Warning, TEXT("Dodge Button Pressed"));
 }
 
 void ADkPlayerController::Attack()
@@ -368,7 +354,7 @@ void ADkPlayerController::Interact()
     {
         InteractDelegate.Broadcast();
     }
-    UE_LOG(LogTemp, Warning, TEXT("Interact Button Pressed"));
+    //UE_LOG(LogTemp, Warning, TEXT("Interact Button Pressed"));
 }
 
 void ADkPlayerController::Drop()
@@ -377,7 +363,7 @@ void ADkPlayerController::Drop()
     {
         DropDelegate.Broadcast();
     }
-    UE_LOG(LogTemp, Warning, TEXT("Drop Button Pressed"));
+    //UE_LOG(LogTemp, Warning, TEXT("Drop Button Pressed"));
 }
 
 void ADkPlayerController::Lift()
@@ -386,7 +372,7 @@ void ADkPlayerController::Lift()
     {
         LiftDelegate.Broadcast();
     }
-    UE_LOG(LogTemp, Warning, TEXT("Lift Button Pressed"));
+    //UE_LOG(LogTemp, Warning, TEXT("Lift Button Pressed"));
 }
 
 void ADkPlayerController::TogglePauseMenu()
@@ -395,7 +381,7 @@ void ADkPlayerController::TogglePauseMenu()
     {
         TogglePauseMenuDelegate.Broadcast();
     }
-    UE_LOG(LogTemp, Warning, TEXT("Pause Menu Button Pressed"));
+    //UE_LOG(LogTemp, Warning, TEXT("Pause Menu Button Pressed"));
 }
 
 FTargetStartSignature* ADkPlayerController::GetTargetStartDelegate()
@@ -496,6 +482,9 @@ void ADkPlayerController::ScanModeEnd()
 {
     if (bIsScanning || !bUseScanModeToggle)
     {
+        // Execute end scan if it was active
+        ScanExecuteEnd();
+        
         if (ScanModeEndDelegate.IsBound())
         {
             ScanModeEndDelegate.Broadcast();
@@ -519,6 +508,7 @@ void ADkPlayerController::ScanModeToggle()
     }
     else
     {
+        ScanExecuteEnd();  // Add this to ensure scan stops when toggling off
         ScanModeEnd();
     }
     bIsScanning = !bIsScanning;
