@@ -35,6 +35,12 @@ public:
 
     UPROPERTY(EditDefaultsOnly, Category = "Camera") 
     float CameraInterpolationSpeed = 5.0f;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UUserWidget> CrosshairWidgetClass;
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UUserWidget> CrosshairWidgetTargetClass;
 
 protected:
     virtual void BeginPlay() override;
@@ -78,4 +84,7 @@ private:
 
     float CurrentCameraOffset = 0.0f;
     FVector OriginalCameraLocation;
+
+    UPROPERTY()
+    UUserWidget* CrosshairWidget = nullptr;
 };

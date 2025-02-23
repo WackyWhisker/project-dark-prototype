@@ -4,7 +4,7 @@
 #include "Component/DkScannableComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Character/DkCharacter.h"
-#include "GameFramework/HUD.h"
+#include "Blueprint/UserWidget.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/DkPlayerController.h"
@@ -147,6 +147,30 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
         CurrentScannableTarget->UnhighlightAsTarget();
         CurrentScannableTarget = nullptr;
     }
+    if (bIsInScanMode)  // Only process widget changes when in scan mode
+    {
+        if (bFoundScannable)
+        {
+            if (CrosshairWidgetTargetClass && (!CrosshairWidget || CrosshairWidget->GetClass() != CrosshairWidgetTargetClass))
+            {
+                if (CrosshairWidget)
+                {
+                    CrosshairWidget->RemoveFromParent();
+                }
+                CrosshairWidget = CreateWidget<UUserWidget>(PlayerControllerRef, CrosshairWidgetTargetClass);
+                CrosshairWidget->AddToViewport();
+            }
+        }
+        else if (CrosshairWidgetClass && (!CrosshairWidget || CrosshairWidget->GetClass() != CrosshairWidgetClass))
+        {
+            if (CrosshairWidget)
+            {
+                CrosshairWidget->RemoveFromParent();
+            }
+            CrosshairWidget = CreateWidget<UUserWidget>(PlayerControllerRef, CrosshairWidgetClass);
+            CrosshairWidget->AddToViewport();
+        }
+    }
 }
 
 void UDkScanningComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -167,6 +191,16 @@ void UDkScanningComponent::OnScanModeStart()
     if (!bIsInScanMode)
     {
         bIsInScanMode = true;
+
+        // Add crosshair widget
+        if (CrosshairWidgetClass && !CrosshairWidget && PlayerControllerRef)
+        {
+            CrosshairWidget = CreateWidget<UUserWidget>(PlayerControllerRef, CrosshairWidgetClass);
+            if (CrosshairWidget)
+            {
+                CrosshairWidget->AddToViewport();
+            }
+        }
 
         TArray<FOverlapResult> OverlapResults;
         FCollisionQueryParams QueryParams;
@@ -204,6 +238,13 @@ void UDkScanningComponent::OnScanModeEnd()
     {
         bIsInScanMode = false;
         
+        // Remove crosshair widget
+        if (CrosshairWidget)
+        {
+            CrosshairWidget->RemoveFromParent();
+            CrosshairWidget = nullptr;
+        }
+
         if (bIsExecutingScanning)
         {
             OnScanExecuteEnd();
