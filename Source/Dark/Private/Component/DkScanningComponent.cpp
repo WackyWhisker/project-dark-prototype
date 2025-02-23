@@ -14,12 +14,30 @@ UDkScanningComponent::UDkScanningComponent()
     PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-    FActorComponentTickFunction* ThisTickFunction)
+void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
     
     if (!PlayerCameraRef || !PlayerControllerRef) return;
+
+    // Handle scanning progress
+    if (bIsExecutingScanning && CurrentScannableTarget)
+    {
+        float ScanDuration = CurrentScannableTarget->GetScanDuration();
+        float CurrentProgress = CurrentScannableTarget->GetCurrentScanProgress();
+        CurrentProgress += DeltaTime / ScanDuration;
+        
+        if (CurrentProgress >= 1.0f)
+        {
+            CurrentScannableTarget->OnScanComplete();
+            bIsExecutingScanning = false;
+            CurrentScannableTarget = nullptr;
+            return;
+        }
+        
+        CurrentScannableTarget->OnScanProgress(CurrentProgress);
+        return; // Skip target detection while scanning
+    }
 
     FVector Start = PlayerCameraRef->GetComponentLocation();
     FVector Forward = PlayerCameraRef->GetForwardVector();
@@ -28,7 +46,6 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType,
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(GetOwner());
     QueryParams.bTraceComplex = true;
-    // These are key for penetrating traces:
     QueryParams.bReturnFaceIndex = true;
     QueryParams.bReturnPhysicalMaterial = true;
 
@@ -46,7 +63,7 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType,
         HitResults, 
         Start, 
         End, 
-        FCollisionObjectQueryParams::AllObjects, // This checks against all object channels
+        FCollisionObjectQueryParams::AllObjects,
         QueryParams))
     {
         for (const FHitResult& Hit : HitResults)
@@ -213,7 +230,6 @@ void UDkScanningComponent::OnScanExecuteStart()
     {
         bIsExecutingScanning = true;
         CurrentScannableTarget->OnScanStart();
-        PrimaryComponentTick.bCanEverTick = true;
     }
 }
 
@@ -227,7 +243,5 @@ void UDkScanningComponent::OnScanExecuteEnd()
         {
             CurrentScannableTarget->OnScanAborted();
         }
-       
-        PrimaryComponentTick.bCanEverTick = false;
     }
 }
