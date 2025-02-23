@@ -29,9 +29,12 @@ public:
 
     UPROPERTY(EditDefaultsOnly, Category = "Scanning") 
     float TraceRange = 1500.0f;
-    
-    UPROPERTY(EditDefaultsOnly, Category = "Scanning")
-    int32 NumberOfTraces = 8;
+      
+    UPROPERTY(EditDefaultsOnly, Category = "Camera")
+    float CameraScanOffset = 25.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Camera") 
+    float CameraInterpolationSpeed = 5.0f;
 
 protected:
     virtual void BeginPlay() override;
@@ -60,6 +63,9 @@ private:
     UCameraComponent* PlayerCameraRef = nullptr;
 
     UPROPERTY()
+    class USceneComponent* CameraBoomRef;
+
+    UPROPERTY()
     UDkScannableComponent* CurrentScannableTarget = nullptr;
 
     UPROPERTY()
@@ -69,4 +75,7 @@ private:
     bool bIsExecutingScanning = false;
 
     IDkPlayerControllerInterface* PlayerControllerInterface = nullptr;
+
+    float CurrentCameraOffset = 0.0f;
+    FVector OriginalCameraLocation;
 };

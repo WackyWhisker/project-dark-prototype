@@ -5,6 +5,7 @@
 #include "Camera/CameraComponent.h"
 #include "Character/DkCharacter.h"
 #include "GameFramework/HUD.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/DkPlayerController.h"
 #include "Player/DkPlayerControllerInterface.h"
@@ -14,11 +15,64 @@ UDkScanningComponent::UDkScanningComponent()
     PrimaryComponentTick.bCanEverTick = true;
 }
 
+void UDkScanningComponent::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if (!PlayerRef)
+    {
+        PlayerRef = Cast<ADkCharacter>(GetOwner());
+    }
+
+    if (PlayerRef)
+    {
+        if (!PlayerControllerRef)
+        {
+            PlayerControllerRef = Cast<ADkPlayerController>(PlayerRef->GetController());
+        }
+
+        PlayerCameraRef = Cast<UCameraComponent>(PlayerRef->GetComponentByClass(UCameraComponent::StaticClass()));
+        // Get the camera boom (usually named CameraBoom in the character blueprint)
+        CameraBoomRef = PlayerRef->FindComponentByClass<USpringArmComponent>();
+    }
+    
+    if (!PlayerControllerInterface)
+    {
+        PlayerControllerInterface = Cast<IDkPlayerControllerInterface>(UGameplayStatics::GetPlayerController(this, 0));
+    }
+
+    if(PlayerControllerInterface)
+    {
+        PlayerControllerInterface->GetScanModeStartDelegate()->AddUObject(this, &UDkScanningComponent::OnScanModeStart);
+        PlayerControllerInterface->GetScanModeEndDelegate()->AddUObject(this, &UDkScanningComponent::OnScanModeEnd);
+        PlayerControllerInterface->GetScanExecuteStartDelegate()->AddUObject(this, &UDkScanningComponent::OnScanExecuteStart);
+        PlayerControllerInterface->GetScanExecuteEndDelegate()->AddUObject(this, &UDkScanningComponent::OnScanExecuteEnd);
+    }
+
+    if (PlayerCameraRef)
+    {
+        OriginalCameraLocation = PlayerCameraRef->GetRelativeLocation();
+    }
+}
+
 void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
     
     if (!PlayerCameraRef || !PlayerControllerRef) return;
+
+    float TargetOffset = bIsInScanMode ? CameraScanOffset : 0.0f;
+    CurrentCameraOffset = FMath::FInterpTo(CurrentCameraOffset, TargetOffset, DeltaTime, CameraInterpolationSpeed);
+    
+    // Get world-space right vector
+    FRotator ControlRotation = PlayerControllerRef->GetControlRotation();
+    FVector WorldRightOffset = FRotationMatrix(ControlRotation).GetScaledAxis(EAxis::Y) * CurrentCameraOffset;
+    
+    // Convert to local space
+    FVector LocalOffset = PlayerCameraRef->GetComponentTransform().InverseTransformVector(WorldRightOffset);
+    FVector NewLocation = OriginalCameraLocation + LocalOffset;
+    
+    PlayerCameraRef->SetRelativeLocation(NewLocation);
 
     // Handle scanning progress
     if (bIsExecutingScanning && CurrentScannableTarget)
@@ -92,39 +146,6 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
     {
         CurrentScannableTarget->UnhighlightAsTarget();
         CurrentScannableTarget = nullptr;
-    }
-}
-
-void UDkScanningComponent::BeginPlay()
-{
-    Super::BeginPlay();
-
-    if (!PlayerRef)
-    {
-        PlayerRef = Cast<ADkCharacter>(GetOwner());
-    }
-
-    if (PlayerRef)
-    {
-        if (!PlayerControllerRef)
-        {
-            PlayerControllerRef = Cast<ADkPlayerController>(PlayerRef->GetController());
-        }
-
-        PlayerCameraRef = Cast<UCameraComponent>(PlayerRef->GetComponentByClass(UCameraComponent::StaticClass()));
-    }
-    
-    if (!PlayerControllerInterface)
-    {
-        PlayerControllerInterface = Cast<IDkPlayerControllerInterface>(UGameplayStatics::GetPlayerController(this, 0));
-    }
-
-    if(PlayerControllerInterface)
-    {
-        PlayerControllerInterface->GetScanModeStartDelegate()->AddUObject(this, &UDkScanningComponent::OnScanModeStart);
-        PlayerControllerInterface->GetScanModeEndDelegate()->AddUObject(this, &UDkScanningComponent::OnScanModeEnd);
-        PlayerControllerInterface->GetScanExecuteStartDelegate()->AddUObject(this, &UDkScanningComponent::OnScanExecuteStart);
-        PlayerControllerInterface->GetScanExecuteEndDelegate()->AddUObject(this, &UDkScanningComponent::OnScanExecuteEnd);
     }
 }
 
