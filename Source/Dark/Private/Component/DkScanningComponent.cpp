@@ -1,7 +1,9 @@
 ﻿#include "Component/DkScanningComponent.h"
 #include "Character/DkCharacter.h"
 #include "Component/DkScannableComponent.h"
+#include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/DkPlayerController.h"
 #include "Player/DkPlayerControllerInterface.h"
 
 UDkScanningComponent::UDkScanningComponent()
@@ -13,17 +15,27 @@ void UDkScanningComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (!PlayerControllerInterface)
-    {
-        PlayerControllerInterface = Cast<IDkPlayerControllerInterface>(UGameplayStatics::GetPlayerController(this, 0));
-    }
-
     if (!PlayerRef)
     {
         PlayerRef = Cast<ADkCharacter>(GetOwner());
     }
 
-    if (PlayerControllerInterface)
+    if (PlayerRef)
+    {
+        if (!PlayerControllerRef)
+        {
+            PlayerControllerRef = Cast<ADkPlayerController>(PlayerRef->GetController());
+        }
+
+        PlayerCameraRef = Cast<UCameraComponent>(PlayerRef->GetComponentByClass(UCameraComponent::StaticClass()));
+    }
+    
+    if (!PlayerControllerInterface)
+    {
+        PlayerControllerInterface = Cast<IDkPlayerControllerInterface>(UGameplayStatics::GetPlayerController(this, 0));
+    }
+
+    if(PlayerControllerInterface)
     {
         PlayerControllerInterface->GetScanModeStartDelegate()->AddUObject(this, &UDkScanningComponent::OnScanModeStart);
         PlayerControllerInterface->GetScanModeEndDelegate()->AddUObject(this, &UDkScanningComponent::OnScanModeEnd);
@@ -54,14 +66,18 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
         return;
     }
 
-    // If we're in scan mode but not actively scanning, keep updating target
     if (!bIsExecutingScanning)
     {
+        UDkScannableComponent* PreviousTarget = CurrentScannableTarget;
         InitiateSweepForScannables();
+        
+        if (PreviousTarget && PreviousTarget != CurrentScannableTarget)
+        {
+            PreviousTarget->UnhighlightAsTarget();
+        }
         return;
     }
 
-    // If we're actively scanning, handle progress
     if (!CurrentScannableTarget)
     {
         return;
@@ -120,15 +136,18 @@ void UDkScanningComponent::OnScanModeEnd()
 
         TArray<UDkScannableComponent*> ScannablesInRange;
         if (GetScannableComponentsInRange(ScannablesInRange, ScannableSearchRange))
-        {
-            for (UDkScannableComponent* Scannable : ScannablesInRange)
+            if (CurrentScannableTarget)
             {
-                if (Scannable)
+                for (UDkScannableComponent* Scannable : ScannablesInRange)
                 {
-                    Scannable->OnScanModeExited();
+                    if (Scannable)
+                    {
+                        Scannable->OnScanModeExited();
+                    }
                 }
+                CurrentScannableTarget->UnhighlightAsTarget();
+                CurrentScannableTarget = nullptr;
             }
-        }
 
         CurrentScannableTarget = nullptr;
     }
@@ -138,7 +157,6 @@ void UDkScanningComponent::OnScanExecuteStart()
 {
     if (bIsInScanMode && CurrentScannableTarget && !bIsExecutingScanning)
     {
-        UE_LOG(LogTemp, Log, TEXT("Scan Execute Started"));
         bIsExecutingScanning = true;
         CurrentScannableTarget->OnScanStart();
         PrimaryComponentTick.bCanEverTick = true;
@@ -149,7 +167,6 @@ void UDkScanningComponent::OnScanExecuteEnd()
 {
     if (bIsExecutingScanning)
     {
-        UE_LOG(LogTemp, Log, TEXT("Scan Execute Ended"));
         bIsExecutingScanning = false;
 
         if (CurrentScannableTarget)
@@ -223,10 +240,13 @@ bool UDkScanningComponent::GetScannableComponentsInRange(TArray<UDkScannableComp
 bool UDkScanningComponent::FilterScannablesByViewCone(const TArray<UDkScannableComponent*>& PotentialScannables,
    TArray<UDkScannableComponent*>& OutValidScannables, float MaxAngleInDegrees)
 {
-    if (!PlayerRef) { return false; }
+    if (!PlayerCameraRef || !PlayerRef) { return false; }
   
-    FVector PlayerLocation = PlayerRef->GetActorLocation();
-    FVector PlayerForward = PlayerRef->GetActorForwardVector();
+    FVector CameraLocation = PlayerCameraRef->GetComponentLocation();
+    FVector CameraForward = PlayerCameraRef->GetForwardVector();
+    
+    APlayerController* PC = Cast<APlayerController>(PlayerRef->GetController());
+    if (!PC) { return false; }
   
     float CosMaxAngle = FMath::Cos(FMath::DegreesToRadians(MaxAngleInDegrees));
 
@@ -234,10 +254,9 @@ bool UDkScanningComponent::FilterScannablesByViewCone(const TArray<UDkScannableC
     {
         UDkScannableComponent* Component;
         float Score;
-        float Distance;
   
-        FScanScore(UDkScannableComponent* InComponent, float InScore, float InDistance)
-            : Component(InComponent), Score(InScore), Distance(InDistance) {}
+        FScanScore(UDkScannableComponent* InComponent, float InScore)
+            : Component(InComponent), Score(InScore) {}
     };
 
     TArray<FScanScore> ScoredScannables;
@@ -250,31 +269,22 @@ bool UDkScanningComponent::FilterScannablesByViewCone(const TArray<UDkScannableC
         if (!ScannableOwner) continue;
 
         FVector ScannableLocation = ScannableOwner->GetActorLocation();
-        FVector DirectionToScannable = (ScannableLocation - PlayerLocation);
-        float Distance = DirectionToScannable.Size();
-        DirectionToScannable.Normalize();
-
-        float DotProduct = FVector::DotProduct(PlayerForward, DirectionToScannable);
-      
-        if (DotProduct >= CosMaxAngle)
+        FVector2D ScreenPosition;
+        
+        if (PC->ProjectWorldLocationToScreen(ScannableLocation, ScreenPosition))
         {
-            // Score based on both angle and distance
-            float AngleScore = (DotProduct - CosMaxAngle) / (1.0f - CosMaxAngle); // 0 to 1
-            float DistanceScore = 1.0f - FMath::Min(Distance / ScannableSearchRange, 1.0f); // 1 when close, 0 when far
-            float FinalScore = (AngleScore * 0.5f) + (DistanceScore * 0.5f); // Weighted combination
+            int32 ViewportSizeX, ViewportSizeY;
+            PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
+            FVector2D ScreenCenter(ViewportSizeX * 0.5f, ViewportSizeY * 0.5f);
 
-            ScoredScannables.Add(FScanScore(Scannable, FinalScore, Distance));
-
-            // Debug draw
-            DrawDebugLine(GetWorld(), PlayerLocation, ScannableLocation, 
-                FColor::Yellow, false, 0.1f, 0, 2.0f);
-            DrawDebugString(GetWorld(), ScannableLocation, 
-                FString::Printf(TEXT("Score: %.2f"), FinalScore),
-                nullptr, FColor::White, 0.1f);
+            FVector2D ScreenDelta = ScreenPosition - ScreenCenter;
+            float ScreenDistance = ScreenDelta.Size() / FMath::Min(ViewportSizeX, ViewportSizeY);
+            
+            float ScreenScore = 1.0f - FMath::Min(ScreenDistance, 1.0f);
+            ScoredScannables.Add(FScanScore(Scannable, ScreenScore));
         }
     }
   
-    // Sort by score
     ScoredScannables.Sort([](const FScanScore& A, const FScanScore& B) {
         return A.Score > B.Score;
     });
@@ -293,11 +303,19 @@ void UDkScanningComponent::InitiateSweepForScannables()
     UDkScannableComponent* NewScannable = nullptr;
     if (FindBestScannable(NewScannable, ScannableSearchRange, MaxViewConeAngle))
     {
-        CurrentScannableTarget = NewScannable;
-        UE_LOG(LogTemp, Log, TEXT("Found scannable target: %s"), *NewScannable->GetOwner()->GetName());
+        if (NewScannable != CurrentScannableTarget)
+        {
+            if (CurrentScannableTarget)
+            {
+                CurrentScannableTarget->UnhighlightAsTarget();
+            }
+            CurrentScannableTarget = NewScannable;
+            CurrentScannableTarget->HighlightAsTarget();
+        }
     }
-    else
+    else if (CurrentScannableTarget)
     {
-        UE_LOG(LogTemp, Log, TEXT("No scannable found in range"));
+        CurrentScannableTarget->UnhighlightAsTarget();
+        CurrentScannableTarget = nullptr;
     }
 }

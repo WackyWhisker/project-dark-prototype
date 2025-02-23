@@ -4,8 +4,11 @@
 #include "Components/ActorComponent.h"
 #include "DkScanningComponent.generated.h"
 
+class ADkPlayerController;
 class ADkCharacter;
 class IDkPlayerControllerInterface;
+class UCameraComponent;
+class USpringArmComponent;
 class UDkScannableComponent;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -28,6 +31,16 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+    UPROPERTY(BlueprintReadOnly)
+    ADkCharacter* PlayerRef = nullptr;
+
+    UPROPERTY(BlueprintReadOnly)
+    ADkPlayerController* PlayerControllerRef = nullptr;
+
+    UPROPERTY(BlueprintReadOnly)
+    UCameraComponent* PlayerCameraRef = nullptr;
+
 
 private:
     UFUNCTION()
@@ -53,11 +66,10 @@ private:
                                   TArray<UDkScannableComponent*>& OutValidScannables, 
                                   float MaxAngleInDegrees);
 
+
     void InitiateSweepForScannables();
 
-    UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-    ADkCharacter* PlayerRef = nullptr;
-
+    
     UPROPERTY()
     UDkScannableComponent* CurrentScannableTarget = nullptr;
 

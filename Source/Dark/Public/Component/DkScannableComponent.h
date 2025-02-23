@@ -49,8 +49,16 @@ protected:
     UPROPERTY()
     bool bIsBeingScanned = false;
 
+public:
+    void HighlightAsTarget();
+    void UnhighlightAsTarget();
+
 private:
     FVector OriginalLocation = FVector::ZeroVector;
+    FVector OriginalScale = FVector::OneVector;
+    
+    UPROPERTY(EditAnywhere, Category = "Scanning|Highlight")
+    float HighlightScaleMultiplier = 1.2f;
     
     UPROPERTY()
     UMaterialInterface* OriginalMaterial = nullptr;
