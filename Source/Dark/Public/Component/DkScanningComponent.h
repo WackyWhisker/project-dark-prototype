@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿// Copyright @ Christian Reichel
+#pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
@@ -6,10 +7,9 @@
 
 class ADkPlayerController;
 class ADkCharacter;
-class IDkPlayerControllerInterface;
 class UCameraComponent;
-class USpringArmComponent;
 class UDkScannableComponent;
+class IDkPlayerControllerInterface;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DARK_API UDkScanningComponent : public UActorComponent
@@ -18,58 +18,47 @@ class DARK_API UDkScanningComponent : public UActorComponent
 
 public:    
     UDkScanningComponent();
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-    virtual void TickComponent(float DeltaTime, ELevelTick TickType, 
-                            FActorComponentTickFunction* ThisTickFunction) override;
+public:
+    UPROPERTY(EditDefaultsOnly, Category = "Debug")
+    bool bShowDebugTraces = true;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Scanning")
-    float ScannableSearchRange = 1500.0f;
+    UPROPERTY(EditDefaultsOnly, Category = "Scanning")
+    float TraceRadius = 25.0f;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Scanning")
-    float MaxViewConeAngle = 30.0f;
+    UPROPERTY(EditDefaultsOnly, Category = "Scanning") 
+    float TraceRange = 1500.0f;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Scanning")
+    int32 NumberOfTraces = 8;
 
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-    UPROPERTY(BlueprintReadOnly)
-    ADkCharacter* PlayerRef = nullptr;
-
-    UPROPERTY(BlueprintReadOnly)
-    ADkPlayerController* PlayerControllerRef = nullptr;
-
-    UPROPERTY(BlueprintReadOnly)
-    UCameraComponent* PlayerCameraRef = nullptr;
-
-
 private:
     UFUNCTION()
     void OnScanModeStart();
-    
+   
     UFUNCTION()
     void OnScanModeEnd();
-    
+   
     UFUNCTION()
     void OnScanExecuteStart();
-    
+   
     UFUNCTION()
     void OnScanExecuteEnd();
-
-    UFUNCTION()
-    bool FindBestScannable(UDkScannableComponent*& OutBestScannable, float SphereRadius, float MaxAngleInDegrees);
     
-    UFUNCTION()
-    bool GetScannableComponentsInRange(TArray<UDkScannableComponent*>& OutScannables, float SphereRadius);
-    
-    UFUNCTION()
-    bool FilterScannablesByViewCone(const TArray<UDkScannableComponent*>& PotentialScannables, 
-                                  TArray<UDkScannableComponent*>& OutValidScannables, 
-                                  float MaxAngleInDegrees);
+    UPROPERTY()
+    ADkCharacter* PlayerRef = nullptr;
 
+    UPROPERTY()
+    ADkPlayerController* PlayerControllerRef = nullptr;
 
-    void InitiateSweepForScannables();
+    UPROPERTY()
+    UCameraComponent* PlayerCameraRef = nullptr;
 
-    
     UPROPERTY()
     UDkScannableComponent* CurrentScannableTarget = nullptr;
 

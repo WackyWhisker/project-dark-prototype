@@ -1,4 +1,6 @@
-﻿#include "Component/DkScannableComponent.h"
+﻿// Copyright @ Christian Reichel
+
+#include "Component/DkScannableComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
@@ -58,7 +60,7 @@ void UDkScannableComponent::OnScanComplete()
     
     if (AActor* Owner = GetOwner())
     {
-        Owner->SetActorLocation(this->OriginalLocation);
+        Owner->SetActorLocation(this->OriginalLocation);//TODO: superflous
         Owner->Destroy();
     }
 }
@@ -124,20 +126,18 @@ void UDkScannableComponent::OnScanModeExited()
     UE_LOG(LogTemp, Log, TEXT("Scannable %s exited scan mode"), *GetOwner()->GetName());
 }
 
-void UDkScannableComponent::HighlightAsTarget()
+void UDkScannableComponent::HighlightAsTarget() //TODO: later on we might do more than just a scale
 {
     if (AActor* Owner = GetOwner())
     {
-        // Only handle scale here
         Owner->SetActorScale3D(OriginalScale * HighlightScaleMultiplier);
     }
 }
 
-void UDkScannableComponent::UnhighlightAsTarget()
+void UDkScannableComponent::UnhighlightAsTarget() //TODO: later on we might do more than just a scale
 {
     if (AActor* Owner = GetOwner())
     {
-        // Only handle scale here
         Owner->SetActorScale3D(OriginalScale);
     }
 }

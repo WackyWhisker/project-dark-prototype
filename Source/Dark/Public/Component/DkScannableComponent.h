@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿// Copyright @ Christian Reichel
+#pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
@@ -37,6 +38,9 @@ public:
     void OnScanComplete();
     void OnScanAborted();
 
+    void HighlightAsTarget();
+    void UnhighlightAsTarget();
+
     float GetScanDuration() const { return ScanDuration; }
     float GetCurrentScanProgress() const { return CurrentScanProgress; }
 
@@ -48,10 +52,6 @@ protected:
 
     UPROPERTY()
     bool bIsBeingScanned = false;
-
-public:
-    void HighlightAsTarget();
-    void UnhighlightAsTarget();
 
 private:
     FVector OriginalLocation = FVector::ZeroVector;

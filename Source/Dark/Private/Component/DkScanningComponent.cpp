@@ -1,7 +1,10 @@
-﻿#include "Component/DkScanningComponent.h"
-#include "Character/DkCharacter.h"
+﻿// Copyright @ Christian Reichel
+
+#include "Component/DkScanningComponent.h"
 #include "Component/DkScannableComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Character/DkCharacter.h"
+#include "GameFramework/HUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/DkPlayerController.h"
 #include "Player/DkPlayerControllerInterface.h"
@@ -9,6 +12,70 @@
 UDkScanningComponent::UDkScanningComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
+}
+
+void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+    FActorComponentTickFunction* ThisTickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    
+    if (!PlayerCameraRef || !PlayerControllerRef) return;
+
+    FVector Start = PlayerCameraRef->GetComponentLocation();
+    FVector Forward = PlayerCameraRef->GetForwardVector();
+    FVector End = Start + (Forward * TraceRange);
+    
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(GetOwner());
+    QueryParams.bTraceComplex = true;
+    // These are key for penetrating traces:
+    QueryParams.bReturnFaceIndex = true;
+    QueryParams.bReturnPhysicalMaterial = true;
+
+    TArray<FHitResult> HitResults;
+    bool bFoundScannable = false;
+
+#if ENABLE_DRAW_DEBUG
+    if (bShowDebugTraces)
+    {
+        DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, -1.0f);
+    }
+#endif
+
+    if (GetWorld()->LineTraceMultiByObjectType(
+        HitResults, 
+        Start, 
+        End, 
+        FCollisionObjectQueryParams::AllObjects, // This checks against all object channels
+        QueryParams))
+    {
+        for (const FHitResult& Hit : HitResults)
+        {
+            if (AActor* HitActor = Hit.GetActor())
+            {
+                if (UDkScannableComponent* NewTarget = HitActor->FindComponentByClass<UDkScannableComponent>())
+                {
+                    bFoundScannable = true;
+                    if (NewTarget != CurrentScannableTarget)
+                    {
+                        if (CurrentScannableTarget)
+                        {
+                            CurrentScannableTarget->UnhighlightAsTarget();
+                        }
+                        CurrentScannableTarget = NewTarget;
+                        CurrentScannableTarget->HighlightAsTarget();
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!bFoundScannable && CurrentScannableTarget)
+    {
+        CurrentScannableTarget->UnhighlightAsTarget();
+        CurrentScannableTarget = nullptr;
+    }
 }
 
 void UDkScanningComponent::BeginPlay()
@@ -57,63 +124,34 @@ void UDkScanningComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
     }
 }
 
-void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-    if (!bIsInScanMode)
-    {
-        return;
-    }
-
-    if (!bIsExecutingScanning)
-    {
-        UDkScannableComponent* PreviousTarget = CurrentScannableTarget;
-        InitiateSweepForScannables();
-        
-        if (PreviousTarget && PreviousTarget != CurrentScannableTarget)
-        {
-            PreviousTarget->UnhighlightAsTarget();
-        }
-        return;
-    }
-
-    if (!CurrentScannableTarget)
-    {
-        return;
-    }
-
-    float CurrentProgress = CurrentScannableTarget->GetCurrentScanProgress();
-    float ScanDuration = CurrentScannableTarget->GetScanDuration();
-   
-    CurrentProgress += DeltaTime / ScanDuration;
-    CurrentProgress = FMath::Clamp(CurrentProgress, 0.0f, 1.0f);
-   
-    CurrentScannableTarget->OnScanProgress(CurrentProgress);
-
-    if (CurrentProgress >= 1.0f)
-    {
-        CurrentScannableTarget->OnScanComplete();
-        CurrentScannableTarget = nullptr;
-        bIsExecutingScanning = false;
-        PrimaryComponentTick.bCanEverTick = false;
-    }
-}
-
 void UDkScanningComponent::OnScanModeStart()
 {
     if (!bIsInScanMode)
     {
-        UE_LOG(LogTemp, Log, TEXT("Scan Mode Started"));
         bIsInScanMode = true;
-        InitiateSweepForScannables();
-      
-        TArray<UDkScannableComponent*> ScannablesInRange;
-        if (GetScannableComponentsInRange(ScannablesInRange, ScannableSearchRange))
+
+        TArray<FOverlapResult> OverlapResults;
+        FCollisionQueryParams QueryParams;
+        QueryParams.bTraceComplex = false;
+        QueryParams.AddIgnoredActor(GetOwner());
+
+        FCollisionShape SphereShape;
+        SphereShape.SetSphere(TraceRange);
+
+        GetWorld()->OverlapMultiByChannel(
+            OverlapResults,
+            GetOwner()->GetActorLocation(),
+            FQuat::Identity,
+            ECollisionChannel::ECC_Visibility,
+            SphereShape,
+            QueryParams
+        );
+
+        for (const FOverlapResult& Result : OverlapResults)
         {
-            for (UDkScannableComponent* Scannable : ScannablesInRange)
+            if (AActor* Actor = Result.GetActor())
             {
-                if (Scannable)
+                if (UDkScannableComponent* Scannable = Actor->FindComponentByClass<UDkScannableComponent>())
                 {
                     Scannable->OnScanModeEntered();
                 }
@@ -126,30 +164,46 @@ void UDkScanningComponent::OnScanModeEnd()
 {
     if (bIsInScanMode)
     {
-        UE_LOG(LogTemp, Log, TEXT("Scan Mode Ended"));
         bIsInScanMode = false;
-       
+        
         if (bIsExecutingScanning)
         {
             OnScanExecuteEnd();
         }
 
-        TArray<UDkScannableComponent*> ScannablesInRange;
-        if (GetScannableComponentsInRange(ScannablesInRange, ScannableSearchRange))
-            if (CurrentScannableTarget)
-            {
-                for (UDkScannableComponent* Scannable : ScannablesInRange)
-                {
-                    if (Scannable)
-                    {
-                        Scannable->OnScanModeExited();
-                    }
-                }
-                CurrentScannableTarget->UnhighlightAsTarget();
-                CurrentScannableTarget = nullptr;
-            }
+        TArray<FOverlapResult> OverlapResults;
+        FCollisionQueryParams QueryParams;
+        QueryParams.bTraceComplex = false;
+        QueryParams.AddIgnoredActor(GetOwner());
 
-        CurrentScannableTarget = nullptr;
+        FCollisionShape SphereShape;
+        SphereShape.SetSphere(TraceRange);
+
+        GetWorld()->OverlapMultiByChannel(
+            OverlapResults,
+            GetOwner()->GetActorLocation(),
+            FQuat::Identity,
+            ECollisionChannel::ECC_Visibility,
+            SphereShape,
+            QueryParams
+        );
+
+        for (const FOverlapResult& Result : OverlapResults)
+        {
+            if (AActor* Actor = Result.GetActor())
+            {
+                if (UDkScannableComponent* Scannable = Actor->FindComponentByClass<UDkScannableComponent>())
+                {
+                    Scannable->OnScanModeExited();
+                }
+            }
+        }
+
+        if (CurrentScannableTarget)
+        {
+            CurrentScannableTarget->UnhighlightAsTarget();
+            CurrentScannableTarget = nullptr;
+        }
     }
 }
 
@@ -175,147 +229,5 @@ void UDkScanningComponent::OnScanExecuteEnd()
         }
        
         PrimaryComponentTick.bCanEverTick = false;
-    }
-}
-
-bool UDkScanningComponent::FindBestScannable(UDkScannableComponent*& OutBestScannable, float SphereRadius, float MaxAngleInDegrees)
-{
-    TArray<UDkScannableComponent*> ScannablesInRange;
-    TArray<UDkScannableComponent*> ScannablesInCone;
-  
-    if (!GetScannableComponentsInRange(ScannablesInRange, SphereRadius))
-    {
-        return false;
-    }
-  
-    if (!FilterScannablesByViewCone(ScannablesInRange, ScannablesInCone, MaxAngleInDegrees))
-    {
-        return false;
-    }
-
-    OutBestScannable = ScannablesInCone[0];
-    return true;
-}
-
-bool UDkScanningComponent::GetScannableComponentsInRange(TArray<UDkScannableComponent*>& OutScannables, float SphereRadius)
-{
-    if (!PlayerRef) { return false; }
-
-    FVector StartLocation = PlayerRef->GetActorLocation();
-
-    TArray<FOverlapResult> OverlapResults;
-    FCollisionQueryParams QueryParams;
-    QueryParams.bTraceComplex = false;
-    QueryParams.AddIgnoredActor(PlayerRef);
-
-    FCollisionShape CollisionShape;
-    CollisionShape.SetSphere(SphereRadius);
-
-    bool bSuccess = GetWorld()->OverlapMultiByChannel(
-        OverlapResults,
-        StartLocation,
-        FQuat::Identity,
-        ECollisionChannel::ECC_Visibility,
-        CollisionShape,
-        QueryParams
-    );
-  
-    if (bSuccess)
-    {
-        for (const FOverlapResult& Result : OverlapResults)
-        {
-            if (AActor* OverlappedActor = Result.GetActor())
-            {
-                if (UDkScannableComponent* ScannableComp = OverlappedActor->FindComponentByClass<UDkScannableComponent>())
-                {
-                    OutScannables.Add(ScannableComp);
-                }
-            }
-        }
-    }
-
-    return OutScannables.Num() > 0;
-}
-
-bool UDkScanningComponent::FilterScannablesByViewCone(const TArray<UDkScannableComponent*>& PotentialScannables,
-   TArray<UDkScannableComponent*>& OutValidScannables, float MaxAngleInDegrees)
-{
-    if (!PlayerCameraRef || !PlayerRef) { return false; }
-  
-    FVector CameraLocation = PlayerCameraRef->GetComponentLocation();
-    FVector CameraForward = PlayerCameraRef->GetForwardVector();
-    
-    APlayerController* PC = Cast<APlayerController>(PlayerRef->GetController());
-    if (!PC) { return false; }
-  
-    float CosMaxAngle = FMath::Cos(FMath::DegreesToRadians(MaxAngleInDegrees));
-
-    struct FScanScore 
-    {
-        UDkScannableComponent* Component;
-        float Score;
-  
-        FScanScore(UDkScannableComponent* InComponent, float InScore)
-            : Component(InComponent), Score(InScore) {}
-    };
-
-    TArray<FScanScore> ScoredScannables;
-  
-    for (UDkScannableComponent* Scannable : PotentialScannables)
-    {
-        if (!Scannable) continue;
-        
-        AActor* ScannableOwner = Scannable->GetOwner();
-        if (!ScannableOwner) continue;
-
-        FVector ScannableLocation = ScannableOwner->GetActorLocation();
-        FVector2D ScreenPosition;
-        
-        if (PC->ProjectWorldLocationToScreen(ScannableLocation, ScreenPosition))
-        {
-            int32 ViewportSizeX, ViewportSizeY;
-            PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
-            FVector2D ScreenCenter(ViewportSizeX * 0.5f, ViewportSizeY * 0.5f);
-
-            FVector2D ScreenDelta = ScreenPosition - ScreenCenter;
-            float ScreenDistance = ScreenDelta.Size() / FMath::Min(ViewportSizeX, ViewportSizeY);
-            
-            float ScreenScore = 1.0f - FMath::Min(ScreenDistance, 1.0f);
-            ScoredScannables.Add(FScanScore(Scannable, ScreenScore));
-        }
-    }
-  
-    ScoredScannables.Sort([](const FScanScore& A, const FScanScore& B) {
-        return A.Score > B.Score;
-    });
-  
-    OutValidScannables.Empty();
-    for (const FScanScore& ScoredScannable : ScoredScannables)
-    {
-        OutValidScannables.Add(ScoredScannable.Component);
-    }
-  
-    return OutValidScannables.Num() > 0;
-}
-
-void UDkScanningComponent::InitiateSweepForScannables()
-{
-    UDkScannableComponent* NewScannable = nullptr;
-    if (FindBestScannable(NewScannable, ScannableSearchRange, MaxViewConeAngle))
-    {
-        if (NewScannable != CurrentScannableTarget)
-        {
-            if (CurrentScannableTarget)
-            {
-                CurrentScannableTarget->UnhighlightAsTarget();
-            }
-            CurrentScannableTarget = NewScannable;
-            CurrentScannableTarget->HighlightAsTarget();
-        }
-    }
-    else if (CurrentScannableTarget)
-    {
-        CurrentScannableTarget->UnhighlightAsTarget();
-        CurrentScannableTarget = nullptr;
     }
 }
