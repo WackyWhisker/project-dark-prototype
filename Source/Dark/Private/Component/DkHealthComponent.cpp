@@ -92,7 +92,7 @@ void UDkHealthComponent::TakeDamage(float DamageAmount)
     // Play hit flash effect
     PlayHitFlash();
     
-    OnHealthChanged.Broadcast(CurrentHealth, -DamageAmount);
+    OnHealthChanged.Broadcast(CurrentHealth, -DamageAmount, GetMaxHealth());
     
     if (CurrentHealth <= 0.0f)
     {
@@ -127,7 +127,7 @@ void UDkHealthComponent::Heal(float HealAmount)
 
 	if (ActualHealAmount > 0.0f)
 	{
-		OnHealthChanged.Broadcast(CurrentHealth, ActualHealAmount);
+		OnHealthChanged.Broadcast(CurrentHealth, ActualHealAmount, GetMaxHealth());
 	}
 }
 
@@ -177,7 +177,7 @@ void UDkHealthComponent::HandleGameStateChanged(EDkGameState NewState, EDkGameSt
 			bCanTakeDamage = true;
             
 			// Broadcast the health change
-			OnHealthChanged.Broadcast(CurrentHealth, MaxHealth - CurrentHealth);
+			OnHealthChanged.Broadcast(CurrentHealth, MaxHealth - CurrentHealth, GetMaxHealth());
             
 			// Notify reset complete immediately since we're done
 			//GameStateSubsystem->NotifyResetComplete(this);

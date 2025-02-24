@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "DkHealthComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChanged, float, Health, float, HealthDelta);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnHealthChanged, float, Health, float, HealthDelta, float, MaxHealth);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHealthDepleted);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))

@@ -237,7 +237,7 @@ void UDkScanningComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void UDkScanningComponent::HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState)
 {
-    if (NewState == EDkGameState::Dying || NewState == EDkGameState::Retreat)
+    if (NewState == EDkGameState::Dying || NewState == EDkGameState::Retreat) //TODO: I think I need to not do this on retreat.
     {
         ResetValuesOnDeath();
     }
@@ -249,7 +249,11 @@ void UDkScanningComponent::ResetValuesOnDeath()
     {
         if (!Pair.Value.RetainOnDeath)
         {
+            float OldValue = Pair.Value.CurrentValue;
             Pair.Value.CurrentValue = 0;
+            
+            // Broadcast the value change to notify listeners
+            OnScanValueChanged.Broadcast(Pair.Key, OldValue, Pair.Value.CurrentValue, Pair.Value.MaxValue);
         }
     }
 }
