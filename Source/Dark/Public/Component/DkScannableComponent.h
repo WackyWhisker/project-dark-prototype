@@ -42,10 +42,10 @@ public:
     EDkScanType ScanType = EDkScanType::Generic;
 
     UPROPERTY(EditInstanceOnly, Category = "Scanning|Type")
-    int32 ScanValue = 1;
+    float ScanValue = 1.0f;
 
     UPROPERTY(EditDefaultsOnly, Category = "Scanning|Type")
-    int32 MaxValue = 100;
+    float MaxValue = 100.0f;
     
     UPROPERTY(EditDefaultsOnly, Category = "Scanning|Type")
     bool bRetainOnDeath = false;
@@ -69,10 +69,10 @@ public:
     EDkScanType GetScanType() const { return ScanType; }
 
     UFUNCTION(BlueprintPure, Category = "Scanning")
-    int32 GetScanValue() const { return ScanValue; }
+    float GetScanValue() const { return ScanValue; }
 
     UFUNCTION(BlueprintPure, Category = "Scanning")
-    int32 GetMaxValue() const { return MaxValue; }
+    float GetMaxValue() const { return MaxValue; }
     
     UFUNCTION(BlueprintPure, Category = "Scanning")
     bool ShouldRetainOnDeath() const { return bRetainOnDeath; }

@@ -34,9 +34,7 @@ private:
 	class UDkBaseMenuStack* BaseMenuStack;
 
 	void HandleTogglePauseMenu();
-
 	
-
 	bool bIsPauseMenuVisible;
 	bool bIsEndScreenMenuVisible;
 };

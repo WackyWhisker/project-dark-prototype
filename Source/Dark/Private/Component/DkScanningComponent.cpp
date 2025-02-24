@@ -117,15 +117,16 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
         {
             // Get the scan value and type
             EDkScanType ScanType = CurrentScannableTarget->GetScanType();
-            int32 ScanValue = CurrentScannableTarget->GetScanValue();
+            float ScanValue = CurrentScannableTarget->GetScanValue();
             
-            // Update our stored value
             FScanTypeValue& TypeValue = ScannedValues.FindOrAdd(ScanType);
-            // Clamp to max value
-            TypeValue.CurrentValue = FMath::Min(TypeValue.CurrentValue + ScanValue, TypeValue.MaxValue);
+            float OldValue = TypeValue.CurrentValue;
             TypeValue.RetainOnDeath = CurrentScannableTarget->ShouldRetainOnDeath();
             TypeValue.MaxValue = CurrentScannableTarget->GetMaxValue();
-            
+            TypeValue.CurrentValue = FMath::Min(TypeValue.CurrentValue + ScanValue, TypeValue.MaxValue);
+
+            OnScanValueChanged.Broadcast(ScanType, OldValue, TypeValue.CurrentValue, TypeValue.MaxValue);
+
             CurrentScannableTarget->OnScanComplete();
             bIsExecutingScanning = false;
             CurrentScannableTarget = nullptr;

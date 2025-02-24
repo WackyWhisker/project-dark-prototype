@@ -19,14 +19,16 @@ struct FScanTypeValue
     GENERATED_BODY()
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Scanning")
-    int32 CurrentValue = 0;
+    float CurrentValue = 0.0f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Scanning")
-    int32 MaxValue = 100;
+    float MaxValue = 100.0f;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Scanning")
     bool RetainOnDeath = false;
 };
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnScanValueChanged, EDkScanType, ScanType, float, OldValue, float, NewValue, float, MaxValue);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DARK_API UDkScanningComponent : public UActorComponent
@@ -58,6 +60,10 @@ public:
 
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UUserWidget> CrosshairWidgetTargetClass;
+
+    //Delegate for broadcast
+    UPROPERTY(BlueprintAssignable, Category = "Scanning")
+    FOnScanValueChanged OnScanValueChanged;
 
 protected:
     virtual void BeginPlay() override;
