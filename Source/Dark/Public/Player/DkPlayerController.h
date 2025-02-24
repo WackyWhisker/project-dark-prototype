@@ -36,6 +36,7 @@ public:
    void Drop();
    void Lift();
    void TogglePauseMenu();
+   void ToggleUpgradeMenu();
    void SetMappingContext(const FName& ContextName, bool bEnable);
    void ToggleLetterboxUI(bool bShowLetterboxUI);
    void ScanModeStart();
@@ -84,6 +85,7 @@ public:
    virtual FDropSignature* GetDropDelegate() override;
    virtual FLiftSignature* GetLiftDelegate() override;
    virtual FTogglePauseMenuSignature* GetTogglePauseMenuDelegate() override;
+   virtual FToggleUpgradeMenuSignature* GetToggleUpgradeMenuDelegate() override;
    virtual FInteractSignature* GetInteractDelegate() override;
    virtual FScanModeStartSignature* GetScanModeStartDelegate() override;
    virtual FScanModeEndSignature* GetScanModeEndDelegate() override;
@@ -164,6 +166,9 @@ private:
 
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputAction* TogglePauseMenuAction;
+   
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+   UInputAction* ToggleUpgradeMenuAction;
 
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputAction* InteractAction;
@@ -190,6 +195,7 @@ private:
    FDropSignature DropDelegate;
    FLiftSignature LiftDelegate;
    FTogglePauseMenuSignature TogglePauseMenuDelegate;
+   FToggleUpgradeMenuSignature ToggleUpgradeMenuDelegate;
    FInteractSignature InteractDelegate;
    FScanModeStartSignature ScanModeStartDelegate;
    FScanModeEndSignature ScanModeEndDelegate;

@@ -70,7 +70,7 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
     // Debug HUD - always show values
-    if (GEngine)
+    /*if (GEngine)
     {
         int32 Line = 0;
         for (auto It = ScannedValues.CreateConstIterator(); It; ++It)
@@ -89,7 +89,7 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
             );
             Line++;
         }
-    }
+    }*/
     
     if (!PlayerCameraRef || !PlayerControllerRef) return;
 

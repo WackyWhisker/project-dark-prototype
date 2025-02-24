@@ -82,6 +82,9 @@ void ADkPlayerController::SetupInputComponent()
 
         //Pause Menu
         EnhancedInputComponent->BindAction(TogglePauseMenuAction, ETriggerEvent::Started, this, &ADkPlayerController::TogglePauseMenu);
+
+        //Upgrade Menu
+        EnhancedInputComponent->BindAction(ToggleUpgradeMenuAction, ETriggerEvent::Started, this, &ADkPlayerController::ToggleUpgradeMenu);
     }
     else
     {
@@ -384,6 +387,15 @@ void ADkPlayerController::TogglePauseMenu()
     //UE_LOG(LogTemp, Warning, TEXT("Pause Menu Button Pressed"));
 }
 
+void ADkPlayerController::ToggleUpgradeMenu()
+{
+    if (ToggleUpgradeMenuDelegate.IsBound())
+    {
+        ToggleUpgradeMenuDelegate.Broadcast();
+    }
+    UE_LOG(LogTemp, Warning, TEXT("Upgrade Menu Button Pressed"));
+}
+
 FTargetStartSignature* ADkPlayerController::GetTargetStartDelegate()
 {
     return &TargetStartDelegate;
@@ -437,6 +449,11 @@ FLiftSignature* ADkPlayerController::GetLiftDelegate()
 FTogglePauseMenuSignature* ADkPlayerController::GetTogglePauseMenuDelegate()
 {
     return &TogglePauseMenuDelegate;
+}
+
+FToggleUpgradeMenuSignature* ADkPlayerController::GetToggleUpgradeMenuDelegate()
+{
+    return &ToggleUpgradeMenuDelegate;
 }
 
 FScanModeStartSignature* ADkPlayerController::GetScanModeStartDelegate()

@@ -18,6 +18,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)//should be called from level blueprint?
 	void HandleToggleEndScreenMenu();
+
+	UFUNCTION(BlueprintCallable)
+	void HandleTogglePauseMenu();
+
+	UFUNCTION(BlueprintCallable)
+	void HandleToggleUpgradeMenu();
     
 protected:
 	virtual void BeginPlay() override;
@@ -33,8 +39,9 @@ private:
 	UPROPERTY()
 	class UDkBaseMenuStack* BaseMenuStack;
 
-	void HandleTogglePauseMenu();
+	
 	
 	bool bIsPauseMenuVisible;
 	bool bIsEndScreenMenuVisible;
+	bool bIsUpgradeMenuVisible;
 };

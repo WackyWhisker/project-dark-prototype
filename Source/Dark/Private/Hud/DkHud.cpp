@@ -30,6 +30,7 @@ void ADkHUD::BeginPlay()
           if (PlayerControllerInterface)
           {
              PlayerControllerInterface->GetTogglePauseMenuDelegate()->AddUObject(this, &ADkHUD::HandleTogglePauseMenu);
+             PlayerControllerInterface->GetToggleUpgradeMenuDelegate()->AddUObject(this, &ADkHUD::HandleToggleUpgradeMenu);
           }
       }
     }
@@ -58,18 +59,30 @@ void ADkHUD::HandleTogglePauseMenu()
    }
 }
 
+void ADkHUD::HandleToggleUpgradeMenu()
+{
+   if (bIsUpgradeMenuVisible)
+   {
+      BaseMenuStack->OnHideUpgradeMenuWidget();
+      bIsUpgradeMenuVisible = false;
+   }
+   else
+   {
+      BaseMenuStack->OnShowUpgradeMenuWidget();
+      bIsUpgradeMenuVisible = true;
+   }
+}
+
 void ADkHUD::HandleToggleEndScreenMenu()
 {
    if (bIsEndScreenMenuVisible)
    {
       BaseMenuStack->OnHideEndScreenMenuWidget();
       bIsEndScreenMenuVisible = false;
-      UE_LOG(LogTemp, Warning, TEXT("Hide Endscreen menu"));
    }
    else
    {
       BaseMenuStack->OnShowEndScreenMenuWidget();
       bIsEndScreenMenuVisible = true;
-      UE_LOG(LogTemp, Warning, TEXT("Show Endscreen menu"));
    }
 }

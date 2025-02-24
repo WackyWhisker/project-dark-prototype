@@ -39,4 +39,12 @@ public:
 	//UPROPERTY(BlueprintAssignable, Category = "Events")
 	UFUNCTION(BlueprintImplementableEvent, Category = "Events")
 	void OnHideEndScreenMenuWidget();
+
+	//UPROPERTY(BlueprintAssignable, Category = "Events")
+	UFUNCTION(BlueprintImplementableEvent, Category = "Events")
+	void OnShowUpgradeMenuWidget();
+
+	//UPROPERTY(BlueprintAssignable, Category = "Events")
+	UFUNCTION(BlueprintImplementableEvent, Category = "Events")
+	void OnHideUpgradeMenuWidget();
 };
