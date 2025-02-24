@@ -22,6 +22,9 @@ struct FScanTypeValue
     int32 CurrentValue = 0;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Scanning")
+    int32 MaxValue = 100;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Scanning")
     bool RetainOnDeath = false;
 };
 
