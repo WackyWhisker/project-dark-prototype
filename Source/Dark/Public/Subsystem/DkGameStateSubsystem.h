@@ -12,6 +12,7 @@ enum class EDkGameState : uint8
 {
 	Playing,
 	Dying,
+	Retreat,
 	Resetting,
 	Respawning
 };
@@ -41,6 +42,10 @@ public:
 	// Start the death sequence. Called by health component when health reaches 0
 	UFUNCTION(BlueprintCallable, Category = "Dk|GameState")
 	void BeginDeathSequence();
+
+	// Start the retreat sequence. Similar to death sequence but for tactical retreat
+	UFUNCTION(BlueprintCallable, Category = "Dk|GameState")
+	void BeginRetreatSequence();
 
 	// State change broadcast
 	UPROPERTY(BlueprintAssignable, Category = "Dk|GameState")

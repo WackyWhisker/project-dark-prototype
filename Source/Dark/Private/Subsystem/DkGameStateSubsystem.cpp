@@ -67,6 +67,15 @@ void UDkGameStateSubsystem::BeginDeathSequence()
 	}
 }
 
+void UDkGameStateSubsystem::BeginRetreatSequence()
+{
+	if (CurrentGameState == EDkGameState::Playing)
+	{
+		RequestStateChange(EDkGameState::Retreat);
+	}
+}
+
+
 void UDkGameStateSubsystem::RegisterForReset(UObject* Object)
 {
 	if (Object)
@@ -102,9 +111,13 @@ bool UDkGameStateSubsystem::IsValidStateTransition(EDkGameState NewState) const
 	switch (CurrentGameState)
 	{
 	case EDkGameState::Playing:
-		return NewState == EDkGameState::Dying;
+		return NewState == EDkGameState::Dying || 
+			   NewState == EDkGameState::Retreat;
             
 	case EDkGameState::Dying:
+		return NewState == EDkGameState::Resetting;
+
+	case EDkGameState::Retreat:
 		return NewState == EDkGameState::Resetting;
             
 	case EDkGameState::Resetting:

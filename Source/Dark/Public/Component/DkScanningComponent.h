@@ -5,11 +5,25 @@
 #include "Components/ActorComponent.h"
 #include "DkScanningComponent.generated.h"
 
+enum class EDkGameState : uint8;
+enum class EDkScanType : uint8;
 class ADkPlayerController;
 class ADkCharacter;
 class UCameraComponent;
 class UDkScannableComponent;
 class IDkPlayerControllerInterface;
+
+USTRUCT(BlueprintType)
+struct FScanTypeValue
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Scanning")
+    int32 CurrentValue = 0;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Scanning")
+    bool RetainOnDeath = false;
+};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DARK_API UDkScanningComponent : public UActorComponent
@@ -47,6 +61,15 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
+
+    UPROPERTY()
+    class UDkGameStateSubsystem* GameStateSubsystem;
+
+    UFUNCTION()
+    void HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState);
+    
+    void ResetValuesOnDeath();
+    
     UFUNCTION()
     void OnScanModeStart();
    
@@ -80,6 +103,10 @@ private:
     UPROPERTY()
     bool bIsExecutingScanning = false;
 
+    // Stores the current values for each scan type
+    UPROPERTY()
+    TMap<EDkScanType, FScanTypeValue> ScannedValues;
+
     IDkPlayerControllerInterface* PlayerControllerInterface = nullptr;
 
     float CurrentCameraOffset = 0.0f;
@@ -87,4 +114,5 @@ private:
 
     UPROPERTY()
     UUserWidget* CrosshairWidget = nullptr;
+
 };

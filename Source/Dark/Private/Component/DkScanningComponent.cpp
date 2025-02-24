@@ -53,11 +53,43 @@ void UDkScanningComponent::BeginPlay()
     {
         OriginalCameraLocation = PlayerCameraRef->GetRelativeLocation();
     }
+    
+    // Get game state subsystem
+    if (UWorld* World = GetWorld())
+    {
+        GameStateSubsystem = World->GetSubsystem<UDkGameStateSubsystem>();
+        if (GameStateSubsystem)
+        {
+            GameStateSubsystem->OnGameStateChanged.AddDynamic(this, &UDkScanningComponent::HandleGameStateChanged);
+        }
+    }
 }
 
 void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+    // Debug HUD - always show values
+    if (GEngine)
+    {
+        int32 Line = 0;
+        for (auto It = ScannedValues.CreateConstIterator(); It; ++It)
+        {
+            FString TypeName = UEnum::GetValueAsString(It->Key);
+            FString DebugText = FString::Printf(TEXT("%s: %d (Retain: %s)"), 
+                *TypeName, 
+                It->Value.CurrentValue,
+                It->Value.RetainOnDeath ? TEXT("Yes") : TEXT("No"));
+                
+            GEngine->AddOnScreenDebugMessage(
+                -10000 - Line,  // Using -10000 as base to avoid conflict with other debug messages
+                0.0f,          
+                FColor::Cyan,
+                DebugText
+            );
+            Line++;
+        }
+    }
     
     if (!PlayerCameraRef || !PlayerControllerRef) return;
 
@@ -83,6 +115,15 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
         
         if (CurrentProgress >= 1.0f)
         {
+            // Get the scan value and type
+            EDkScanType ScanType = CurrentScannableTarget->GetScanType();
+            int32 ScanValue = CurrentScannableTarget->GetScanValue();
+            
+            // Update our stored value
+            FScanTypeValue& TypeValue = ScannedValues.FindOrAdd(ScanType);
+            TypeValue.CurrentValue += ScanValue;
+            TypeValue.RetainOnDeath = CurrentScannableTarget->ShouldRetainOnDeath();
+            
             CurrentScannableTarget->OnScanComplete();
             bIsExecutingScanning = false;
             CurrentScannableTarget = nullptr;
@@ -176,6 +217,11 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 void UDkScanningComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
+
+    if (GameStateSubsystem)
+    {
+        GameStateSubsystem->OnGameStateChanged.RemoveDynamic(this, &UDkScanningComponent::HandleGameStateChanged);
+    }
   
     if (PlayerControllerInterface)
     {
@@ -183,6 +229,25 @@ void UDkScanningComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
         PlayerControllerInterface->GetScanModeEndDelegate()->RemoveAll(this);
         PlayerControllerInterface->GetScanExecuteStartDelegate()->RemoveAll(this);
         PlayerControllerInterface->GetScanExecuteEndDelegate()->RemoveAll(this);
+    }
+}
+
+void UDkScanningComponent::HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState)
+{
+    if (NewState == EDkGameState::Dying || NewState == EDkGameState::Retreat)
+    {
+        ResetValuesOnDeath();
+    }
+}
+
+void UDkScanningComponent::ResetValuesOnDeath()
+{
+    for (auto& Pair : ScannedValues)
+    {
+        if (!Pair.Value.RetainOnDeath)
+        {
+            Pair.Value.CurrentValue = 0;
+        }
     }
 }
 
@@ -290,6 +355,10 @@ void UDkScanningComponent::OnScanExecuteStart()
 {
     if (bIsInScanMode && CurrentScannableTarget && !bIsExecutingScanning)
     {
+        // Get current value for this type
+        EDkScanType ScanType = CurrentScannableTarget->GetScanType();
+        FScanTypeValue& TypeValue = ScannedValues.FindOrAdd(ScanType);
+        
         bIsExecutingScanning = true;
         CurrentScannableTarget->OnScanStart();
     }

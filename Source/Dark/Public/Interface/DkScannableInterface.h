@@ -4,14 +4,6 @@
 #include "UObject/Interface.h"
 #include "DkScannableInterface.generated.h"
 
-UENUM(BlueprintType)
-enum class EDkScanType : uint8
-{
-	Generic     UMETA(DisplayName = "Generic"),
-	Ability     UMETA(DisplayName = "Ability"), 
-	PowerUp     UMETA(DisplayName = "Power Up")
-};
-
 UINTERFACE(MinimalAPI)
 class UDkScannableInterface : public UInterface
 {
