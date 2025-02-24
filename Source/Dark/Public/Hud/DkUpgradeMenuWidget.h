@@ -24,6 +24,25 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Upgrade Actions")
 	void HandleUnlockUpgrade();
+	
+	// Hover event handlers - exposed to Blueprint
+	UFUNCTION(BlueprintImplementableEvent, Category = "Upgrade Actions")
+	void HandleHintButtonHovered();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Upgrade Actions")
+	void HandleHintButtonUnhovered();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Upgrade Actions")
+	void HandleAbilityButtonHovered();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Upgrade Actions")
+	void HandleAbilityButtonUnhovered();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Upgrade Actions")
+	void HandleUpgradeButtonHovered();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Upgrade Actions")
+	void HandleUpgradeButtonUnhovered();
 
 protected:
 	virtual void NativeOnInitialized() override;
@@ -37,6 +56,9 @@ protected:
     
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
 	class UCommonButtonBase* UnlockUpgradeButton;
+
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	class UCommonButtonBase* ResumeButton;
 
 	// Hold duration in seconds required to activate buttons
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Settings")
@@ -55,6 +77,9 @@ private:
 
 	// Button press handlers
 	UFUNCTION()
+	void HandleResumeClicked();
+	
+	UFUNCTION()
 	void HandleUnlockHintButtonPressed();
 	
 	UFUNCTION()
@@ -72,5 +97,22 @@ private:
 	UFUNCTION()
 	void HandleUnlockUpgradeButtonReleased();
 	
+	// Button hover handlers
+	UFUNCTION()
+	void HandleUnlockHintButtonHovered();
 	
+	UFUNCTION()
+	void HandleUnlockHintButtonUnhovered();
+	
+	UFUNCTION()
+	void HandleUnlockAbilityButtonHovered();
+	
+	UFUNCTION()
+	void HandleUnlockAbilityButtonUnhovered();
+	
+	UFUNCTION()
+	void HandleUnlockUpgradeButtonHovered();
+	
+	UFUNCTION()
+	void HandleUnlockUpgradeButtonUnhovered();
 };
