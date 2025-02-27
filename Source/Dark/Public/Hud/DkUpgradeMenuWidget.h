@@ -8,6 +8,8 @@
 #include "Player/DkPlayerController.h"
 #include "DkUpgradeMenuWidget.generated.h"
 
+class UDkScanningComponent;
+
 UCLASS()
 class DARK_API UDkUpgradeMenuWidget : public UDkBaseMenuWidget
 {
@@ -63,6 +65,41 @@ protected:
 	// Hold duration in seconds required to activate buttons
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Settings")
 	float HoldDuration = 1.5f;
+
+	// Costs for each upgrade type
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Upgrade Costs")
+	TMap<EDkScanType, float> HintCost;
+    
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Upgrade Costs")
+	TMap<EDkScanType, float> AbilityCost;
+    
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Upgrade Costs")
+	TMap<EDkScanType, float> UpgradeCost;
+
+	// Progress bars for each upgrade button
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	class UProgressBar* HintProgressBar;
+    
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	class UProgressBar* AbilityProgressBar;
+    
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	class UProgressBar* UpgradeProgressBar;
+    
+	// Function to update button states based on available resources
+	UFUNCTION(BlueprintCallable, Category = "Upgrade Actions")
+	void UpdateButtonStates();
+    
+	// Resource check and consumption functions
+	UFUNCTION(BlueprintCallable, Category = "Upgrade Actions")
+	bool HasEnoughResources(const TMap<EDkScanType, float>& Cost);
+    
+	UFUNCTION(BlueprintCallable, Category = "Upgrade Actions")
+	bool ConsumeResources(const TMap<EDkScanType, float>& Cost);
+    
+	// Get player's scanning component
+	UFUNCTION(BlueprintCallable, Category = "Upgrade Actions")
+	UDkScanningComponent* GetScanningComponent();
 
 private:
 	// Button press tracking

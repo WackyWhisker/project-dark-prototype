@@ -15,6 +15,28 @@ UDkScanningComponent::UDkScanningComponent()
     PrimaryComponentTick.bCanEverTick = true;
 }
 
+bool UDkScanningComponent::HasResource(EDkScanType ScanType, float Amount) const
+{
+    if (const FScanTypeValue* Value = ScannedValues.Find(ScanType))
+    {
+        return Value->CurrentValue >= Amount;
+    }
+    return false;
+}
+
+bool UDkScanningComponent::ConsumeResource(EDkScanType ScanType, float Amount)
+{
+    FScanTypeValue* Value = ScannedValues.Find(ScanType);
+    if (Value && Value->CurrentValue >= Amount)
+    {
+        float OldValue = Value->CurrentValue;
+        Value->CurrentValue -= Amount;
+        OnScanValueChanged.Broadcast(ScanType, OldValue, Value->CurrentValue, Value->MaxValue);
+        return true;
+    }
+    return false;
+}
+
 void UDkScanningComponent::BeginPlay()
 {
     Super::BeginPlay();

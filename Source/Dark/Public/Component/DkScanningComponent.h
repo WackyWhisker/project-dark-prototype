@@ -65,6 +65,12 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Scanning")
     FOnScanValueChanged OnScanValueChanged;
 
+    UFUNCTION(BlueprintCallable, Category = "Scanning")
+    bool HasResource(EDkScanType ScanType, float Amount) const;
+    
+    UFUNCTION(BlueprintCallable, Category = "Scanning")
+    bool ConsumeResource(EDkScanType ScanType, float Amount);
+
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;

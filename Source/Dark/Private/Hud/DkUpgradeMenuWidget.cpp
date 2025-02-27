@@ -1,7 +1,10 @@
 ﻿// Copyright @ Christian Reichel
 
 #include "Hud/DkUpgradeMenuWidget.h"
-#include "Hud/DkHUD.h"
+
+#include "Character/DkCharacter.h"
+#include "Component/DkScanningComponent.h"
+#include "Components/ProgressBar.h"
 //#include "Components/ButtonComponent.h"
 
 void UDkUpgradeMenuWidget::NativeOnInitialized()
@@ -38,39 +41,73 @@ void UDkUpgradeMenuWidget::NativeOnInitialized()
 	}
 }
 
+// In DkUpgradeMenuWidget.cpp, update the NativeTick function
+
 void UDkUpgradeMenuWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
-	
+    
+	// Update button states each tick
+	UpdateButtonStates();
+
+	// Update progress bars
+	if (HintProgressBar)
+	{
+		HintProgressBar->SetPercent(bIsHintButtonPressed ? 
+			FMath::Min(HintButtonHoldTime / HoldDuration, 1.0f) : 0.0f);
+	}
+    
+	if (AbilityProgressBar)
+	{
+		AbilityProgressBar->SetPercent(bIsAbilityButtonPressed ? 
+			FMath::Min(AbilityButtonHoldTime / HoldDuration, 1.0f) : 0.0f);
+	}
+    
+	if (UpgradeProgressBar)
+	{
+		UpgradeProgressBar->SetPercent(bIsUpgradeButtonPressed ? 
+			FMath::Min(UpgradeButtonHoldTime / HoldDuration, 1.0f) : 0.0f);
+	}
+    
+    
 	// Track hold time for each button
 	if (bIsHintButtonPressed)
 	{
 		HintButtonHoldTime += InDeltaTime;
 		if (HintButtonHoldTime >= HoldDuration)
 		{
-			HandleUnlockHint();
+			if (ConsumeResources(HintCost))
+			{
+				HandleUnlockHint();
+			}
 			bIsHintButtonPressed = false;
 			HintButtonHoldTime = 0.0f;
 		}
 	}
-	
+    
 	if (bIsAbilityButtonPressed)
 	{
 		AbilityButtonHoldTime += InDeltaTime;
 		if (AbilityButtonHoldTime >= HoldDuration)
 		{
-			HandleUnlockAbility();
+			if (ConsumeResources(AbilityCost))
+			{
+				HandleUnlockAbility();
+			}
 			bIsAbilityButtonPressed = false;
 			AbilityButtonHoldTime = 0.0f;
 		}
 	}
-	
+    
 	if (bIsUpgradeButtonPressed)
 	{
 		UpgradeButtonHoldTime += InDeltaTime;
 		if (UpgradeButtonHoldTime >= HoldDuration)
 		{
-			HandleUnlockUpgrade();
+			if (ConsumeResources(UpgradeCost))
+			{
+				HandleUnlockUpgrade();
+			}
 			bIsUpgradeButtonPressed = false;
 			UpgradeButtonHoldTime = 0.0f;
 		}
@@ -153,4 +190,69 @@ void UDkUpgradeMenuWidget::HandleUnlockUpgradeButtonHovered()
 void UDkUpgradeMenuWidget::HandleUnlockUpgradeButtonUnhovered()
 {
 	HandleUpgradeButtonUnhovered();
+}
+
+UDkScanningComponent* UDkUpgradeMenuWidget::GetScanningComponent()
+{
+	if (ADkPlayerController* PC = Cast<ADkPlayerController>(GetOwningPlayer()))
+	{
+		if (ADkCharacter* Character = Cast<ADkCharacter>(PC->GetPawn()))
+		{
+			return Character->FindComponentByClass<UDkScanningComponent>();
+		}
+	}
+	return nullptr;
+}
+
+bool UDkUpgradeMenuWidget::HasEnoughResources(const TMap<EDkScanType, float>& Cost)
+{
+	UDkScanningComponent* ScanComponent = GetScanningComponent();
+	if (!ScanComponent) return false;
+    
+	for (const auto& Pair : Cost)
+	{
+		if (!ScanComponent->HasResource(Pair.Key, Pair.Value))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool UDkUpgradeMenuWidget::ConsumeResources(const TMap<EDkScanType, float>& Cost)
+{
+	UDkScanningComponent* ScanComponent = GetScanningComponent();
+	if (!ScanComponent) return false;
+    
+	// First check if we have enough resources
+	if (!HasEnoughResources(Cost)) return false;
+    
+	// Then consume them
+	for (const auto& Pair : Cost)
+	{
+		ScanComponent->ConsumeResource(Pair.Key, Pair.Value);
+	}
+    
+	return true;
+}
+
+void UDkUpgradeMenuWidget::UpdateButtonStates()
+{
+	if (UnlockHintButton)
+	{
+		bool bHasEnoughForHint = HasEnoughResources(HintCost);
+		UnlockHintButton->SetIsEnabled(bHasEnoughForHint);
+	}
+    
+	if (UnlockAbilityButton)
+	{
+		bool bHasEnoughForAbility = HasEnoughResources(AbilityCost);
+		UnlockAbilityButton->SetIsEnabled(bHasEnoughForAbility);
+	}
+    
+	if (UnlockUpgradeButton)
+	{
+		bool bHasEnoughForUpgrade = HasEnoughResources(UpgradeCost);
+		UnlockUpgradeButton->SetIsEnabled(bHasEnoughForUpgrade);
+	}
 }
