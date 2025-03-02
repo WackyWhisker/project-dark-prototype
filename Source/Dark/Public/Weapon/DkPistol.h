@@ -23,5 +23,6 @@ protected:
 	float Range = 10000.0f;  // 100 meters in UE units
 
 private:
-	void ProcessHit(const FHitResult& Hit);
+	void ProcessHit(const FHitResult& CameraHit, const FHitResult& MuzzleHit);
+
 };

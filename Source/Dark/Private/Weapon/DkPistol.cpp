@@ -2,53 +2,75 @@
 
 #include "Weapon/DkPistol.h"
 #include "DrawDebugHelpers.h"
+#include "GameFramework/Character.h"
+#include "Camera/CameraComponent.h"
 
 ADkPistol::ADkPistol()
 {
-	// Set default values
-	FireRate = 0.2f;
-	Damage = 25.0f;
-	MaxAmmo = 12;
+    FireRate = 0.2f;
+    Damage = 25.0f;
+    MaxAmmo = 12;
 }
 
 void ADkPistol::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 }
 
 void ADkPistol::Fire()
 {
-	if (!Super::CanFire()) return;
+    if (!Super::CanFire()) return;
     
-	// Get pistol muzzle location
-	FVector MuzzleLocation = WeaponMesh->GetSocketLocation(FName("Muzzle"));
-	FRotator MuzzleRotation = WeaponMesh->GetSocketRotation(FName("Muzzle"));
+    ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+    if (!OwnerCharacter) return;
     
-	// Setup trace
-	FVector Start = MuzzleLocation;
-	FVector End = Start + MuzzleRotation.Vector() * Range;
+    // Get camera view point
+    APlayerController* PC = Cast<APlayerController>(OwnerCharacter->GetController());
+    if (!PC) return;
     
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-	QueryParams.AddIgnoredActor(GetOwner());
+    FVector CameraLocation;
+    FRotator CameraRotation;
+    PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
     
-	FHitResult Hit;
-	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, QueryParams);
+    // Primary trace from camera
+    FVector TraceStart = CameraLocation;
+    FVector TraceEnd = TraceStart + CameraRotation.Vector() * Range;
     
-	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 2.0f);
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(this);
+    QueryParams.AddIgnoredActor(GetOwner());
     
-	if (bHit)
-	{
-		ProcessHit(Hit);
-	}
+    FHitResult CameraHit;
+    bool bHit = GetWorld()->LineTraceSingleByChannel(CameraHit, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
     
-	Super::Fire(); // Handle ammo and reload
+    DrawDebugLine(GetWorld(), TraceStart, bHit ? CameraHit.Location : TraceEnd, FColor::Green, false, 2.0f);
+    
+    // If we hit something, do muzzle trace for effects
+    if (bHit)
+    {
+        FVector MuzzleLocation = WeaponMesh->GetSocketLocation(FName("Muzzle"));
+        
+        FHitResult MuzzleHit;
+        GetWorld()->LineTraceSingleByChannel(MuzzleHit, MuzzleLocation, CameraHit.Location, ECC_Visibility, QueryParams);
+        
+        DrawDebugLine(GetWorld(), MuzzleLocation, CameraHit.Location, FColor::Red, false, 2.0f);
+        
+        ProcessHit(CameraHit, MuzzleHit);
+    }
+    
+    Super::Fire(); // Handle ammo and reload
 }
 
-void ADkPistol::ProcessHit(const FHitResult& Hit)
+void ADkPistol::ProcessHit(const FHitResult& CameraHit, const FHitResult& MuzzleHit)
 {
-	// For now just draw debug point
-	DrawDebugPoint(GetWorld(), Hit.ImpactPoint, 20.0f, FColor::Red, false, 2.0f);
+    // Camera hit is for gameplay (damage)
+    DrawDebugPoint(GetWorld(), CameraHit.ImpactPoint, 20.0f, FColor::Green, false, 2.0f);
     
-	// Later add damage, effects, etc.
+    // Muzzle hit is for effects (particles, decals)
+    if (MuzzleHit.bBlockingHit)
+    {
+        DrawDebugPoint(GetWorld(), MuzzleHit.ImpactPoint, 20.0f, FColor::Red, false, 2.0f);
+    }
+    
+    // Later add damage, effects, etc.
 }
