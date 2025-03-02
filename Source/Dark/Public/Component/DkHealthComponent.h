@@ -47,6 +47,12 @@ public:
     UFUNCTION(BlueprintPure, Category="Health")
     float GetMaxHealth() const { return MaxHealth; }
 
+    UFUNCTION(BlueprintPure, Category="Health")
+    float GetCurrentBinding() const { return CurrentBinding; }
+
+    UFUNCTION(BlueprintPure, Category="Health")
+    float GetMaxBinding() const { return BindingThreshold > 0.0f ? BindingThreshold : MaxHealth; }
+
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
