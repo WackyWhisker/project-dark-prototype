@@ -22,6 +22,9 @@ DECLARE_MULTICAST_DELEGATE(FScanModeStartSignature);
 DECLARE_MULTICAST_DELEGATE(FScanModeEndSignature);
 DECLARE_MULTICAST_DELEGATE(FScanExecuteStartSignature);
 DECLARE_MULTICAST_DELEGATE(FScanExecuteEndSignature);
+DECLARE_MULTICAST_DELEGATE(FShootSignature);
+DECLARE_MULTICAST_DELEGATE(FAimStartSignature);
+DECLARE_MULTICAST_DELEGATE(FAimEndSignature);
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
@@ -54,4 +57,7 @@ public:
 	virtual FScanModeEndSignature* GetScanModeEndDelegate() = 0;
 	virtual FScanExecuteStartSignature* GetScanExecuteStartDelegate() = 0;
 	virtual FScanExecuteEndSignature* GetScanExecuteEndDelegate() = 0;
+	virtual FShootSignature* GetShootDelegate() = 0;
+	virtual FAimStartSignature* GetAimStartDelegate() = 0;
+	virtual FAimEndSignature* GetAimEndDelegate() = 0;
 };

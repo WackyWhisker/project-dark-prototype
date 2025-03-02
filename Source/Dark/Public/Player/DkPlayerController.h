@@ -1,3 +1,5 @@
+// Copyright @ Christian Reichel
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -23,46 +25,65 @@ class DARK_API ADkPlayerController : public APlayerController, public IDkPlayerC
    GENERATED_BODY()
 
 public:
-   // public methods
+   // Basic player actions
    void Jump();
    void Dodge();
    void Attack();
    void Interact();
+   void Drop();
+   void Lift();
+   
+   // Menu controls
+   void TogglePauseMenu();
+   void ToggleUpgradeMenu();
+   
+   // Targeting system
    void TargetStart();
    void TargetEnd();
    void TargetToggle();
    void TargetCycleLeft();
    void TargetCycleRight();
-   void Drop();
-   void Lift();
-   void TogglePauseMenu();
-   void ToggleUpgradeMenu();
-   void SetMappingContext(const FName& ContextName, bool bEnable);
-   void ToggleLetterboxUI(bool bShowLetterboxUI);
+   
+   UFUNCTION(BlueprintCallable, Category = "Targeting")
+   void SetTargetingMode(bool bNewToggleMode);
+   
+   UFUNCTION(BlueprintPure, Category = "Targeting")
+   bool IsUsingToggleMode() const { return bUseTargetModeToggle; }
+   
+   UFUNCTION(BlueprintCallable, Category = "Targeting")
+   void ResetTargetingState();
+   
+   UFUNCTION(Exec)
+   void ToggleTargetMode();
+   
+   // Scanning system
    void ScanModeStart();
    void ScanModeEnd();
    void ScanModeToggle();
    void ScanExecuteStart();
    void ScanExecuteEnd();
-
-   UFUNCTION(Exec)
-   void ToggleTargetMode();
-
-   UFUNCTION(Exec)
-   void ToggleScanMode();
-
+   
    UFUNCTION(BlueprintCallable, Category = "Scanning")
    void SetScanModeToggle(bool bNewToggleMode);
-
-   UFUNCTION(BlueprintCallable, Category = "Targeting")
-   void SetTargetingMode(bool bNewToggleMode);
-
-   UFUNCTION(BlueprintPure, Category = "Targeting")
-   bool IsUsingToggleMode() const { return bUseTargetModeToggle; }
-
-public:
-   UFUNCTION(BlueprintCallable, Category = "Targeting")
-   void ResetTargetingState();
+   
+   UFUNCTION(Exec)
+   void ToggleScanMode();
+   
+   // Aiming system
+   void Shoot();
+   void AimStart();
+   void AimEnd();
+   void AimToggle();
+   
+   UFUNCTION(BlueprintCallable, Category = "Aiming")
+   void SetAimingMode(bool bNewToggleMode);
+   
+   UFUNCTION(Exec)
+   void ToggleAimMode();
+   
+   // UI and mapping context
+   void SetMappingContext(const FName& ContextName, bool bEnable);
+   void ToggleLetterboxUI(bool bShowLetterboxUI);
 
 public:
    // public properties
@@ -75,6 +96,7 @@ public:
    UPROPERTY()
    float TargetingYawInputScale = 1.0f;
 
+   // Interface method implementations
    virtual FJumpSignature* GetJumpDelegate() override;
    virtual FDodgeSignature* GetDodgeDelegate() override;
    virtual FAttackSignature* GetAttackDelegate() override;
@@ -91,22 +113,30 @@ public:
    virtual FScanModeEndSignature* GetScanModeEndDelegate() override;
    virtual FScanExecuteStartSignature* GetScanExecuteStartDelegate() override;
    virtual FScanExecuteEndSignature* GetScanExecuteEndDelegate() override;
+   virtual FShootSignature* GetShootDelegate() override;
+   virtual FAimStartSignature* GetAimStartDelegate() override;
+   virtual FAimEndSignature* GetAimEndDelegate() override;
 
 protected:
-   // protected methods
-   void Move(const FInputActionValue& Value);
-   void Look(const FInputActionValue& Value);
+   // Base controller methods
    virtual void BeginPlay() override;
    virtual void SetupInputComponent() override;
+   
+   // Input handling
+   void Move(const FInputActionValue& Value);
+   void Look(const FInputActionValue& Value);
+   
+   // Setup methods
    void SetupTargetingBindings();
    void SetupScanBindings();
-   
+   void SetupAimingBindings();
 
 private:
-   // private properties
+   // Character reference
    UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
    ADkCharacter* PlayerRef = nullptr;
 
+   // Input mapping contexts
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputMappingContext* DefaultMappingContext;
 
@@ -118,22 +148,14 @@ private:
 
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputMappingContext* ScanMappingContext;
-
+   
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   bool bUseTargetModeToggle = true;
+   UInputMappingContext* AimingMappingContext;
+   
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+   TMap<FName, UInputMappingContext*> MappingContexts;
 
-   UPROPERTY()
-   bool bIsTargeting = false;
-
-   UPROPERTY()
-   UEnhancedInputComponent* CachedEnhancedInputComponent;
-
-   uint32 TargetStartHandle;
-   uint32 TargetEndHandle;
-
-   uint32 ScanStartHandle;
-   uint32 ScanEndHandle;
-
+   // Input actions
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputAction* MoveAction;
 
@@ -150,14 +172,8 @@ private:
    UInputAction* AttackAction;
    
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   UInputAction* TargetAction;
-
-   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   UInputAction* TargetCycleLeftAction;
-
-   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   UInputAction* TargetCycleRightAction;
-
+   UInputAction* InteractAction;
+   
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputAction* DropAction;
 
@@ -169,22 +185,63 @@ private:
    
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputAction* ToggleUpgradeMenuAction;
+   
+   // Targeting related properties
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+   UInputAction* TargetAction;
 
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   UInputAction* InteractAction;
+   UInputAction* TargetCycleLeftAction;
 
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+   UInputAction* TargetCycleRightAction;
+   
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+   bool bUseTargetModeToggle = true;
+
+   UPROPERTY()
+   bool bIsTargeting = false;
+   
+   uint32 TargetStartHandle;
+   uint32 TargetEndHandle;
+   
+   // Scanning related properties
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputAction* ScanModeAction;
 
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) 
    UInputAction* ScanExecuteAction;
-
+   
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    bool bUseScanModeToggle = true;
 
    UPROPERTY()
    bool bIsScanning = false;
+   
+   uint32 ScanStartHandle;
+   uint32 ScanEndHandle;
+   
+   // Aiming related properties
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+   UInputAction* ShootAction;
 
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+   UInputAction* AimAction;
+   
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+   bool bUseAimModeToggle = true;
+
+   UPROPERTY()
+   bool bIsAiming = false;
+   
+   uint32 AimStartHandle;
+   uint32 AimEndHandle;
+
+   // Input component cache
+   UPROPERTY()
+   UEnhancedInputComponent* CachedEnhancedInputComponent;
+
+   // Delegates
    FJumpSignature JumpDelegate;
    FDodgeSignature DodgeDelegate;
    FAttackSignature AttackDelegate;
@@ -201,31 +258,31 @@ private:
    FScanModeEndSignature ScanModeEndDelegate;
    FScanExecuteStartSignature ScanExecuteStartDelegate;
    FScanExecuteEndSignature ScanExecuteEndDelegate;
+   FShootSignature ShootDelegate;
+   FAimStartSignature AimStartDelegate;
+   FAimEndSignature AimEndDelegate;
 
+   // UI related properties
    UPROPERTY()
    UUserWidget* LetterboxWidget;
 
    UPROPERTY()
    float FadeDuration;
 
-   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   TMap<FName, UInputMappingContext*> MappingContexts;
-
-   //Castle Game State specifics
+   // Game state handling
    UFUNCTION()
    void HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState);
-
-   // Optional: Keep track if we disabled input due to death
+   
+   // Track input state for death/respawn
    bool bWasInputDisabledByDeath = false;
 
-private:
+   // Sequence handling
    UPROPERTY(EditDefaultsOnly, Category = "Sequences")
    ULevelSequence* DeathSequence;
 
    UPROPERTY(EditDefaultsOnly, Category = "Sequences")
    ULevelSequence* RespawnSequence;
 
-   // Keep track of sequence player
    UPROPERTY()
    ULevelSequencePlayer* ActiveSequencePlayer;
 
