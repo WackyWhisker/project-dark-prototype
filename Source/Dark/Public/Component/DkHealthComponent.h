@@ -8,13 +8,16 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnHealthChanged, float, Health, float, HealthDelta, float, MaxHealth);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHealthDepleted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBindingChanged, float, CurrentBinding, float, MaxBinding);
+
+class UDkMeleeDamageType;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DARK_API UDkHealthComponent : public UActorComponent
 {
     GENERATED_BODY()
 
-public:
+public:    
     UDkHealthComponent();
 
     UPROPERTY(BlueprintAssignable, Category="Events")
@@ -22,6 +25,9 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category="Events")
     FOnHealthDepleted OnHealthDepleted;
+
+    UPROPERTY(BlueprintAssignable, Category="Events")
+    FOnBindingChanged OnBindingChanged;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Health")
     float CurrentHealth;
@@ -89,6 +95,11 @@ protected:
 
 private:
     bool bIsDead;
+    float CurrentBinding = 0.0f;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Binding")
+    float BindingThreshold = -1.0f; // -1 means no threshold
+    
     FTimerHandle DamageCooldownTimer;
     FTimerHandle HitFlashTimerHandle;
     bool bCanTakeDamage = true;
@@ -96,4 +107,8 @@ private:
     // Visual feedback methods
     void PlayHitFlash();
     void ResetDamageCooldown();
+    
+    // Damage processing methods
+    void ProcessBindingDamage(float Damage);
+    void ProcessMeleeDamage(float Damage, const class UDkMeleeDamageType* DamageType);
 };

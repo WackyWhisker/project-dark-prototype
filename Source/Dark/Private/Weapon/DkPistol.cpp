@@ -63,14 +63,19 @@ void ADkPistol::Fire()
 
 void ADkPistol::ProcessHit(const FHitResult& CameraHit, const FHitResult& MuzzleHit)
 {
-    // Camera hit is for gameplay (damage)
+    // Camera hit is for gameplay (binding)
     DrawDebugPoint(GetWorld(), CameraHit.ImpactPoint, 20.0f, FColor::Green, false, 2.0f);
+    
+    // Apply binding damage
+    if (AActor* HitActor = CameraHit.GetActor())
+    {
+        FDamageEvent DamageEvent(UDkBindingDamageType::StaticClass());
+        HitActor->TakeDamage(Damage, DamageEvent, GetInstigatorController(), this);
+    }
     
     // Muzzle hit is for effects (particles, decals)
     if (MuzzleHit.bBlockingHit)
     {
         DrawDebugPoint(GetWorld(), MuzzleHit.ImpactPoint, 20.0f, FColor::Red, false, 2.0f);
     }
-    
-    // Later add damage, effects, etc.
 }

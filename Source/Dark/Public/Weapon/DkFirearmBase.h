@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Combat/DkBindingDamageType.h"
+#include "Engine/DamageEvents.h"
 #include "DkFirearmBase.generated.h"
 
 UCLASS()
