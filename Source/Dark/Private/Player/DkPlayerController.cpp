@@ -492,8 +492,8 @@ void ADkPlayerController::Shoot()
     if (ShootDelegate.IsBound())
     {
         ShootDelegate.Broadcast();
-        UE_LOG(LogTemp, Warning, TEXT("Shoot Button Pressed"));
     }
+    UE_LOG(LogTemp, Warning, TEXT("Shoot Button Pressed"));
 }
 
 void ADkPlayerController::AimStart()
@@ -503,9 +503,8 @@ void ADkPlayerController::AimStart()
         if (AimStartDelegate.IsBound())
         {
             AimStartDelegate.Broadcast();
-            UE_LOG(LogTemp, Warning, TEXT("Aim Start Button Pressed"));
         }
-        
+        UE_LOG(LogTemp, Warning, TEXT("Aim Start Button Pressed"));
         // Add the aiming mapping context
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
         {
@@ -526,9 +525,8 @@ void ADkPlayerController::AimEnd()
         if (AimEndDelegate.IsBound())
         {
             AimEndDelegate.Broadcast();
-            UE_LOG(LogTemp, Warning, TEXT("Aim Start Button Released"));
         }
-        
+        UE_LOG(LogTemp, Warning, TEXT("Aim Start Button Released"));
         // Remove the aiming mapping context
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
         {
