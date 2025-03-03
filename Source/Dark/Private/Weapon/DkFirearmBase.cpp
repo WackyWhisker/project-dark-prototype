@@ -25,7 +25,6 @@ void ADkFirearmBase::Fire()
 	if (!CanFire()) return;
     
 	CurrentAmmo--;
-    
 	if (CurrentAmmo <= 0 && bAutoReload)
 	{
 		StartReload();
@@ -35,7 +34,7 @@ void ADkFirearmBase::Fire()
 void ADkFirearmBase::StartReload()
 {
 	if (bIsReloading || CurrentAmmo == MaxAmmo) return;
-    
+	GEngine->AddOnScreenDebugMessage(-1, ReloadTime, FColor::Red, TEXT("Reloading"));
 	bIsReloading = true;
 	GetWorld()->GetTimerManager().SetTimer(ReloadTimerHandle, this, &ADkFirearmBase::FinishReload, ReloadTime, false);
 }
