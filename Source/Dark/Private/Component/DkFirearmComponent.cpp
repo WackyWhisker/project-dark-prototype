@@ -1,6 +1,7 @@
 // Copyright @ Christian Reichel
 
 #include "Component/DkFirearmComponent.h"
+#include "Component/DkFocusComponent.h"
 #include "GameFramework/Character.h"
 #include "Player/DkPlayerControllerInterface.h"
 
@@ -12,8 +13,15 @@ UDkFirearmComponent::UDkFirearmComponent()
 void UDkFirearmComponent::BeginPlay()
 {
     Super::BeginPlay();
-    bIsAiming = false;
     bCanFire = true;
+    
+    // Get focus component reference
+    FocusComponent = GetOwner()->FindComponentByClass<UDkFocusComponent>();
+    if (FocusComponent)
+    {
+        FocusComponent->OnFocusStateChanged.AddUObject(this, &UDkFirearmComponent::HandleFocusChanged);
+        FocusComponent->OnFocusModeChanged.AddUObject(this, &UDkFirearmComponent::HandleFocusModeChanged);
+    }
     
     // Get player controller interface
     APawn* Pawn = Cast<APawn>(GetOwner());
@@ -23,10 +31,6 @@ void UDkFirearmComponent::BeginPlay()
         {
             if (IDkPlayerControllerInterface* Interface = Cast<IDkPlayerControllerInterface>(PC))
             {
-                // Subscribe to aiming delegates
-                Interface->GetAimStartDelegate()->AddUObject(this, &UDkFirearmComponent::StartAiming);
-                Interface->GetAimEndDelegate()->AddUObject(this, &UDkFirearmComponent::StopAiming);
-                
                 // Subscribe to shoot delegate
                 Interface->GetShootDelegate()->AddUObject(this, &UDkFirearmComponent::Fire);
             }
@@ -40,44 +44,55 @@ void UDkFirearmComponent::BeginPlay()
     }
 }
 
+void UDkFirearmComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+    
+    if (FocusComponent)
+    {
+        FocusComponent->OnFocusStateChanged.RemoveAll(this);
+        FocusComponent->OnFocusModeChanged.RemoveAll(this);
+    }
+}
+
 void UDkFirearmComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UDkFirearmComponent::StartAiming()
+void UDkFirearmComponent::HandleFocusChanged(bool bIsFocused)
 {
-    bIsAiming = true;
+    if (!CurrentWeapon) return;
     
-    if (CurrentWeapon && GetOwner())
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (!Character) return;
+
+    if (bIsFocused && bIsFirearmMode)
     {
-        ACharacter* Character = Cast<ACharacter>(GetOwner());
-        if (Character)
-        {
-            CurrentWeapon->AttachToHand(Character->GetMesh());
-        }
+        CurrentWeapon->AttachToHand(Character->GetMesh());
+    }
+    else
+    {
+        CurrentWeapon->AttachToHolster(Character->GetMesh());
     }
 }
 
-void UDkFirearmComponent::StopAiming()
+void UDkFirearmComponent::HandleFocusModeChanged(EDkFocusMode NewMode, EDkFocusMode OldMode)
 {
-    bIsAiming = false;
+    bIsFirearmMode = (NewMode == EDkFocusMode::Firearm);
     
-    if (CurrentWeapon && GetOwner())
+    // Update weapon position if focus is active
+    if (FocusComponent && FocusComponent->IsFocused())
     {
-        ACharacter* Character = Cast<ACharacter>(GetOwner());
-        if (Character)
-        {
-            CurrentWeapon->AttachToHolster(Character->GetMesh());
-        }
+        HandleFocusChanged(true);
     }
 }
 
 void UDkFirearmComponent::Fire()
 {
-    if (!bCanFire || !CurrentWeapon) return;
+    if (!bCanFire || !CurrentWeapon || !bIsFirearmMode) return;
     
-    if (bIsAiming && CurrentWeapon->CanFire())
+    if (FocusComponent && FocusComponent->IsFocused() && CurrentWeapon->CanFire())
     {
         CurrentWeapon->Fire();
         OnWeaponFired.Broadcast();
@@ -88,7 +103,7 @@ void UDkFirearmComponent::Fire()
 
 void UDkFirearmComponent::Reload()
 {
-    if (CurrentWeapon)
+    if (CurrentWeapon && bIsFirearmMode)
     {
         CurrentWeapon->StartReload();
     }

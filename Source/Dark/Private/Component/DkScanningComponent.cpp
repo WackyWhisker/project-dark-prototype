@@ -2,6 +2,7 @@
 
 #include "Component/DkScanningComponent.h"
 #include "Component/DkScannableComponent.h"
+#include "Component/DkFocusComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Character/DkCharacter.h"
 #include "Blueprint/UserWidget.h"
@@ -48,27 +49,26 @@ void UDkScanningComponent::BeginPlay()
 
     if (PlayerRef)
     {
-        if (!PlayerControllerRef)
-        {
-            PlayerControllerRef = Cast<ADkPlayerController>(PlayerRef->GetController());
-        }
-
+        PlayerControllerRef = Cast<ADkPlayerController>(PlayerRef->GetController());
         PlayerCameraRef = Cast<UCameraComponent>(PlayerRef->GetComponentByClass(UCameraComponent::StaticClass()));
-        // Get the camera boom (usually named CameraBoom in the character blueprint)
         CameraBoomRef = PlayerRef->FindComponentByClass<USpringArmComponent>();
     }
     
-    if (!PlayerControllerInterface)
+    if (PlayerControllerRef)
     {
-        PlayerControllerInterface = Cast<IDkPlayerControllerInterface>(UGameplayStatics::GetPlayerController(this, 0));
+        if (IDkPlayerControllerInterface* Interface = Cast<IDkPlayerControllerInterface>(PlayerControllerRef))
+        {
+            Interface->GetScanExecuteStartDelegate()->AddUObject(this, &UDkScanningComponent::HandleScanExecuteStart);
+            Interface->GetScanExecuteEndDelegate()->AddUObject(this, &UDkScanningComponent::HandleScanExecuteEnd);
+        }
     }
-
-    if(PlayerControllerInterface)
+    
+    // Get focus component reference
+    FocusComponent = GetOwner()->FindComponentByClass<UDkFocusComponent>();
+    if (FocusComponent)
     {
-        PlayerControllerInterface->GetScanModeStartDelegate()->AddUObject(this, &UDkScanningComponent::OnScanModeStart);
-        PlayerControllerInterface->GetScanModeEndDelegate()->AddUObject(this, &UDkScanningComponent::OnScanModeEnd);
-        PlayerControllerInterface->GetScanExecuteStartDelegate()->AddUObject(this, &UDkScanningComponent::OnScanExecuteStart);
-        PlayerControllerInterface->GetScanExecuteEndDelegate()->AddUObject(this, &UDkScanningComponent::OnScanExecuteEnd);
+        FocusComponent->OnFocusStateChanged.AddUObject(this, &UDkScanningComponent::HandleFocusChanged);
+        FocusComponent->OnFocusModeChanged.AddUObject(this, &UDkScanningComponent::HandleFocusModeChanged);
     }
 
     if (PlayerCameraRef)
@@ -76,7 +76,6 @@ void UDkScanningComponent::BeginPlay()
         OriginalCameraLocation = PlayerCameraRef->GetRelativeLocation();
     }
     
-    // Get game state subsystem
     if (UWorld* World = GetWorld())
     {
         GameStateSubsystem = World->GetSubsystem<UDkGameStateSubsystem>();
@@ -91,31 +90,9 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-    // Debug HUD - always show values
-    /*if (GEngine)
-    {
-        int32 Line = 0;
-        for (auto It = ScannedValues.CreateConstIterator(); It; ++It)
-        {
-            FString TypeName = UEnum::GetValueAsString(It->Key);
-            FString DebugText = FString::Printf(TEXT("%s: %d (Retain: %s)"), 
-                *TypeName, 
-                It->Value.CurrentValue,
-                It->Value.RetainOnDeath ? TEXT("Yes") : TEXT("No"));
-                
-            GEngine->AddOnScreenDebugMessage(
-                -10000 - Line,  // Using -10000 as base to avoid conflict with other debug messages
-                0.0f,          
-                FColor::Cyan,
-                DebugText
-            );
-            Line++;
-        }
-    }*/
-    
     if (!PlayerCameraRef || !PlayerControllerRef) return;
 
-    float TargetOffset = bIsInScanMode ? CameraScanOffset : 0.0f;
+    float TargetOffset = (bIsScanningMode && FocusComponent && FocusComponent->IsFocused()) ? CameraScanOffset : 0.0f;
     CurrentCameraOffset = FMath::FInterpTo(CurrentCameraOffset, TargetOffset, DeltaTime, CameraInterpolationSpeed);
     
     // Get world-space right vector
@@ -127,6 +104,17 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
     FVector NewLocation = OriginalCameraLocation + LocalOffset;
     
     PlayerCameraRef->SetRelativeLocation(NewLocation);
+
+    // Only process scanning if active and focused
+    if (!bIsScanningMode || !FocusComponent || !FocusComponent->IsFocused())
+    {
+        if (CurrentScannableTarget)
+        {
+            CurrentScannableTarget->UnhighlightAsTarget();
+            CurrentScannableTarget = nullptr;
+        }
+        return;
+    }
 
     // Handle scanning progress
     if (bIsExecutingScanning && CurrentScannableTarget)
@@ -159,6 +147,7 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
         return; // Skip target detection while scanning
     }
 
+    // Scanning raycast logic
     FVector Start = PlayerCameraRef->GetComponentLocation();
     FVector Forward = PlayerCameraRef->GetForwardVector();
     FVector End = Start + (Forward * TraceRange);
@@ -172,12 +161,10 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
     TArray<FHitResult> HitResults;
     bool bFoundScannable = false;
 
-#if ENABLE_DRAW_DEBUG
     if (bShowDebugTraces)
     {
         DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, -1.0f);
     }
-#endif
 
     if (GetWorld()->LineTraceMultiByObjectType(
         HitResults, 
@@ -213,29 +200,28 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
         CurrentScannableTarget->UnhighlightAsTarget();
         CurrentScannableTarget = nullptr;
     }
-    if (bIsInScanMode)  // Only process widget changes when in scan mode
+
+    // Update crosshair widget based on scannable target
+    if (bFoundScannable)
     {
-        if (bFoundScannable)
-        {
-            if (CrosshairWidgetTargetClass && (!CrosshairWidget || CrosshairWidget->GetClass() != CrosshairWidgetTargetClass))
-            {
-                if (CrosshairWidget)
-                {
-                    CrosshairWidget->RemoveFromParent();
-                }
-                CrosshairWidget = CreateWidget<UUserWidget>(PlayerControllerRef, CrosshairWidgetTargetClass);
-                CrosshairWidget->AddToViewport();
-            }
-        }
-        else if (CrosshairWidgetClass && (!CrosshairWidget || CrosshairWidget->GetClass() != CrosshairWidgetClass))
+        if (CrosshairWidgetTargetClass && (!CrosshairWidget || CrosshairWidget->GetClass() != CrosshairWidgetTargetClass))
         {
             if (CrosshairWidget)
             {
                 CrosshairWidget->RemoveFromParent();
             }
-            CrosshairWidget = CreateWidget<UUserWidget>(PlayerControllerRef, CrosshairWidgetClass);
+            CrosshairWidget = CreateWidget<UUserWidget>(PlayerControllerRef, CrosshairWidgetTargetClass);
             CrosshairWidget->AddToViewport();
         }
+    }
+    else if (CrosshairWidgetClass && (!CrosshairWidget || CrosshairWidget->GetClass() != CrosshairWidgetClass))
+    {
+        if (CrosshairWidget)
+        {
+            CrosshairWidget->RemoveFromParent();
+        }
+        CrosshairWidget = CreateWidget<UUserWidget>(PlayerControllerRef, CrosshairWidgetClass);
+        CrosshairWidget->AddToViewport();
     }
 }
 
@@ -248,18 +234,25 @@ void UDkScanningComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
         GameStateSubsystem->OnGameStateChanged.RemoveDynamic(this, &UDkScanningComponent::HandleGameStateChanged);
     }
   
-    if (PlayerControllerInterface)
+    if (PlayerControllerRef)
     {
-        PlayerControllerInterface->GetScanModeStartDelegate()->RemoveAll(this);
-        PlayerControllerInterface->GetScanModeEndDelegate()->RemoveAll(this);
-        PlayerControllerInterface->GetScanExecuteStartDelegate()->RemoveAll(this);
-        PlayerControllerInterface->GetScanExecuteEndDelegate()->RemoveAll(this);
+        if (IDkPlayerControllerInterface* Interface = Cast<IDkPlayerControllerInterface>(PlayerControllerRef))
+        {
+            Interface->GetScanExecuteStartDelegate()->RemoveAll(this);
+            Interface->GetScanExecuteEndDelegate()->RemoveAll(this);
+        }
+    }
+
+    if (FocusComponent)
+    {
+        FocusComponent->OnFocusStateChanged.RemoveAll(this);
+        FocusComponent->OnFocusModeChanged.RemoveAll(this);
     }
 }
 
 void UDkScanningComponent::HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState)
 {
-    if (NewState == EDkGameState::Dying || NewState == EDkGameState::Retreat) //TODO: I think I need to not do this on retreat.
+    if (NewState == EDkGameState::Dying || NewState == EDkGameState::Retreat)
     {
         ResetValuesOnDeath();
     }
@@ -273,20 +266,16 @@ void UDkScanningComponent::ResetValuesOnDeath()
         {
             float OldValue = Pair.Value.CurrentValue;
             Pair.Value.CurrentValue = 0;
-            
-            // Broadcast the value change to notify listeners
             OnScanValueChanged.Broadcast(Pair.Key, OldValue, Pair.Value.CurrentValue, Pair.Value.MaxValue);
         }
     }
 }
 
-void UDkScanningComponent::OnScanModeStart()
+void UDkScanningComponent::HandleFocusChanged(bool bIsFocused)
 {
-    if (!bIsInScanMode)
+    // Handle scanning UI
+    if (bIsFocused && bIsScanningMode)
     {
-        bIsInScanMode = true;
-
-        // Add crosshair widget
         if (CrosshairWidgetClass && !CrosshairWidget && PlayerControllerRef)
         {
             CrosshairWidget = CreateWidget<UUserWidget>(PlayerControllerRef, CrosshairWidgetClass);
@@ -295,7 +284,8 @@ void UDkScanningComponent::OnScanModeStart()
                 CrosshairWidget->AddToViewport();
             }
         }
-
+        
+        // Notify scannables in range
         TArray<FOverlapResult> OverlapResults;
         FCollisionQueryParams QueryParams;
         QueryParams.bTraceComplex = false;
@@ -324,15 +314,8 @@ void UDkScanningComponent::OnScanModeStart()
             }
         }
     }
-}
-
-void UDkScanningComponent::OnScanModeEnd()
-{
-    if (bIsInScanMode)
+    else
     {
-        bIsInScanMode = false;
-        
-        // Remove crosshair widget
         if (CrosshairWidget)
         {
             CrosshairWidget->RemoveFromParent();
@@ -341,9 +324,10 @@ void UDkScanningComponent::OnScanModeEnd()
 
         if (bIsExecutingScanning)
         {
-            OnScanExecuteEnd();
+            HandleScanExecuteEnd();
         }
 
+        // Notify scannables
         TArray<FOverlapResult> OverlapResults;
         FCollisionQueryParams QueryParams;
         QueryParams.bTraceComplex = false;
@@ -380,9 +364,31 @@ void UDkScanningComponent::OnScanModeEnd()
     }
 }
 
-void UDkScanningComponent::OnScanExecuteStart()
+void UDkScanningComponent::HandleFocusModeChanged(EDkFocusMode NewMode, EDkFocusMode OldMode)
 {
-    if (bIsInScanMode && CurrentScannableTarget && !bIsExecutingScanning)
+    bool bWasActive = bIsScanningMode;
+    bIsScanningMode = (NewMode == EDkFocusMode::Scanning);
+    
+    // If focus is active, handle the mode change
+    if (FocusComponent && FocusComponent->IsFocused())
+    {
+        if (bIsScanningMode)
+        {
+            HandleFocusChanged(true);
+        }
+        else if (bWasActive)
+        {
+            HandleFocusChanged(false);
+        }
+    }
+}
+
+void UDkScanningComponent::HandleScanExecuteStart()
+{
+    if (!bIsScanningMode || !FocusComponent || !FocusComponent->IsFocused())
+        return;
+        
+    if (CurrentScannableTarget && !bIsExecutingScanning)
     {
         // Get current value for this type
         EDkScanType ScanType = CurrentScannableTarget->GetScanType();
@@ -397,7 +403,7 @@ void UDkScanningComponent::OnScanExecuteStart()
     }
 }
 
-void UDkScanningComponent::OnScanExecuteEnd()
+void UDkScanningComponent::HandleScanExecuteEnd()
 {
     if (bIsExecutingScanning)
     {

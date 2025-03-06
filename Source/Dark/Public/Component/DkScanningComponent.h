@@ -7,11 +7,13 @@
 
 enum class EDkGameState : uint8;
 enum class EDkScanType : uint8;
+enum class EDkFocusMode : uint8;
 class ADkPlayerController;
 class ADkCharacter;
 class UCameraComponent;
 class UDkScannableComponent;
 class IDkPlayerControllerInterface;
+class UDkFocusComponent;
 
 USTRUCT(BlueprintType)
 struct FScanTypeValue
@@ -39,7 +41,6 @@ public:
     UDkScanningComponent();
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-public:
     UPROPERTY(EditDefaultsOnly, Category = "Debug")
     bool bShowDebugTraces = true;
 
@@ -61,7 +62,6 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UUserWidget> CrosshairWidgetTargetClass;
 
-    //Delegate for broadcast
     UPROPERTY(BlueprintAssignable, Category = "Scanning")
     FOnScanValueChanged OnScanValueChanged;
 
@@ -76,26 +76,22 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
-
     UPROPERTY()
     class UDkGameStateSubsystem* GameStateSubsystem;
+
+    UPROPERTY()
+    UDkFocusComponent* FocusComponent;
 
     UFUNCTION()
     void HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState);
     
     void ResetValuesOnDeath();
+   
+    void HandleScanExecuteStart();
+    void HandleScanExecuteEnd();
     
-    UFUNCTION()
-    void OnScanModeStart();
-   
-    UFUNCTION()
-    void OnScanModeEnd();
-   
-    UFUNCTION()
-    void OnScanExecuteStart();
-   
-    UFUNCTION()
-    void OnScanExecuteEnd();
+    void HandleFocusChanged(bool bIsFocused);
+    void HandleFocusModeChanged(EDkFocusMode NewMode, EDkFocusMode OldMode);
     
     UPROPERTY()
     ADkCharacter* PlayerRef = nullptr;
@@ -113,21 +109,18 @@ private:
     UDkScannableComponent* CurrentScannableTarget = nullptr;
 
     UPROPERTY()
-    bool bIsInScanMode = false;
+    bool bIsExecutingScanning = false;
 
     UPROPERTY()
-    bool bIsExecutingScanning = false;
+    bool bIsScanningMode = false;
 
     // Stores the current values for each scan type
     UPROPERTY()
     TMap<EDkScanType, FScanTypeValue> ScannedValues;
-
-    IDkPlayerControllerInterface* PlayerControllerInterface = nullptr;
 
     float CurrentCameraOffset = 0.0f;
     FVector OriginalCameraLocation;
 
     UPROPERTY()
     UUserWidget* CrosshairWidget = nullptr;
-
 };

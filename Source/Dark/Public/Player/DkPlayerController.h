@@ -56,31 +56,25 @@ public:
    UFUNCTION(Exec)
    void ToggleTargetMode();
    
-   // Scanning system
-   void ScanModeStart();
-   void ScanModeEnd();
-   void ScanModeToggle();
+   // Focus system
+   void FocusStart();
+   void FocusEnd();
+   void FocusToggle();
+   void SwitchFocusMode();
+   
+   UFUNCTION(BlueprintCallable, Category = "Focus")
+   void SetFocusToggleMode(bool bNewToggleMode);
+   
+   UFUNCTION(Exec)
+   void ToggleFocusMode();
+   
+   // Scan execute
    void ScanExecuteStart();
    void ScanExecuteEnd();
    
-   UFUNCTION(BlueprintCallable, Category = "Scanning")
-   void SetScanModeToggle(bool bNewToggleMode);
-   
-   UFUNCTION(Exec)
-   void ToggleScanMode();
-   
-   // Aiming system
+   // Shoot
    void Shoot();
-   void AimStart();
-   void AimEnd();
-   void AimToggle();
-   
-   UFUNCTION(BlueprintCallable, Category = "Aiming")
-   void SetAimingMode(bool bNewToggleMode);
-   
-   UFUNCTION(Exec)
-   void ToggleAimMode();
-   
+      
    // UI and mapping context
    void SetMappingContext(const FName& ContextName, bool bEnable);
    void ToggleLetterboxUI(bool bShowLetterboxUI);
@@ -109,13 +103,12 @@ public:
    virtual FTogglePauseMenuSignature* GetTogglePauseMenuDelegate() override;
    virtual FToggleUpgradeMenuSignature* GetToggleUpgradeMenuDelegate() override;
    virtual FInteractSignature* GetInteractDelegate() override;
-   virtual FScanModeStartSignature* GetScanModeStartDelegate() override;
-   virtual FScanModeEndSignature* GetScanModeEndDelegate() override;
    virtual FScanExecuteStartSignature* GetScanExecuteStartDelegate() override;
    virtual FScanExecuteEndSignature* GetScanExecuteEndDelegate() override;
    virtual FShootSignature* GetShootDelegate() override;
-   virtual FAimStartSignature* GetAimStartDelegate() override;
-   virtual FAimEndSignature* GetAimEndDelegate() override;
+   virtual FFocusStartSignature* GetFocusStartDelegate() override;
+   virtual FFocusEndSignature* GetFocusEndDelegate() override;
+   virtual FSwitchFocusModeSignature* GetSwitchFocusModeDelegate() override;
 
 protected:
    // Base controller methods
@@ -128,8 +121,7 @@ protected:
    
    // Setup methods
    void SetupTargetingBindings();
-   void SetupScanBindings();
-   void SetupAimingBindings();
+   void SetupFocusBindings();
 
 private:
    // Character reference
@@ -147,10 +139,13 @@ private:
    UInputMappingContext* LedgeHangMappingContext;
 
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   UInputMappingContext* ScanMappingContext;
-   
+   UInputMappingContext* FocusMappingContext;
+
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   UInputMappingContext* AimingMappingContext;
+   UInputMappingContext* ScanningMappingContext;
+
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+   UInputMappingContext* ShootingMappingContext;
    
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    TMap<FName, UInputMappingContext*> MappingContexts;
@@ -205,37 +200,32 @@ private:
    uint32 TargetStartHandle;
    uint32 TargetEndHandle;
    
-   // Scanning related properties
+   // Focus system related properties
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   UInputAction* ScanModeAction;
+   UInputAction* FocusAction;
 
-   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) 
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+   UInputAction* SwitchFocusModeAction;
+
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputAction* ScanExecuteAction;
    
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   bool bUseScanModeToggle = true;
-
-   UPROPERTY()
-   bool bIsScanning = false;
-   
-   uint32 ScanStartHandle;
-   uint32 ScanEndHandle;
-   
-   // Aiming related properties
-   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputAction* ShootAction;
 
+   UPROPERTY()
+   bool bIsFocusModeShooting = true; // Default to shooting mode
+ 
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   UInputAction* AimAction;
-   
-   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   bool bUseAimModeToggle = true;
+   bool bUseFocusToggle = true;
 
    UPROPERTY()
-   bool bIsAiming = false;
+   bool bIsFocused = false;
+
+   void ApplyCurrentFocusMode();
    
-   uint32 AimStartHandle;
-   uint32 AimEndHandle;
+   uint32 FocusStartHandle;
+   uint32 FocusEndHandle;
 
    // Input component cache
    UPROPERTY()
@@ -254,13 +244,12 @@ private:
    FTogglePauseMenuSignature TogglePauseMenuDelegate;
    FToggleUpgradeMenuSignature ToggleUpgradeMenuDelegate;
    FInteractSignature InteractDelegate;
-   FScanModeStartSignature ScanModeStartDelegate;
-   FScanModeEndSignature ScanModeEndDelegate;
    FScanExecuteStartSignature ScanExecuteStartDelegate;
    FScanExecuteEndSignature ScanExecuteEndDelegate;
    FShootSignature ShootDelegate;
-   FAimStartSignature AimStartDelegate;
-   FAimEndSignature AimEndDelegate;
+   FFocusStartSignature FocusStartDelegate;
+   FFocusEndSignature FocusEndDelegate;
+   FSwitchFocusModeSignature SwitchFocusModeDelegate;
 
    // UI related properties
    UPROPERTY()

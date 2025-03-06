@@ -6,7 +6,6 @@
 #include "MovieSceneSequencePlaybackSettings.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/SpringArmComponent.h"
-
 #include "Character/DkCharacter.h"
 
 DEFINE_LOG_CATEGORY(LogDkPlayerController);
@@ -18,6 +17,7 @@ void ADkPlayerController::BeginPlay()
     FInputModeGameOnly InputMode;
     SetInputMode(InputMode);
     bShowMouseCursor = false;
+    bIsFocusModeShooting = true;
     
     if (!PlayerRef)
     {
@@ -69,14 +69,18 @@ void ADkPlayerController::SetupInputComponent()
 
         //Interact
         EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ADkPlayerController::Interact);
+
+        EnhancedInputComponent->BindAction(SwitchFocusModeAction, ETriggerEvent::Started, this, &ADkPlayerController::SwitchFocusMode);
+        EnhancedInputComponent->BindAction(ShootAction, ETriggerEvent::Triggered, this, &ADkPlayerController::Shoot);
+        EnhancedInputComponent->BindAction(ScanExecuteAction, ETriggerEvent::Started, this, &ADkPlayerController::ScanExecuteStart);
+        EnhancedInputComponent->BindAction(ScanExecuteAction, ETriggerEvent::Completed, this, &ADkPlayerController::ScanExecuteEnd);
         
         // Store enhanced input component for rebinding
         CachedEnhancedInputComponent = EnhancedInputComponent;
         
-        // Setup initial targeting and scanning bindings
+        // Setup initial targeting and focus bindings
         SetupTargetingBindings();
-        SetupScanBindings();
-        SetupAimingBindings();
+        SetupFocusBindings();
 
         //Drop and Lift
         EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Started, this, &ADkPlayerController::Drop);
@@ -120,85 +124,83 @@ void ADkPlayerController::Look(const FInputActionValue& Value)
 {
     if (!PlayerRef) {return;}
     FVector2D LookAxisVector = Value.Get<FVector2D>();
-    //UE_LOG(LogDkPlayerController, Warning, TEXT("LookAxisVector: %s"), *LookAxisVector.ToString());
     
     PlayerRef->AddControllerYawInput(LookAxisVector.X * TargetingYawInputScale);
     PlayerRef->AddControllerPitchInput(LookAxisVector.Y);
-     
 }
 
 // Basic player actions
 void ADkPlayerController::Jump()
 {
+    UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerController: Jump Input"));
     if (JumpDelegate.IsBound())
     {
         JumpDelegate.Broadcast();
     }
-    //UE_LOG(LogTemp, Warning, TEXT("Jump Button Pressed"));
 }
 
 void ADkPlayerController::Dodge()
 {
+    UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerController: Dodge Input"));
     if (DodgeDelegate.IsBound())
     {
         DodgeDelegate.Broadcast();
     }
-   // UE_LOG(LogTemp, Warning, TEXT("Dodge Button Pressed"));
 }
 
 void ADkPlayerController::Attack()
 {
+    UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerController: Attack Input"));
     if (AttackDelegate.IsBound())
     {
         AttackDelegate.Broadcast();
     }
-    //UE_LOG(LogTemp, Warning, TEXT("Attack Button Pressed"));
 }
 
 void ADkPlayerController::Interact()
 {
+    UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerController: Attack Input"));
     if (InteractDelegate.IsBound())
     {
         InteractDelegate.Broadcast();
     }
-    //UE_LOG(LogTemp, Warning, TEXT("Interact Button Pressed"));
 }
 
 void ADkPlayerController::Drop()
 {
+    UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerController: Drop Input"));
     if (DropDelegate.IsBound())
     {
         DropDelegate.Broadcast();
     }
-    //UE_LOG(LogTemp, Warning, TEXT("Drop Button Pressed"));
 }
 
 void ADkPlayerController::Lift()
 {
+    UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerController: Lift Input"));
     if (LiftDelegate.IsBound())
     {
         LiftDelegate.Broadcast();
     }
-    //UE_LOG(LogTemp, Warning, TEXT("Lift Button Pressed"));
 }
 
 // Menu controls
 void ADkPlayerController::TogglePauseMenu()
 {
+    UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerController: Pause Menu Input"));
     if (TogglePauseMenuDelegate.IsBound())
     {
         TogglePauseMenuDelegate.Broadcast();
     }
-    //UE_LOG(LogTemp, Warning, TEXT("Pause Menu Button Pressed"));
 }
 
 void ADkPlayerController::ToggleUpgradeMenu()
 {
+    UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerController: Upgrade Menu Input"));
     if (ToggleUpgradeMenuDelegate.IsBound())
     {
         ToggleUpgradeMenuDelegate.Broadcast();
     }
-    UE_LOG(LogTemp, Warning, TEXT("Upgrade Menu Button Pressed"));
 }
 
 // UI and mapping context
@@ -243,7 +245,7 @@ void ADkPlayerController::SetMappingContext(const FName& ContextName, bool bEnab
 // Targeting system
 void ADkPlayerController::TargetStart()
 {
-    if (!bIsTargeting || !bUseTargetModeToggle)  // Allow start if not targeting or in hold mode
+    if (!bIsTargeting || !bUseTargetModeToggle)
     {
         if (TargetStartDelegate.IsBound())
         {
@@ -262,7 +264,7 @@ void ADkPlayerController::TargetStart()
 
 void ADkPlayerController::TargetEnd()
 {
-    if (bIsTargeting || !bUseTargetModeToggle)  // Allow end if targeting or in hold mode
+    if (bIsTargeting || !bUseTargetModeToggle)
     {
         if (TargetEndDelegate.IsBound())
         {
@@ -304,14 +306,12 @@ void ADkPlayerController::SetTargetingMode(bool bNewToggleMode)
     
     bUseTargetModeToggle = bNewToggleMode;
     
-    // If switching to hold mode while targeting is active, end targeting
     if (!bUseTargetModeToggle && bIsTargeting)
     {
         TargetEnd();
         bIsTargeting = false;
     }
     
-    // Rebind the inputs for the new mode
     SetupTargetingBindings();
 }
 
@@ -335,10 +335,8 @@ void ADkPlayerController::ResetTargetingState()
 {
     bIsTargeting = false;
     
-    // If using toggle mode, ensure we're in a clean state
     if (bUseTargetModeToggle)
     {
-        // Re-setup bindings to ensure clean state
         SetupTargetingBindings();
     }
 }
@@ -367,67 +365,112 @@ void ADkPlayerController::SetupTargetingBindings()
     CachedEnhancedInputComponent->BindAction(TargetCycleRightAction, ETriggerEvent::Started, this, &ADkPlayerController::TargetCycleRight);
 }
 
-// Scanning system
-void ADkPlayerController::ScanModeStart()
+// Focus system
+void ADkPlayerController::FocusStart()
 {
-    if (!bIsScanning || !bUseScanModeToggle)
+    if (!bIsFocused || !bUseFocusToggle)
     {
-        if (ScanModeStartDelegate.IsBound())
+        bIsFocused = true;
+        
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
         {
-            ScanModeStartDelegate.Broadcast();
-            if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-            {
-                Subsystem->AddMappingContext(ScanMappingContext, 0);
-            }
+            Subsystem->AddMappingContext(FocusMappingContext, 1);
         }
-        if (!bUseScanModeToggle)
+        
+        ApplyCurrentFocusMode();
+        
+        if (FocusStartDelegate.IsBound())
         {
-            bIsScanning = true;
+            FocusStartDelegate.Broadcast();
         }
     }
 }
 
-void ADkPlayerController::ScanModeEnd()
+void ADkPlayerController::FocusEnd()
 {
-    if (bIsScanning || !bUseScanModeToggle)
+    if (bIsFocused || !bUseFocusToggle)
     {
-        // Execute end scan if it was active
+        bIsFocused = false;
+        
+        // End any active scanning
         ScanExecuteEnd();
         
-        if (ScanModeEndDelegate.IsBound())
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
         {
-            ScanModeEndDelegate.Broadcast();
-            if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-            {
-                Subsystem->RemoveMappingContext(ScanMappingContext);
-            }
+            Subsystem->RemoveMappingContext(FocusMappingContext);
+            Subsystem->RemoveMappingContext(ScanningMappingContext);
+            Subsystem->RemoveMappingContext(ShootingMappingContext);
         }
-        if (!bUseScanModeToggle)
+        
+        if (FocusEndDelegate.IsBound())
         {
-            bIsScanning = false;
+            FocusEndDelegate.Broadcast();
         }
     }
 }
 
-void ADkPlayerController::ScanModeToggle()
+void ADkPlayerController::FocusToggle()
 {
-    if (!bIsScanning)
+    if (!bIsFocused)
     {
-        ScanModeStart();
+        FocusStart();
     }
     else
     {
-        ScanExecuteEnd();
-        ScanModeEnd();
+        FocusEnd();
     }
-    bIsScanning = !bIsScanning;
+}
+
+void ADkPlayerController::SetFocusToggleMode(bool bNewToggleMode)
+{
+    if (bUseFocusToggle == bNewToggleMode) return;
+    
+    bUseFocusToggle = bNewToggleMode;
+    
+    if (!bUseFocusToggle && bIsFocused)
+    {
+        FocusEnd();
+    }
+    
+    SetupFocusBindings();
+}
+
+void ADkPlayerController::ToggleFocusMode()
+{
+    bUseFocusToggle = !bUseFocusToggle;
+    SetupFocusBindings();
+}
+
+void ADkPlayerController::SwitchFocusMode()
+{
+    // Toggle between shooting and scanning modes
+    bIsFocusModeShooting = !bIsFocusModeShooting;
+    
+    // Apply the new focus mode if we're currently focused
+    if (bIsFocused)
+    {
+        ApplyCurrentFocusMode();
+    }
+    
+    if (SwitchFocusModeDelegate.IsBound())
+    {
+        SwitchFocusModeDelegate.Broadcast();
+    }
+}
+
+void ADkPlayerController::Shoot()
+{
+    // Only broadcast if we're focused and in shooting mode
+    if (bIsFocused && bIsFocusModeShooting && ShootDelegate.IsBound())
+    {
+        ShootDelegate.Broadcast();
+    }
 }
 
 void ADkPlayerController::ScanExecuteStart()
 {
-    if (!bIsScanning) return;
-    
-    if (ScanExecuteStartDelegate.IsBound())
+    // Only broadcast if we're focused and in scanning mode
+    if (bIsFocused && !bIsFocusModeShooting && ScanExecuteStartDelegate.IsBound())
     {
         ScanExecuteStartDelegate.Broadcast();
     }
@@ -435,168 +478,32 @@ void ADkPlayerController::ScanExecuteStart()
 
 void ADkPlayerController::ScanExecuteEnd()
 {
-    if (!bIsScanning) return;
-    
-    if (ScanExecuteEndDelegate.IsBound())
+    // Only broadcast if we're focused and in scanning mode
+    // Note: We might want to always broadcast end regardless of mode
+    if ((!bIsFocused || !bIsFocusModeShooting) && ScanExecuteEndDelegate.IsBound())
     {
         ScanExecuteEndDelegate.Broadcast();
     }
 }
 
-void ADkPlayerController::ToggleScanMode()
-{
-    bUseScanModeToggle = !bUseScanModeToggle;
-    SetupScanBindings();
-}
-
-void ADkPlayerController::SetScanModeToggle(bool bNewToggleMode)
-{
-    if (bUseScanModeToggle == bNewToggleMode) return;
-    
-    bUseScanModeToggle = bNewToggleMode;
-    
-    if (!bUseScanModeToggle && bIsScanning)
-    {
-        ScanModeEnd();
-        bIsScanning = false;
-    }
-}
-
-void ADkPlayerController::SetupScanBindings()
+void ADkPlayerController::SetupFocusBindings()
 {
     if (!CachedEnhancedInputComponent) return;
     
     // Clear existing bindings if any
-    CachedEnhancedInputComponent->RemoveBindingByHandle(ScanStartHandle);
-    CachedEnhancedInputComponent->RemoveBindingByHandle(ScanEndHandle);
+    CachedEnhancedInputComponent->RemoveBindingByHandle(FocusStartHandle);
+    CachedEnhancedInputComponent->RemoveBindingByHandle(FocusEndHandle);
     
-    // Set up main scanning binding based on mode
-    if (bUseScanModeToggle)
+    // Set up main focus binding based on mode
+    if (bUseFocusToggle)
     {
-        ScanStartHandle = CachedEnhancedInputComponent->BindAction(ScanModeAction, ETriggerEvent::Started, this, &ADkPlayerController::ScanModeToggle).GetHandle();
+        FocusStartHandle = CachedEnhancedInputComponent->BindAction(FocusAction, ETriggerEvent::Started, this, &ADkPlayerController::FocusToggle).GetHandle();
     }
     else
     {
-        ScanStartHandle = CachedEnhancedInputComponent->BindAction(ScanModeAction, ETriggerEvent::Started, this, &ADkPlayerController::ScanModeStart).GetHandle();
-        ScanEndHandle = CachedEnhancedInputComponent->BindAction(ScanModeAction, ETriggerEvent::Completed, this, &ADkPlayerController::ScanModeEnd).GetHandle();
+        FocusStartHandle = CachedEnhancedInputComponent->BindAction(FocusAction, ETriggerEvent::Started, this, &ADkPlayerController::FocusStart).GetHandle();
+        FocusEndHandle = CachedEnhancedInputComponent->BindAction(FocusAction, ETriggerEvent::Completed, this, &ADkPlayerController::FocusEnd).GetHandle();
     }
-
-    // Always bind execute scan
-    CachedEnhancedInputComponent->BindAction(ScanExecuteAction, ETriggerEvent::Started, this, &ADkPlayerController::ScanExecuteStart);
-    CachedEnhancedInputComponent->BindAction(ScanExecuteAction, ETriggerEvent::Completed, this, &ADkPlayerController::ScanExecuteEnd);
-}
-
-// Aiming system
-void ADkPlayerController::Shoot()
-{
-    if (ShootDelegate.IsBound())
-    {
-        ShootDelegate.Broadcast();
-    }
-    UE_LOG(LogTemp, Warning, TEXT("Shoot Button Pressed"));
-}
-
-void ADkPlayerController::AimStart()
-{
-    if (!bIsAiming || !bUseAimModeToggle)  // Allow start if not aiming or in hold mode
-    {
-        if (AimStartDelegate.IsBound())
-        {
-            AimStartDelegate.Broadcast();
-        }
-        UE_LOG(LogTemp, Warning, TEXT("Aim Start Button Pressed"));
-        // Add the aiming mapping context
-        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-        {
-            Subsystem->AddMappingContext(AimingMappingContext, 0);
-        }
-        
-        if (!bUseAimModeToggle)
-        {
-            bIsAiming = true;
-        }
-    }
-}
-
-void ADkPlayerController::AimEnd()
-{
-    if (bIsAiming || !bUseAimModeToggle)  // Allow end if aiming or in hold mode
-    {
-        if (AimEndDelegate.IsBound())
-        {
-            AimEndDelegate.Broadcast();
-        }
-        UE_LOG(LogTemp, Warning, TEXT("Aim Start Button Released"));
-        // Remove the aiming mapping context
-        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-        {
-            Subsystem->RemoveMappingContext(AimingMappingContext);
-        }
-        
-        if (!bUseAimModeToggle)
-        {
-            bIsAiming = false;
-        }
-    }
-}
-
-void ADkPlayerController::AimToggle()
-{
-    if (!bIsAiming)
-    {
-        AimStart();
-    }
-    else
-    {
-        AimEnd();
-    }
-    bIsAiming = !bIsAiming;
-}
-
-void ADkPlayerController::SetAimingMode(bool bNewToggleMode)
-{
-    if (bUseAimModeToggle == bNewToggleMode) return;
-    
-    bUseAimModeToggle = bNewToggleMode;
-    
-    // If switching to hold mode while aiming is active, end aiming
-    if (!bUseAimModeToggle && bIsAiming)
-    {
-        AimEnd();
-        bIsAiming = false;
-    }
-    
-    // Rebind the inputs for the new mode
-    SetupAimingBindings();
-}
-
-void ADkPlayerController::ToggleAimMode()
-{
-    bUseAimModeToggle = !bUseAimModeToggle;
-    SetupAimingBindings();
-}
-
-void ADkPlayerController::SetupAimingBindings()
-{
-    if (!CachedEnhancedInputComponent) return;
-    
-    // Clear existing aiming bindings if any
-    CachedEnhancedInputComponent->RemoveBindingByHandle(AimStartHandle);
-    CachedEnhancedInputComponent->RemoveBindingByHandle(AimEndHandle);
-    
-    // Set up main aiming binding based on mode
-    if (bUseAimModeToggle)
-    {
-        AimStartHandle = CachedEnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &ADkPlayerController::AimToggle).GetHandle();
-    }
-    else
-    {
-        AimStartHandle = CachedEnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &ADkPlayerController::AimStart).GetHandle();
-        AimEndHandle = CachedEnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &ADkPlayerController::AimEnd).GetHandle();
-    }
-
-    // Always bind shooting action
-    CachedEnhancedInputComponent->BindAction(ShootAction, ETriggerEvent::Triggered, this, &ADkPlayerController::Shoot);
 }
 
 // Interface method implementations
@@ -660,16 +567,6 @@ FToggleUpgradeMenuSignature* ADkPlayerController::GetToggleUpgradeMenuDelegate()
     return &ToggleUpgradeMenuDelegate;
 }
 
-FScanModeStartSignature* ADkPlayerController::GetScanModeStartDelegate()
-{
-    return &ScanModeStartDelegate;
-}
-
-FScanModeEndSignature* ADkPlayerController::GetScanModeEndDelegate()
-{
-    return &ScanModeEndDelegate;
-}
-
 FScanExecuteStartSignature* ADkPlayerController::GetScanExecuteStartDelegate()
 {
     return &ScanExecuteStartDelegate;
@@ -685,14 +582,19 @@ FShootSignature* ADkPlayerController::GetShootDelegate()
     return &ShootDelegate;
 }
 
-FAimStartSignature* ADkPlayerController::GetAimStartDelegate()
+FFocusStartSignature* ADkPlayerController::GetFocusStartDelegate()
 {
-    return &AimStartDelegate;
+    return &FocusStartDelegate;
 }
 
-FAimEndSignature* ADkPlayerController::GetAimEndDelegate()
+FFocusEndSignature* ADkPlayerController::GetFocusEndDelegate()
 {
-    return &AimEndDelegate;
+    return &FocusEndDelegate;
+}
+
+FSwitchFocusModeSignature* ADkPlayerController::GetSwitchFocusModeDelegate()
+{
+    return &SwitchFocusModeDelegate;
 }
 
 // Game state handling and sequences
@@ -702,11 +604,10 @@ void ADkPlayerController::HandleGameStateChanged(EDkGameState NewState, EDkGameS
     {
     case EDkGameState::Dying:
         // Disable input
-            DisableInput(this);
+        DisableInput(this);
         bWasInputDisabledByDeath = true;
         PlayDeathSequence();
         break;
-
 
     case EDkGameState::Respawning:
         PlayRespawnSequence();
@@ -714,11 +615,11 @@ void ADkPlayerController::HandleGameStateChanged(EDkGameState NewState, EDkGameS
             
     case EDkGameState::Playing:
         // Only re-enable if we were the ones who disabled it
-            if (bWasInputDisabledByDeath)
-            {
-                EnableInput(this);
-                bWasInputDisabledByDeath = false;
-            }
+        if (bWasInputDisabledByDeath)
+        {
+            EnableInput(this);
+            bWasInputDisabledByDeath = false;
+        }
         break;
     }
 }
@@ -831,4 +732,30 @@ void ADkPlayerController::OnRespawnSequenceFinished()
    {
        GameStateSubsystem->RequestStateChange(EDkGameState::Playing);
    }
+}
+
+
+void ADkPlayerController::ApplyCurrentFocusMode()
+{
+    if (!bIsFocused)
+    {
+        return;
+    }
+    
+    if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+    {
+        // Remove both contexts first
+        Subsystem->RemoveMappingContext(ScanningMappingContext);
+        Subsystem->RemoveMappingContext(ShootingMappingContext);
+        
+        // Add appropriate context
+        if (bIsFocusModeShooting)
+        {
+            Subsystem->AddMappingContext(ShootingMappingContext, 2);
+        }
+        else
+        {
+            Subsystem->AddMappingContext(ScanningMappingContext, 2);
+        }
+    }
 }

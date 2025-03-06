@@ -7,6 +7,9 @@
 #include "Weapon/DkFirearmBase.h"
 #include "DkFirearmComponent.generated.h"
 
+class UDkFocusComponent;
+enum class EDkFocusMode : uint8;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponFired);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -19,10 +22,9 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	// Firearm functions
-	void StartAiming();
-	void StopAiming();
+	// Core functions
 	void Fire();
 	void Reload();
 
@@ -37,8 +39,6 @@ public:
 	ADkFirearmBase* GetCurrentWeapon() const { return CurrentWeapon; }
 
 protected:
-	bool bIsAiming;
-    
 	UPROPERTY(EditDefaultsOnly, Category = "Firearms")
 	float FireRate = 0.25f;
     
@@ -47,10 +47,19 @@ protected:
 
 	void EndFireCooldown();
     
+	// Focus system handling
+	void HandleFocusChanged(bool bIsFocused);
+	void HandleFocusModeChanged(EDkFocusMode NewMode, EDkFocusMode OldMode);
+    
 private:
 	UPROPERTY()
 	ADkFirearmBase* CurrentWeapon;
     
 	UPROPERTY(EditDefaultsOnly, Category = "Firearms")
 	TSubclassOf<ADkFirearmBase> DefaultWeapon;
+
+	UPROPERTY()
+	UDkFocusComponent* FocusComponent;
+
+	bool bIsFirearmMode = false;
 };
