@@ -3,11 +3,7 @@
 #include "Component/DkScanningComponent.h"
 #include "Component/DkScannableComponent.h"
 #include "Component/DkFocusComponent.h"
-#include "Camera/CameraComponent.h"
 #include "Character/DkCharacter.h"
-#include "Blueprint/UserWidget.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "Player/DkPlayerController.h"
 #include "Player/DkPlayerControllerInterface.h"
 
@@ -50,8 +46,6 @@ void UDkScanningComponent::BeginPlay()
     if (PlayerRef)
     {
         PlayerControllerRef = Cast<ADkPlayerController>(PlayerRef->GetController());
-        PlayerCameraRef = Cast<UCameraComponent>(PlayerRef->GetComponentByClass(UCameraComponent::StaticClass()));
-        CameraBoomRef = PlayerRef->FindComponentByClass<USpringArmComponent>();
     }
     
     if (PlayerControllerRef)
@@ -70,11 +64,6 @@ void UDkScanningComponent::BeginPlay()
         FocusComponent->OnFocusStateChanged.AddUObject(this, &UDkScanningComponent::HandleFocusChanged);
         FocusComponent->OnFocusModeChanged.AddUObject(this, &UDkScanningComponent::HandleFocusModeChanged);
     }
-
-    if (PlayerCameraRef)
-    {
-        OriginalCameraLocation = PlayerCameraRef->GetRelativeLocation();
-    }
     
     if (UWorld* World = GetWorld())
     {
@@ -89,21 +78,6 @@ void UDkScanningComponent::BeginPlay()
 void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-    if (!PlayerCameraRef || !PlayerControllerRef) return;
-
-    float TargetOffset = (bIsScanningMode && FocusComponent && FocusComponent->IsFocused()) ? CameraScanOffset : 0.0f;
-    CurrentCameraOffset = FMath::FInterpTo(CurrentCameraOffset, TargetOffset, DeltaTime, CameraInterpolationSpeed);
-    
-    // Get world-space right vector
-    FRotator ControlRotation = PlayerControllerRef->GetControlRotation();
-    FVector WorldRightOffset = FRotationMatrix(ControlRotation).GetScaledAxis(EAxis::Y) * CurrentCameraOffset;
-    
-    // Convert to local space
-    FVector LocalOffset = PlayerCameraRef->GetComponentTransform().InverseTransformVector(WorldRightOffset);
-    FVector NewLocation = OriginalCameraLocation + LocalOffset;
-    
-    PlayerCameraRef->SetRelativeLocation(NewLocation);
 
     // Only process scanning if active and focused
     if (!bIsScanningMode || !FocusComponent || !FocusComponent->IsFocused())
@@ -148,8 +122,8 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
     }
 
     // Scanning raycast logic
-    FVector Start = PlayerCameraRef->GetComponentLocation();
-    FVector Forward = PlayerCameraRef->GetForwardVector();
+    FVector Start = PlayerRef->GetActorLocation();
+    FVector Forward = PlayerRef->GetActorForwardVector();
     FVector End = Start + (Forward * TraceRange);
     
     FCollisionQueryParams QueryParams;
@@ -201,27 +175,10 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
         CurrentScannableTarget = nullptr;
     }
 
-    // Update crosshair widget based on scannable target
-    if (bFoundScannable)
+    // Notify Focus Component about target state
+    if (FocusComponent)
     {
-        if (CrosshairWidgetTargetClass && (!CrosshairWidget || CrosshairWidget->GetClass() != CrosshairWidgetTargetClass))
-        {
-            if (CrosshairWidget)
-            {
-                CrosshairWidget->RemoveFromParent();
-            }
-            CrosshairWidget = CreateWidget<UUserWidget>(PlayerControllerRef, CrosshairWidgetTargetClass);
-            CrosshairWidget->AddToViewport();
-        }
-    }
-    else if (CrosshairWidgetClass && (!CrosshairWidget || CrosshairWidget->GetClass() != CrosshairWidgetClass))
-    {
-        if (CrosshairWidget)
-        {
-            CrosshairWidget->RemoveFromParent();
-        }
-        CrosshairWidget = CreateWidget<UUserWidget>(PlayerControllerRef, CrosshairWidgetClass);
-        CrosshairWidget->AddToViewport();
+        FocusComponent->UpdateTargetWidget(bFoundScannable);
     }
 }
 
@@ -273,87 +230,11 @@ void UDkScanningComponent::ResetValuesOnDeath()
 
 void UDkScanningComponent::HandleFocusChanged(bool bIsFocused)
 {
-    // Handle scanning UI
-    if (bIsFocused && bIsScanningMode)
+    if (!bIsFocused)
     {
-        if (CrosshairWidgetClass && !CrosshairWidget && PlayerControllerRef)
-        {
-            CrosshairWidget = CreateWidget<UUserWidget>(PlayerControllerRef, CrosshairWidgetClass);
-            if (CrosshairWidget)
-            {
-                CrosshairWidget->AddToViewport();
-            }
-        }
-        
-        // Notify scannables in range
-        TArray<FOverlapResult> OverlapResults;
-        FCollisionQueryParams QueryParams;
-        QueryParams.bTraceComplex = false;
-        QueryParams.AddIgnoredActor(GetOwner());
-
-        FCollisionShape SphereShape;
-        SphereShape.SetSphere(TraceRange);
-
-        GetWorld()->OverlapMultiByChannel(
-            OverlapResults,
-            GetOwner()->GetActorLocation(),
-            FQuat::Identity,
-            ECollisionChannel::ECC_Visibility,
-            SphereShape,
-            QueryParams
-        );
-
-        for (const FOverlapResult& Result : OverlapResults)
-        {
-            if (AActor* Actor = Result.GetActor())
-            {
-                if (UDkScannableComponent* Scannable = Actor->FindComponentByClass<UDkScannableComponent>())
-                {
-                    Scannable->OnScanModeEntered();
-                }
-            }
-        }
-    }
-    else
-    {
-        if (CrosshairWidget)
-        {
-            CrosshairWidget->RemoveFromParent();
-            CrosshairWidget = nullptr;
-        }
-
         if (bIsExecutingScanning)
         {
             HandleScanExecuteEnd();
-        }
-
-        // Notify scannables
-        TArray<FOverlapResult> OverlapResults;
-        FCollisionQueryParams QueryParams;
-        QueryParams.bTraceComplex = false;
-        QueryParams.AddIgnoredActor(GetOwner());
-
-        FCollisionShape SphereShape;
-        SphereShape.SetSphere(TraceRange);
-
-        GetWorld()->OverlapMultiByChannel(
-            OverlapResults,
-            GetOwner()->GetActorLocation(),
-            FQuat::Identity,
-            ECollisionChannel::ECC_Visibility,
-            SphereShape,
-            QueryParams
-        );
-
-        for (const FOverlapResult& Result : OverlapResults)
-        {
-            if (AActor* Actor = Result.GetActor())
-            {
-                if (UDkScannableComponent* Scannable = Actor->FindComponentByClass<UDkScannableComponent>())
-                {
-                    Scannable->OnScanModeExited();
-                }
-            }
         }
 
         if (CurrentScannableTarget)
@@ -369,17 +250,9 @@ void UDkScanningComponent::HandleFocusModeChanged(EDkFocusMode NewMode, EDkFocus
     bool bWasActive = bIsScanningMode;
     bIsScanningMode = (NewMode == EDkFocusMode::Scanning);
     
-    // If focus is active, handle the mode change
-    if (FocusComponent && FocusComponent->IsFocused())
+    if (!bIsScanningMode && bWasActive)
     {
-        if (bIsScanningMode)
-        {
-            HandleFocusChanged(true);
-        }
-        else if (bWasActive)
-        {
-            HandleFocusChanged(false);
-        }
+        HandleFocusChanged(false);
     }
 }
 

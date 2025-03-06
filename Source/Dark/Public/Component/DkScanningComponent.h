@@ -10,7 +10,6 @@ enum class EDkScanType : uint8;
 enum class EDkFocusMode : uint8;
 class ADkPlayerController;
 class ADkCharacter;
-class UCameraComponent;
 class UDkScannableComponent;
 class IDkPlayerControllerInterface;
 class UDkFocusComponent;
@@ -49,18 +48,6 @@ public:
 
     UPROPERTY(EditDefaultsOnly, Category = "Scanning") 
     float TraceRange = 1500.0f;
-      
-    UPROPERTY(EditDefaultsOnly, Category = "Camera")
-    float CameraScanOffset = 25.0f;
-
-    UPROPERTY(EditDefaultsOnly, Category = "Camera") 
-    float CameraInterpolationSpeed = 5.0f;
-    
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UUserWidget> CrosshairWidgetClass;
-
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UUserWidget> CrosshairWidgetTargetClass;
 
     UPROPERTY(BlueprintAssignable, Category = "Scanning")
     FOnScanValueChanged OnScanValueChanged;
@@ -100,12 +87,6 @@ private:
     ADkPlayerController* PlayerControllerRef = nullptr;
 
     UPROPERTY()
-    UCameraComponent* PlayerCameraRef = nullptr;
-
-    UPROPERTY()
-    class USceneComponent* CameraBoomRef;
-
-    UPROPERTY()
     UDkScannableComponent* CurrentScannableTarget = nullptr;
 
     UPROPERTY()
@@ -117,10 +98,4 @@ private:
     // Stores the current values for each scan type
     UPROPERTY()
     TMap<EDkScanType, FScanTypeValue> ScannedValues;
-
-    float CurrentCameraOffset = 0.0f;
-    FVector OriginalCameraLocation;
-
-    UPROPERTY()
-    UUserWidget* CrosshairWidget = nullptr;
 };
