@@ -2,6 +2,7 @@
 
 #include "Component/DkScannableComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SphereComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
 UDkScannableComponent::UDkScannableComponent()
@@ -15,6 +16,21 @@ void UDkScannableComponent::BeginPlay()
     if (AActor* Owner = GetOwner())
     {
         OriginalScale = Owner->GetActorScale3D();
+        
+        // Create and setup the sphere
+        DetectionSphere = NewObject<USphereComponent>(Owner, TEXT("DetectionSphere"));
+        DetectionSphere->RegisterComponent();
+        DetectionSphere->SetCollisionProfileName(TEXT("Scannable")); 
+        DetectionSphere->SetSphereRadius(DetectionRadius);
+        DetectionSphere->SetHiddenInGame(true);
+        DetectionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        DetectionSphere->AttachToComponent(Owner->GetRootComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
+        
+        // Optionally disable collision on the main mesh for traces
+        if (UStaticMeshComponent* MeshComp = Owner->FindComponentByClass<UStaticMeshComponent>())
+        {
+            MeshComp->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
+        }
     }
 }
 
@@ -126,7 +142,7 @@ void UDkScannableComponent::OnScanModeExited()
     UE_LOG(LogTemp, Log, TEXT("Scannable %s exited scan mode"), *GetOwner()->GetName());
 }
 
-void UDkScannableComponent::HighlightAsTarget() //TODO: later on we might do more than just a scale
+void UDkScannableComponent::HighlightAsTarget()
 {
     if (AActor* Owner = GetOwner())
     {
@@ -134,7 +150,7 @@ void UDkScannableComponent::HighlightAsTarget() //TODO: later on we might do mor
     }
 }
 
-void UDkScannableComponent::UnhighlightAsTarget() //TODO: later on we might do more than just a scale
+void UDkScannableComponent::UnhighlightAsTarget()
 {
     if (AActor* Owner = GetOwner())
     {

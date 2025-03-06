@@ -5,6 +5,8 @@
 #include "Components/ActorComponent.h"
 #include "DkScannableComponent.generated.h"
 
+class USphereComponent;
+
 UENUM(BlueprintType)
 enum class EDkScanType : uint8
 {
@@ -50,6 +52,8 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "Scanning|Type")
     bool bRetainOnDeath = false;
 
+    UPROPERTY(EditAnywhere, Category = "Scanning|Detection")
+    float DetectionRadius = 100.0f;
     
     // Core scanning interface
     void OnScanModeEntered();
@@ -98,4 +102,7 @@ private:
     
     UPROPERTY(EditAnywhere, Category = "Scanning|Highlight")
     UMaterialInterface* HighlightMaterial = nullptr;
+
+    UPROPERTY()
+    USphereComponent* DetectionSphere;
 };
