@@ -79,6 +79,12 @@ private:
     
     void HandleFocusChanged(bool bIsFocused);
     void HandleFocusModeChanged(EDkFocusMode NewMode, EDkFocusMode OldMode);
+
+    UFUNCTION()
+    void OnScanModeStart();
+   
+    UFUNCTION()
+    void OnScanModeEnd();
     
     UPROPERTY()
     ADkCharacter* PlayerRef = nullptr;

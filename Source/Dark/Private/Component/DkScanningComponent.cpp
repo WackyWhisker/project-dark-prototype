@@ -1,6 +1,8 @@
 ﻿// Copyright @ Christian Reichel
 
 #include "Component/DkScanningComponent.h"
+
+#include "Camera/CameraComponent.h"
 #include "Component/DkScannableComponent.h"
 #include "Component/DkFocusComponent.h"
 #include "Character/DkCharacter.h"
@@ -122,8 +124,18 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
     }
 
     // Scanning raycast logic
-    FVector Start = PlayerRef->GetActorLocation();
-    FVector Forward = PlayerRef->GetActorForwardVector();
+    FVector Start;
+    FVector Forward;
+    if (FocusComponent && FocusComponent->GetCamera())
+    {
+        Start = FocusComponent->GetCamera()->GetComponentLocation();
+        Forward = FocusComponent->GetCamera()->GetForwardVector();
+    }
+    else
+    {
+        Start = PlayerRef->GetActorLocation();
+        Forward = PlayerRef->GetActorForwardVector();
+    }
     FVector End = Start + (Forward * TraceRange);
     
     FCollisionQueryParams QueryParams;
@@ -250,14 +262,20 @@ void UDkScanningComponent::HandleFocusModeChanged(EDkFocusMode NewMode, EDkFocus
     bool bWasActive = bIsScanningMode;
     bIsScanningMode = (NewMode == EDkFocusMode::Scanning);
     
-    if (!bIsScanningMode && bWasActive)
+    if (bIsScanningMode && !bWasActive)
     {
+        OnScanModeStart();
+    }
+    else if (!bIsScanningMode && bWasActive)
+    {
+        OnScanModeEnd();
         HandleFocusChanged(false);
     }
 }
 
 void UDkScanningComponent::HandleScanExecuteStart()
 {
+    UE_LOG(LogTemp, Warning, TEXT("Exec start"));
     if (!bIsScanningMode || !FocusComponent || !FocusComponent->IsFocused())
         return;
         
@@ -278,6 +296,7 @@ void UDkScanningComponent::HandleScanExecuteStart()
 
 void UDkScanningComponent::HandleScanExecuteEnd()
 {
+    UE_LOG(LogTemp, Warning, TEXT("Exec end"));
     if (bIsExecutingScanning)
     {
         bIsExecutingScanning = false;
@@ -286,5 +305,78 @@ void UDkScanningComponent::HandleScanExecuteEnd()
         {
             CurrentScannableTarget->OnScanAborted();
         }
+    }
+}
+
+void UDkScanningComponent::OnScanModeStart()
+{
+    TArray<FOverlapResult> OverlapResults;
+    FCollisionQueryParams QueryParams;
+    QueryParams.bTraceComplex = false;
+    QueryParams.AddIgnoredActor(GetOwner());
+    
+    FCollisionShape SphereShape;
+    SphereShape.SetSphere(TraceRange);
+    
+    GetWorld()->OverlapMultiByChannel(
+        OverlapResults,
+        GetOwner()->GetActorLocation(),
+        FQuat::Identity,
+        ECollisionChannel::ECC_Visibility,
+        SphereShape,
+        QueryParams
+    );
+    
+    for (const FOverlapResult& Result : OverlapResults)
+    {
+        if (AActor* Actor = Result.GetActor())
+        {
+            if (UDkScannableComponent* Scannable = Actor->FindComponentByClass<UDkScannableComponent>())
+            {
+                Scannable->OnScanModeEntered();
+            }
+        }
+    }
+}
+
+void UDkScanningComponent::OnScanModeEnd()
+{
+    if (bIsExecutingScanning)
+    {
+        HandleScanExecuteEnd();
+    }
+    
+    TArray<FOverlapResult> OverlapResults;
+    FCollisionQueryParams QueryParams;
+    QueryParams.bTraceComplex = false;
+    QueryParams.AddIgnoredActor(GetOwner());
+    
+    FCollisionShape SphereShape;
+    SphereShape.SetSphere(TraceRange);
+    
+    GetWorld()->OverlapMultiByChannel(
+        OverlapResults,
+        GetOwner()->GetActorLocation(),
+        FQuat::Identity,
+        ECollisionChannel::ECC_Visibility,
+        SphereShape,
+        QueryParams
+    );
+    
+    for (const FOverlapResult& Result : OverlapResults)
+    {
+        if (AActor* Actor = Result.GetActor())
+        {
+            if (UDkScannableComponent* Scannable = Actor->FindComponentByClass<UDkScannableComponent>())
+            {
+                Scannable->OnScanModeExited();
+            }
+        }
+    }
+    
+    if (CurrentScannableTarget)
+    {
+        CurrentScannableTarget->UnhighlightAsTarget();
+        CurrentScannableTarget = nullptr;
     }
 }

@@ -40,6 +40,8 @@ public:
     
     UFUNCTION(BlueprintPure, Category = "Focus")
     EDkFocusMode GetCurrentMode() const { return CurrentMode; }
+
+    UCameraComponent* GetCamera() const { return PlayerCamera; }
     
     // Toggle/Hold mode setting
     UFUNCTION(BlueprintCallable, Category = "Focus")
@@ -102,6 +104,8 @@ private:
     // Camera handling
     UPROPERTY()
     UCameraComponent* PlayerCamera;
+
+    
 
     UPROPERTY()
     USpringArmComponent* CameraBoom;
