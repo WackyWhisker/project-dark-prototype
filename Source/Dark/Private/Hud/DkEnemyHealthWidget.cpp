@@ -30,6 +30,7 @@ void UDkEnemyHealthWidget::UpdateBars(float CurrentHealth, float MaxHealth, floa
 
 	float HealthPercent = FMath::Clamp(CurrentHealth / MaxHealth, 0.0f, 1.0f);
 	float BindingPercent = FMath::Clamp(CurrentBinding / MaxBinding, 0.0f, 1.0f);
+	BindingPercent = FMath::Min(BindingPercent, HealthPercent);
     
 	// Update the bars
 	HealthBar->SetPercent(HealthPercent);
