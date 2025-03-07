@@ -66,26 +66,45 @@ void ADkEnemyBase::BeginPlay()
     {
         FlashComponent->SetupMesh(GetMesh());
     }
+    
+    // Cache the player camera manager
+    if (GetWorld() && GetWorld()->GetFirstPlayerController())
+    {
+        CachedPlayerCameraManager = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
+    }
+    
+    TimeSinceLastWidgetUpdate = 0.0f;
 }
 
 void ADkEnemyBase::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+    
     if (HealthWidgetComponent && HealthWidgetComponent->IsVisible())
     {
-        if (APlayerCameraManager* CameraManager = GetWorld()->GetFirstPlayerController()->PlayerCameraManager)
+        TimeSinceLastWidgetUpdate += DeltaTime;
+        
+        if (TimeSinceLastWidgetUpdate >= WidgetUpdateInterval)
         {
-            FVector CameraLocation = CameraManager->GetCameraLocation();
-            FVector Direction = CameraLocation - HealthWidgetComponent->GetComponentLocation();
-            Direction.Normalize();
+            TimeSinceLastWidgetUpdate = 0.0f;
             
-            // Create a rotation that faces the camera
-            FRotator NewRotation = Direction.Rotation();
-            // Ensure the widget stays upright by zeroing roll and pitch
-            NewRotation.Roll = 0.0f;
-            NewRotation.Pitch = 0.0f;
-            
-            HealthWidgetComponent->SetWorldRotation(NewRotation);
+            if (CachedPlayerCameraManager)
+            {
+                FVector CameraLocation = CachedPlayerCameraManager->GetCameraLocation();
+                FVector Direction = CameraLocation - HealthWidgetComponent->GetComponentLocation();
+                Direction.Normalize();
+                
+                FRotator NewRotation = Direction.Rotation();
+                NewRotation.Roll = 0.0f;
+                NewRotation.Pitch = 0.0f;
+                
+                HealthWidgetComponent->SetWorldRotation(NewRotation);
+            }
+            // If cached manager is invalid, try to get it again
+            else if (GetWorld() && GetWorld()->GetFirstPlayerController())
+            {
+                CachedPlayerCameraManager = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
+            }
         }
     }
 }

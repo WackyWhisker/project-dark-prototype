@@ -37,6 +37,9 @@ protected:
 
 	UPROPERTY(EditInstanceOnly, Category = "Movement", meta = (ClampMin = "0.0"))
 	float AcceptanceRadius = 50.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Movement", meta = (ClampMin = "0.0"))
+	float RotationSpeed = 3.0f;
     
 private:    
 	void GenerateNewTargetPoint();

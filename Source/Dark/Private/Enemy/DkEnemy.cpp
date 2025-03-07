@@ -41,9 +41,9 @@ void ADkEnemy::GenerateNewTargetPoint()
 	float RandomRadius = FMath::RandRange(0.0f, MovementRadius);
     
 	FVector RandomOffset(
-		RandomRadius * FMath::Cos(RandomAngle),
-		RandomRadius * FMath::Sin(RandomAngle),
-		0.0f
+	   RandomRadius * FMath::Cos(RandomAngle),
+	   RandomRadius * FMath::Sin(RandomAngle),
+	   0.0f
 	);
     
 	CurrentTargetPoint = StartLocation + RandomOffset;
@@ -57,14 +57,24 @@ void ADkEnemy::MoveTowardsTarget(float DeltaTime)
 	// Calculate new position
 	FVector NewLocation = CurrentLocation + DirectionToTarget * MovementSpeed * DeltaTime;
     
-	// Optional: Look at movement direction
-	FRotator NewRotation = DirectionToTarget.Rotation();
+	// Calculate target rotation
+	FRotator TargetRotation = DirectionToTarget.Rotation();
     
-	SetActorLocationAndRotation(NewLocation, NewRotation);
+	// Smoothly interpolate current rotation to target rotation
+	FRotator CurrentRotation = GetActorRotation();
+	FRotator NewRotation = FMath::RInterpTo(
+		CurrentRotation,
+		TargetRotation,
+		DeltaTime,
+		RotationSpeed
+	);
+    
+	// Update position and rotation
+	SetActorLocation(NewLocation);
+	SetActorRotation(NewRotation);
 }
 
 bool ADkEnemy::HasReachedTarget() const
 {
 	return FVector::Distance(GetActorLocation(), CurrentTargetPoint) < AcceptanceRadius;
 }
-

@@ -64,8 +64,6 @@ public:
 	UPROPERTY()
 	USphereComponent* DetectionSphere;
 
-	
-
 private:
 	UFUNCTION()
 	void OnHealthChangedHandler(float Health, float HealthDelta, float MaxHealth);
@@ -74,5 +72,16 @@ private:
 	void OnBindingChangedHandler(float CurrentBinding, float MaxBinding);
 
 	void UpdateHealthWidget();
+
+	// Cached reference to player camera manager
+	UPROPERTY()
+	APlayerCameraManager* CachedPlayerCameraManager;
+    
+	// How often to update the widget rotation (in seconds)
+	UPROPERTY(EditDefaultsOnly, Category = "UI", meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float WidgetUpdateInterval = 0.1f;
+    
+	// Time since last widget rotation update
+	float TimeSinceLastWidgetUpdate;
 
 };
