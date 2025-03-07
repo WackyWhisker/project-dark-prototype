@@ -7,6 +7,9 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "Blueprint/UserWidget.h"
+#include "Enemy/DkEnemyBase.h"
+#include "Components/SphereComponent.h"
+#include "DrawDebugHelpers.h"
 
 UDkFocusComponent::UDkFocusComponent()
 {
@@ -63,6 +66,13 @@ void UDkFocusComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
         PlayerControllerInterface->GetSwitchFocusModeDelegate()->RemoveAll(this);
     }
 
+    // Unhighlight enemy if one is targeted
+    if (CurrentEnemyTarget)
+    {
+        CurrentEnemyTarget->UnhighlightAsTarget();
+        CurrentEnemyTarget = nullptr;
+    }
+
     ClearWidget();
 }
 
@@ -73,6 +83,76 @@ void UDkFocusComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
     if (!PlayerCamera || !CameraBoom) return;
     
     UpdateCamera(DeltaTime);
+    
+    // Always detect enemy targets regardless of focus mode
+    DetectEnemyTarget();
+}
+
+void UDkFocusComponent::DetectEnemyTarget()
+{
+    if (!PlayerCamera) return;
+    
+    FVector Start = PlayerCamera->GetComponentLocation();
+    FVector Forward = PlayerCamera->GetForwardVector();
+    FVector End = Start + (Forward * EnemyTraceRange);
+    
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(GetOwner());
+    QueryParams.bTraceComplex = true;
+    
+    if (bShowEnemyDebugTraces)
+    {
+        DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, -1.0f, 0, 1.0f);
+    }
+    
+    TArray<FHitResult> HitResults;
+    bool bFoundEnemy = false;
+    
+    if (GetWorld()->LineTraceMultiByChannel(
+        HitResults,
+        Start,
+        End,
+        ECC_Visibility,
+        QueryParams))
+    {
+        for (const FHitResult& Hit : HitResults)
+        {
+            if (AActor* HitActor = Hit.GetActor())
+            {
+                ADkEnemyBase* Enemy = Cast<ADkEnemyBase>(HitActor);
+                if (Enemy)
+                {
+                    // Check for collision with the detection sphere
+                    USphereComponent* DetectionSphere = Enemy->DetectionSphere;
+                    if (DetectionSphere && DetectionSphere->IsCollisionEnabled())
+                    {
+                        bFoundEnemy = true;
+                        
+                        if (Enemy != CurrentEnemyTarget)
+                        {
+                            // Unhighlight previous target
+                            if (CurrentEnemyTarget)
+                            {
+                                CurrentEnemyTarget->UnhighlightAsTarget();
+                            }
+                            
+                            // Highlight new target
+                            CurrentEnemyTarget = Enemy;
+                            CurrentEnemyTarget->HighlightAsTarget();
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    // If no enemy found but we had one highlighted, unhighlight it
+    if (!bFoundEnemy && CurrentEnemyTarget)
+    {
+        CurrentEnemyTarget->UnhighlightAsTarget();
+        CurrentEnemyTarget = nullptr;
+    }
 }
 
 void UDkFocusComponent::UpdateCamera(float DeltaTime)

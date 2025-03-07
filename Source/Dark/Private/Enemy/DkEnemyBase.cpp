@@ -5,6 +5,7 @@
 #include "Components/WidgetComponent.h"
 #include "Hud/DkEnemyHealthWidget.h"
 #include "Component/DkHealthComponent.h"
+#include "Components/SphereComponent.h"
 
 ADkEnemyBase::ADkEnemyBase()
 {
@@ -20,11 +21,20 @@ ADkEnemyBase::ADkEnemyBase()
     // Health UI
     HealthWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthWidgetComponent"));
     HealthWidgetComponent->SetupAttachment(RootComponent);
-    HealthWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+    HealthWidgetComponent->SetWidgetSpace(EWidgetSpace::World);
     HealthWidgetComponent->SetRelativeLocation(FVector(0, 0, 120));
+    HealthWidgetComponent->SetVisibility(false);
 
     //Adding flash component
     FlashComponent = CreateDefaultSubobject<UDkDamageFlashComponent>(TEXT("FlashComponent"));
+
+    // Create and setup the detection sphere
+    DetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("DetectionSphere"));
+    DetectionSphere->SetupAttachment(RootComponent);
+    DetectionSphere->SetCollisionProfileName(TEXT("AimDetectable")); 
+    DetectionSphere->SetSphereRadius(DetectionRadius);
+    DetectionSphere->SetHiddenInGame(true);
+    DetectionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
 void ADkEnemyBase::BeginPlay()
@@ -61,6 +71,23 @@ void ADkEnemyBase::BeginPlay()
 void ADkEnemyBase::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+    if (HealthWidgetComponent && HealthWidgetComponent->IsVisible())
+    {
+        if (APlayerCameraManager* CameraManager = GetWorld()->GetFirstPlayerController()->PlayerCameraManager)
+        {
+            FVector CameraLocation = CameraManager->GetCameraLocation();
+            FVector Direction = CameraLocation - HealthWidgetComponent->GetComponentLocation();
+            Direction.Normalize();
+            
+            // Create a rotation that faces the camera
+            FRotator NewRotation = Direction.Rotation();
+            // Ensure the widget stays upright by zeroing roll and pitch
+            NewRotation.Roll = 0.0f;
+            NewRotation.Pitch = 0.0f;
+            
+            HealthWidgetComponent->SetWorldRotation(NewRotation);
+        }
+    }
 }
 
 void ADkEnemyBase::ToggleTargetReticle(bool bShowTargetReticle)
@@ -88,6 +115,22 @@ void ADkEnemyBase::OnUntargeted_Implementation()
 FVector ADkEnemyBase::GetTargetLocation_Implementation() const
 {
     return IDkTargetableInterface::GetTargetLocation_Implementation();
+}
+
+void ADkEnemyBase::HighlightAsTarget()
+{
+    if (HealthWidgetComponent)
+    {
+        HealthWidgetComponent->SetVisibility(true);
+    }
+}
+
+void ADkEnemyBase::UnhighlightAsTarget()
+{
+    if (HealthWidgetComponent)
+    {
+        HealthWidgetComponent->SetVisibility(false);
+    }
 }
 
 void ADkEnemyBase::OnHealthChangedHandler(float Health, float HealthDelta, float MaxHealth)

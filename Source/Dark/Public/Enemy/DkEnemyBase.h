@@ -11,6 +11,7 @@ class UWidgetComponent;
 class UUserWidget;
 class UDkDamageFlashComponent;
 class UDkEnemyHealthWidget;
+class USphereComponent;
 
 UCLASS()
 class DARK_API ADkEnemyBase : public ACharacter, public IDkTargetableInterface
@@ -42,6 +43,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	UWidgetComponent* HealthWidgetComponent;
 
+	UPROPERTY(EditAnywhere, Category = "Aiming|Detection")
+	float DetectionRadius = 200.0f;
+
 	UFUNCTION(BlueprintCallable, Category = UI_Targeting)
 	void ToggleTargetReticle(bool bShowTargetReticle);
 
@@ -54,6 +58,14 @@ public:
 	virtual void OnUntargeted_Implementation() override;
 	virtual FVector GetTargetLocation_Implementation() const override;
 
+	void HighlightAsTarget();
+	void UnhighlightAsTarget();
+
+	UPROPERTY()
+	USphereComponent* DetectionSphere;
+
+	
+
 private:
 	UFUNCTION()
 	void OnHealthChangedHandler(float Health, float HealthDelta, float MaxHealth);
@@ -62,4 +74,5 @@ private:
 	void OnBindingChangedHandler(float CurrentBinding, float MaxBinding);
 
 	void UpdateHealthWidget();
+
 };

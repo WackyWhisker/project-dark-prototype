@@ -10,6 +10,7 @@ class IDkPlayerControllerInterface;
 class UCameraComponent;
 class UUserWidget;
 class USpringArmComponent;
+class ADkEnemyBase;
 
 UENUM(BlueprintType)
 enum class EDkFocusMode : uint8
@@ -58,6 +59,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Focus|UI")
     void UpdateTargetWidget(bool bHasTarget);
 
+    // Enemy targeting trace range
+    UPROPERTY(EditDefaultsOnly, Category = "Target Detection")
+    float EnemyTraceRange = 2000.0f;
+
+    // Debug flag for enemy detection traces
+    UPROPERTY(EditDefaultsOnly, Category = "Debug")
+    bool bShowEnemyDebugTraces = false;
+
 protected:
     UPROPERTY(EditDefaultsOnly, Category = "Camera")
     float CameraInterpolationSpeed = 5.0f;
@@ -105,8 +114,6 @@ private:
     UPROPERTY()
     UCameraComponent* PlayerCamera;
 
-    
-
     UPROPERTY()
     USpringArmComponent* CameraBoom;
     
@@ -123,4 +130,10 @@ private:
     UUserWidget* CurrentWidget;
 
     void ClearWidget();
+    
+    // Enemy targeting
+    UPROPERTY()
+    ADkEnemyBase* CurrentEnemyTarget = nullptr;
+    
+    void DetectEnemyTarget();
 };
