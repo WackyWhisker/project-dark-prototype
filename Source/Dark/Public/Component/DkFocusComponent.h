@@ -11,6 +11,7 @@ class UCameraComponent;
 class UUserWidget;
 class USpringArmComponent;
 class ADkEnemyBase;
+class ADkCharacter;
 
 UENUM(BlueprintType)
 enum class EDkFocusMode : uint8
@@ -134,6 +135,9 @@ private:
     // Enemy targeting
     UPROPERTY()
     ADkEnemyBase* CurrentEnemyTarget = nullptr;
+
+    //Player or Owner handling
+    ADkCharacter* OwnerPlayerCharacter = nullptr;
     
     void DetectEnemyTarget();
 };

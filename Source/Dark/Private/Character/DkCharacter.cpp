@@ -43,6 +43,7 @@ ADkCharacter::ADkCharacter(const FObjectInitializer& ObjectInitializer)
 
 	//Player States
 	DkPlayerState = EDkPlayerAnimationState::Default;
+	DkPlayerAimingAnimationState = EDkPlayerAimingAnimationState::None;
 }
 
 void ADkCharacter::AttachWeaponToSocket(FName SocketName)

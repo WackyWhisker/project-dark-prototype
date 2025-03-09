@@ -31,6 +31,14 @@ enum EDkPlayerAnimationState
 	Default
 };
 
+UENUM(BlueprintType)
+enum EDkPlayerAimingAnimationState
+{
+	Firearm,
+	Scanning,
+	None
+};
+
 DECLARE_LOG_CATEGORY_EXTERN(LogDkCharacter, Log, All);
 
 UCLASS()
@@ -48,6 +56,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = StateManager)
 	TEnumAsByte<EDkPlayerAnimationState> DkPlayerState;
+
+	UPROPERTY(BlueprintReadOnly, Category = StateManager)
+	TEnumAsByte<EDkPlayerAimingAnimationState> DkPlayerAimingAnimationState;
 
 	UFUNCTION(BlueprintCallable, Category = Combat)
 	void AttachWeaponToSocket(FName SocketName);

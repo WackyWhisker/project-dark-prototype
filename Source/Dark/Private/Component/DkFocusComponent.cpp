@@ -10,6 +10,7 @@
 #include "Enemy/DkEnemyBase.h"
 #include "Components/SphereComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Character/DkCharacter.h"
 
 UDkFocusComponent::UDkFocusComponent()
 {
@@ -26,8 +27,8 @@ void UDkFocusComponent::BeginPlay()
     Super::BeginPlay();
 
     // Get camera references
-    APawn* Pawn = Cast<APawn>(GetOwner());
-    if (Pawn)
+   OwnerPlayerCharacter = Cast<ADkCharacter>(GetOwner());
+    if (OwnerPlayerCharacter)
     {
         PlayerCamera = Cast<UCameraComponent>(GetOwner()->GetComponentByClass(UCameraComponent::StaticClass()));
         CameraBoom = Cast<USpringArmComponent>(GetOwner()->GetComponentByClass(USpringArmComponent::StaticClass()));
@@ -42,7 +43,7 @@ void UDkFocusComponent::BeginPlay()
             CurrentArmLength = CameraBoom->TargetArmLength;
         }
 
-        if (APlayerController* PC = Cast<APlayerController>(Pawn->GetController()))
+        if (APlayerController* PC = Cast<APlayerController>(OwnerPlayerCharacter->GetController()))
         {
             PlayerControllerInterface = Cast<IDkPlayerControllerInterface>(PC);
             if (PlayerControllerInterface)
@@ -258,6 +259,13 @@ void UDkFocusComponent::HandleFocusStart()
     UpdateTargetWidget(false);
     OnFocusModeChanged.Broadcast(CurrentMode, EDkFocusMode::None);
     OnFocusStateChanged.Broadcast(true);
+    if (OwnerPlayerCharacter)
+    {
+        OwnerPlayerCharacter->DkPlayerAimingAnimationState = 
+    (CurrentMode == EDkFocusMode::Firearm) ? 
+    EDkPlayerAimingAnimationState::Firearm : 
+    EDkPlayerAimingAnimationState::Scanning;
+    }
 }
 
 void UDkFocusComponent::HandleFocusEnd()
@@ -265,6 +273,10 @@ void UDkFocusComponent::HandleFocusEnd()
     bIsFocused = false;
     ClearWidget();
     OnFocusStateChanged.Broadcast(false);
+    if (OwnerPlayerCharacter)
+    {
+        OwnerPlayerCharacter->DkPlayerAimingAnimationState = EDkPlayerAimingAnimationState::None;
+    }
 }
 
 void UDkFocusComponent::HandleFocusModeSwitch()
@@ -280,6 +292,14 @@ void UDkFocusComponent::HandleFocusModeSwitch()
     
     UpdateTargetWidget(false);
     OnFocusModeChanged.Broadcast(NewMode, OldMode);
+
+    if (OwnerPlayerCharacter)
+    {
+        OwnerPlayerCharacter->DkPlayerAimingAnimationState = 
+    (CurrentMode == EDkFocusMode::Firearm) ? 
+    EDkPlayerAimingAnimationState::Firearm : 
+    EDkPlayerAimingAnimationState::Scanning;
+    }
 }
 
 void UDkFocusComponent::SetFocusToggleMode(bool bNewToggleMode)
