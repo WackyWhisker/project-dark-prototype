@@ -263,8 +263,8 @@ void UDkFocusComponent::HandleFocusStart()
     {
         OwnerPlayerCharacter->DkPlayerAimingAnimationState = 
     (CurrentMode == EDkFocusMode::Firearm) ? 
-    EDkPlayerAimingAnimationState::Firearm : 
-    EDkPlayerAimingAnimationState::Scanning;
+    Firearm : 
+    Scanning;
     }
 }
 
@@ -297,8 +297,8 @@ void UDkFocusComponent::HandleFocusModeSwitch()
     {
         OwnerPlayerCharacter->DkPlayerAimingAnimationState = 
     (CurrentMode == EDkFocusMode::Firearm) ? 
-    EDkPlayerAimingAnimationState::Firearm : 
-    EDkPlayerAimingAnimationState::Scanning;
+    Firearm : 
+    Scanning;
     }
 }
 
