@@ -44,29 +44,23 @@ void ADkDamageTrigger::HandleActorEndOverlap(AActor* OverlappedActor, AActor* Ot
 
 void ADkDamageTrigger::ApplyDamageOverTime()
 {
-    TArray<AActor*> ActorsToRemove;
+    // Create a copy of the array to iterate over
+    TArray<AActor*> ActorsToProcess = ActorsInTrigger;
+    ActorsInTrigger.Empty();
 
-    for (AActor* Actor : ActorsInTrigger)
+    for (AActor* Actor : ActorsToProcess)
     {
         if (!Actor) 
         {
-            ActorsToRemove.Add(Actor);
             continue;
         }
 
         if (UDkHealthComponent* HealthComp = Actor->FindComponentByClass<UDkHealthComponent>())
         {
             HealthComp->TakeDamage(BaseDamage);
+            // If the actor is still valid after taking damage, keep it in the trigger
+            ActorsInTrigger.AddUnique(Actor);
         }
-        else
-        {
-            ActorsToRemove.Add(Actor);
-        }
-    }
-
-    for (AActor* Actor : ActorsToRemove)
-    {
-        ActorsInTrigger.Remove(Actor);
     }
 
     if (ActorsInTrigger.Num() == 0)
