@@ -31,14 +31,14 @@ void UDkPlayerStateAttack::OnStateEnter(AActor* StateOwner)
 	PlayerRef->AttachWeaponToSocket("AttackWeaponSocket");
 	
 	//Launch character in momentum direction, but also accounted for slopes
-	AttackLaunchCharacter();
+	//AttackLaunchCharacter();
 	
 	//Stop player movement and decelerate
-	PlayerControllerRef->SetIgnoreMoveInput(true);
-	PreviousBrakingFrictionFactor = PlayerRef->GetCharacterMovement()->BrakingFrictionFactor;
-	PreviousBrakingDecelerationWalking = PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking;
-	PlayerRef->GetCharacterMovement()->BrakingFrictionFactor = 1.5f;  // Increase for more friction
-	PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking = 100.0f;
+	//PlayerControllerRef->SetIgnoreMoveInput(true);
+	//PreviousBrakingFrictionFactor = PlayerRef->GetCharacterMovement()->BrakingFrictionFactor;
+	//PreviousBrakingDecelerationWalking = PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking;
+	//PlayerRef->GetCharacterMovement()->BrakingFrictionFactor = 1.5f;  // Increase for more friction
+	//PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking = 100.0f;
 	
 	IsAttacking = true;
 	PlayerRef->DkPlayerState = EDkPlayerAnimationState::Attack;
@@ -70,9 +70,9 @@ void UDkPlayerStateAttack::OnMontageEnded(UAnimMontage* Montage, bool bInterrupt
 	}
 
 	//Re-enable player movement and restore deceleration values
-	PlayerControllerRef->SetIgnoreMoveInput(false);
-	PlayerRef->GetCharacterMovement()->BrakingFrictionFactor = PreviousBrakingFrictionFactor;
-	PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking = PreviousBrakingDecelerationWalking;
+	//PlayerControllerRef->SetIgnoreMoveInput(false);
+	//PlayerRef->GetCharacterMovement()->BrakingFrictionFactor = PreviousBrakingFrictionFactor;
+	//PlayerRef->GetCharacterMovement()->BrakingDecelerationWalking = PreviousBrakingDecelerationWalking;
 }
 
 void UDkPlayerStateAttack::AttackLaunchCharacter()
