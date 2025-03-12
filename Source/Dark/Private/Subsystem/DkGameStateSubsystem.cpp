@@ -151,6 +151,10 @@ void UDkGameStateSubsystem::HandleStateChanged(EDkGameState NewState)
 		// Initialize death sequence
 			break;
             
+	case EDkGameState::Retreat:
+		// Initialize retreat sequence
+			break;
+            
 	case EDkGameState::Resetting:
 		// Begin level reset
 			break;

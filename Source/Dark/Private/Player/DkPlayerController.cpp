@@ -604,9 +604,15 @@ void ADkPlayerController::HandleGameStateChanged(EDkGameState NewState, EDkGameS
     {
     case EDkGameState::Dying:
         // Disable input
-        DisableInput(this);
+            DisableInput(this);
         bWasInputDisabledByDeath = true;
         PlayDeathSequence();
+        break;
+
+    case EDkGameState::Retreat:
+        DisableInput(this);
+        bWasInputDisabledByDeath = true;
+        PlayRetreatSequence();
         break;
 
     case EDkGameState::Respawning:
@@ -615,11 +621,11 @@ void ADkPlayerController::HandleGameStateChanged(EDkGameState NewState, EDkGameS
             
     case EDkGameState::Playing:
         // Only re-enable if we were the ones who disabled it
-        if (bWasInputDisabledByDeath)
-        {
-            EnableInput(this);
-            bWasInputDisabledByDeath = false;
-        }
+            if (bWasInputDisabledByDeath)
+            {
+                EnableInput(this);
+                bWasInputDisabledByDeath = false;
+            }
         break;
     }
 }
@@ -702,6 +708,47 @@ void ADkPlayerController::PlayRespawnSequence()
    }
 }
 
+void ADkPlayerController::PlayRetreatSequence()
+{
+    if (!RetreatSequence)
+    {
+        UE_LOG(LogDkPlayerController, Warning, TEXT("Retreat sequence not set in PlayerController"));
+        if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+        {
+            GameStateSubsystem->RequestStateChange(EDkGameState::Resetting);
+        }
+        return;
+    }
+
+    // Create sequence player and bind to finish event
+    FMovieSceneSequencePlaybackSettings PlaybackSettings;
+    PlaybackSettings.bPauseAtEnd = false;
+    ALevelSequenceActor* LSActor;  // Will store the created actor
+   
+    ActiveSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
+        GetWorld(),
+        RetreatSequence,
+        PlaybackSettings,
+        LSActor
+    );
+
+    if (ActiveSequencePlayer)
+    {
+        ActiveSequencePlayer->OnFinished.AddDynamic(this, &ADkPlayerController::OnRetreatSequenceFinished);
+        ActiveSequencePlayer->Play();
+    }
+    else
+    {
+        UE_LOG(LogDkPlayerController, Warning, TEXT("Failed to create retreat sequence player"));
+        if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+        {
+            GameStateSubsystem->RequestStateChange(EDkGameState::Resetting);
+        }
+    }
+}
+
+
+
 void ADkPlayerController::OnDeathSequenceFinished()
 {
    // Clean up
@@ -732,6 +779,22 @@ void ADkPlayerController::OnRespawnSequenceFinished()
    {
        GameStateSubsystem->RequestStateChange(EDkGameState::Playing);
    }
+}
+
+void ADkPlayerController::OnRetreatSequenceFinished()
+{
+    // Clean up
+    if (ActiveSequencePlayer)
+    {
+        ActiveSequencePlayer->OnFinished.RemoveDynamic(this, &ADkPlayerController::OnRetreatSequenceFinished);
+        ActiveSequencePlayer = nullptr;
+    }
+
+    // Proceed to next state
+    if (UDkGameStateSubsystem* GameStateSubsystem = GetWorld()->GetSubsystem<UDkGameStateSubsystem>())
+    {
+        GameStateSubsystem->RequestStateChange(EDkGameState::Resetting);
+    }
 }
 
 

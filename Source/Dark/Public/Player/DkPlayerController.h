@@ -272,15 +272,22 @@ private:
    UPROPERTY(EditDefaultsOnly, Category = "Sequences")
    ULevelSequence* RespawnSequence;
 
+   UPROPERTY(EditDefaultsOnly, Category = "Sequences")
+   ULevelSequence* RetreatSequence;
+
    UPROPERTY()
    ULevelSequencePlayer* ActiveSequencePlayer;
 
    void PlayDeathSequence();
    void PlayRespawnSequence();
+   void PlayRetreatSequence();
    
    UFUNCTION()
    void OnDeathSequenceFinished();
 
    UFUNCTION()
    void OnRespawnSequenceFinished();
+
+   UFUNCTION()
+   void OnRetreatSequenceFinished();
 };

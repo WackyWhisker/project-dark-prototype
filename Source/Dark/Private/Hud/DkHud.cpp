@@ -8,6 +8,10 @@
 
 ADkHUD::ADkHUD()
 {
+    bIsPauseMenuVisible = false;
+    bIsEndScreenMenuVisible = false;
+    bIsUpgradeMenuVisible = false;
+    bIsRetreatScreenMenuVisible = false;
 }
 
 void ADkHUD::BeginPlay()
@@ -84,5 +88,19 @@ void ADkHUD::HandleToggleEndScreenMenu()
    {
       BaseMenuStack->OnShowEndScreenMenuWidget();
       bIsEndScreenMenuVisible = true;
+   }
+}
+
+void ADkHUD::HandleToggleRetreatScreenMenu()
+{
+   if (bIsRetreatScreenMenuVisible)
+   {
+      BaseMenuStack->OnHideRetreatScreenMenuWidget();
+      bIsRetreatScreenMenuVisible = false;
+   }
+   else
+   {
+      BaseMenuStack->OnShowRetreatScreenMenuWidget();
+      bIsRetreatScreenMenuVisible = true;
    }
 }

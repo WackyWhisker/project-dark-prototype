@@ -16,7 +16,7 @@ class DARK_API ADkHUD : public AHUD
 public:
 	ADkHUD();
 
-	UFUNCTION(BlueprintCallable)//should be called from level blueprint?
+	UFUNCTION(BlueprintCallable)
 	void HandleToggleEndScreenMenu();
 
 	UFUNCTION(BlueprintCallable)
@@ -24,6 +24,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void HandleToggleUpgradeMenu();
+
+	UFUNCTION(BlueprintCallable)
+	void HandleToggleRetreatScreenMenu();
     
 protected:
 	virtual void BeginPlay() override;
@@ -38,10 +41,9 @@ protected:
 private:
 	UPROPERTY()
 	class UDkBaseMenuStack* BaseMenuStack;
-
-	
 	
 	bool bIsPauseMenuVisible;
 	bool bIsEndScreenMenuVisible;
 	bool bIsUpgradeMenuVisible;
+	bool bIsRetreatScreenMenuVisible;
 };
