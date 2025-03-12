@@ -245,7 +245,7 @@ void UDkScanningComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void UDkScanningComponent::HandleGameStateChanged(EDkGameState NewState, EDkGameState OldState)
 {
-    if (NewState == EDkGameState::Dying || NewState == EDkGameState::Retreat)
+    if (NewState == EDkGameState::Dying /*|| NewState == EDkGameState::Retreat*/)
     {
         ResetValuesOnDeath();
     }
