@@ -37,6 +37,7 @@ ADkEnemyBase::ADkEnemyBase()
     DetectionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
+
 void ADkEnemyBase::BeginPlay()
 {
     Super::BeginPlay();
@@ -53,6 +54,15 @@ void ADkEnemyBase::BeginPlay()
     {
         HealthWidgetComponent->SetWidgetClass(HealthWidgetClass);
         HealthWidget = Cast<UDkEnemyHealthWidget>(HealthWidgetComponent->GetWidget());
+        
+        // Defer visibility setting to ensure it happens after widget initialization
+        GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
+        {
+            if (HealthWidgetComponent)
+            {
+                HealthWidgetComponent->SetVisibility(false);
+            }
+        });
         
         // Bind to health component events
         if (UDkHealthComponent* HealthComp = GetComponentByClass<UDkHealthComponent>())
@@ -136,30 +146,43 @@ FVector ADkEnemyBase::GetTargetLocation_Implementation() const
     return IDkTargetableInterface::GetTargetLocation_Implementation();
 }
 
-void ADkEnemyBase::HighlightAsTarget()
-{
-    if (HealthWidgetComponent)
-    {
-        HealthWidgetComponent->SetVisibility(true);
-    }
-}
-
-void ADkEnemyBase::UnhighlightAsTarget()
-{
-    if (HealthWidgetComponent)
-    {
-        HealthWidgetComponent->SetVisibility(false);
-    }
-}
 
 void ADkEnemyBase::OnHealthChangedHandler(float Health, float HealthDelta, float MaxHealth)
 {
     UpdateHealthWidget();
+    
+    // Show widget on damage and start/reset timer
+    if (HealthDelta < 0 && HealthWidgetComponent)
+    {
+        HealthWidgetComponent->SetVisibility(true);
+        
+        // Clear existing timer and set new one
+        GetWorld()->GetTimerManager().ClearTimer(HideHealthWidgetTimer);
+        GetWorld()->GetTimerManager().SetTimer(
+            HideHealthWidgetTimer, 
+            [this](){ HealthWidgetComponent->SetVisibility(false); }, 
+            3.0f, 
+            false);
+    }
 }
 
 void ADkEnemyBase::OnBindingChangedHandler(float CurrentBinding, float MaxBinding)
 {
     UpdateHealthWidget();
+    
+    // Reset timer for binding damage too
+    if (CurrentBinding > 0 && HealthWidgetComponent)
+    {
+        HealthWidgetComponent->SetVisibility(true);
+        
+        // Clear existing timer and set new one
+        GetWorld()->GetTimerManager().ClearTimer(HideHealthWidgetTimer);
+        GetWorld()->GetTimerManager().SetTimer(
+            HideHealthWidgetTimer, 
+            [this](){ HealthWidgetComponent->SetVisibility(false); }, 
+            3.0f, 
+            false);
+    }
 }
 
 void ADkEnemyBase::UpdateHealthWidget()
@@ -177,3 +200,4 @@ void ADkEnemyBase::UpdateHealthWidget()
         }
     }
 }
+

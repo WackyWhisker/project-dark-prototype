@@ -1,12 +1,13 @@
 // Copyright @ Christian Reichel
 
-// Copyright @ Christian Reichel
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "DkEnemyHealthWidget.generated.h"
+
+class UProgressBar;
+class UHorizontalBox;
 
 UCLASS()
 class DARK_API UDkEnemyHealthWidget : public UUserWidget
@@ -14,15 +15,15 @@ class DARK_API UDkEnemyHealthWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(meta = (BindWidget))
+	UProgressBar* HealthBar;
+
+	UPROPERTY(meta = (BindWidget))
+	UProgressBar* BindingBar;
+
 	virtual void NativeConstruct() override;
-    
-	UFUNCTION(BlueprintCallable, Category = "Health")
 	void UpdateBars(float CurrentHealth, float MaxHealth, float CurrentBinding, float MaxBinding);
 
-protected:
-	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
-	class UProgressBar* HealthBar;
-
-	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
-	class UProgressBar* BindingBar;
+private:
+	bool bHasValidGeometry = false;
 };

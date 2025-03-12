@@ -16,72 +16,67 @@ class USphereComponent;
 UCLASS()
 class DARK_API ADkEnemyBase : public ACharacter, public IDkTargetableInterface
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	ADkEnemyBase();
+    ADkEnemyBase();
+    virtual void BeginPlay() override;
+    virtual void Tick(float DeltaTime) override;
 
-protected:
-	virtual void BeginPlay() override;
+    // Target UI
+    UPROPERTY(EditDefaultsOnly, Category = UI_Targeting)
+    UWidgetComponent* TargetReticleWidget;
 
-public:
-	virtual void Tick(float DeltaTime) override;
+    UPROPERTY(EditDefaultsOnly, Category = UI_Targeting)
+    TSubclassOf<UUserWidget> TargetReticleWidgetClass;
 
-	//Target UI
-	UPROPERTY(EditDefaultsOnly, Category = UI_Targeting)
-	UWidgetComponent* TargetReticleWidget;
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UUserWidget> HealthWidgetClass;
 
-	UPROPERTY(EditDefaultsOnly, Category = UI_Targeting)
-	TSubclassOf<UUserWidget> TargetReticleWidgetClass;
+    UPROPERTY()
+    UDkEnemyHealthWidget* HealthWidget;
 
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UUserWidget> HealthWidgetClass;
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    UWidgetComponent* HealthWidgetComponent;
 
-	UPROPERTY()
-	UDkEnemyHealthWidget* HealthWidget;
+    UPROPERTY(EditAnywhere, Category = "Aiming|Detection")
+    float DetectionRadius = 200.0f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	UWidgetComponent* HealthWidgetComponent;
+    UFUNCTION(BlueprintCallable, Category = UI_Targeting)
+    void ToggleTargetReticle(bool bShowTargetReticle);
 
-	UPROPERTY(EditAnywhere, Category = "Aiming|Detection")
-	float DetectionRadius = 200.0f;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects")
+    UDkDamageFlashComponent* FlashComponent;
 
-	UFUNCTION(BlueprintCallable, Category = UI_Targeting)
-	void ToggleTargetReticle(bool bShowTargetReticle);
+    //IDkTargetableInterface functions
+    virtual bool CanBeTargeted_Implementation() const override;
+    virtual void OnTargeted_Implementation() override;
+    virtual void OnUntargeted_Implementation() override;
+    virtual FVector GetTargetLocation_Implementation() const override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects")
-	UDkDamageFlashComponent* FlashComponent;
-
-	//IDkTargetableInterface functions
-	virtual bool CanBeTargeted_Implementation() const override;
-	virtual void OnTargeted_Implementation() override;
-	virtual void OnUntargeted_Implementation() override;
-	virtual FVector GetTargetLocation_Implementation() const override;
-
-	void HighlightAsTarget();
-	void UnhighlightAsTarget();
-
-	UPROPERTY()
-	USphereComponent* DetectionSphere;
+    UPROPERTY()
+    USphereComponent* DetectionSphere;
 
 private:
-	UFUNCTION()
-	void OnHealthChangedHandler(float Health, float HealthDelta, float MaxHealth);
+    UFUNCTION()
+    void OnHealthChangedHandler(float Health, float HealthDelta, float MaxHealth);
 
-	UFUNCTION()
-	void OnBindingChangedHandler(float CurrentBinding, float MaxBinding);
+    UFUNCTION()
+    void OnBindingChangedHandler(float CurrentBinding, float MaxBinding);
 
-	void UpdateHealthWidget();
+    void UpdateHealthWidget();
 
-	// Cached reference to player camera manager
-	UPROPERTY()
-	APlayerCameraManager* CachedPlayerCameraManager;
+    // Cache reference to player camera manager
+    UPROPERTY()
+    APlayerCameraManager* CachedPlayerCameraManager;
     
-	// How often to update the widget rotation (in seconds)
-	UPROPERTY(EditDefaultsOnly, Category = "UI", meta = (ClampMin = "0.0", UIMin = "0.0"))
-	float WidgetUpdateInterval = 0.1f;
+    // How often to update the widget rotation (in seconds)
+    UPROPERTY(EditDefaultsOnly, Category = "UI", meta = (ClampMin = "0.0", UIMin = "0.0"))
+    float WidgetUpdateInterval = 0.1f;
     
-	// Time since last widget rotation update
-	float TimeSinceLastWidgetUpdate;
+    // Time since last widget update
+    float TimeSinceLastWidgetUpdate;
 
+    // Health widget visibility timer
+    FTimerHandle HideHealthWidgetTimer;
 };

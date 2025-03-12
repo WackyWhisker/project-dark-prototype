@@ -16,11 +16,6 @@ void UDkEnemyHealthWidget::NativeConstruct()
 	if (BindingBar)
 	{
 		BindingBar->SetPercent(0.0f);
-        
-		// Initialize with no offset since health is full
-		FWidgetTransform InitialTransform;
-		InitialTransform.Translation = FVector2D(0.0f, 0.0f);
-		BindingBar->SetRenderTransform(InitialTransform);
 	}
 }
 
@@ -36,11 +31,36 @@ void UDkEnemyHealthWidget::UpdateBars(float CurrentHealth, float MaxHealth, floa
 	HealthBar->SetPercent(HealthPercent);
 	BindingBar->SetPercent(BindingPercent);
 
-	// Get the actual width from the widget's geometry
+	// Check if we have valid geometry now
+	if (BindingBar->GetCachedGeometry().GetLocalSize().X > 0)
+	{
+		bHasValidGeometry = true;
+	}
+
+	// If first binding damage and no valid geometry yet, queue an update
+	if (!bHasValidGeometry && BindingPercent > 0)
+	{
+		FTimerHandle DummyHandle;
+		GetWorld()->GetTimerManager().SetTimer(
+			DummyHandle,
+			[this, HealthPercent]()
+			{
+				FVector2D BarSize = BindingBar->GetCachedGeometry().GetLocalSize();
+				float HealthOffset = BarSize.X * (1.0f - HealthPercent);
+                
+				FWidgetTransform BindingTransform;
+				BindingTransform.Translation = FVector2D(-HealthOffset, 0.0f);
+				BindingBar->SetRenderTransform(BindingTransform);
+			},
+			0.016f,  // About 1 frame at 60fps
+			false);
+		return;
+	}
+
+	// Normal update with valid geometry
 	FVector2D BarSize = BindingBar->GetCachedGeometry().GetLocalSize();
 	float HealthOffset = BarSize.X * (1.0f - HealthPercent);
     
-	// Create and apply transform
 	FWidgetTransform BindingTransform;
 	BindingTransform.Translation = FVector2D(-HealthOffset, 0.0f);
 	BindingBar->SetRenderTransform(BindingTransform);

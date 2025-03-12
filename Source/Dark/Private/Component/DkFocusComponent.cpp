@@ -70,7 +70,6 @@ void UDkFocusComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
     // Unhighlight enemy if one is targeted
     if (CurrentEnemyTarget)
     {
-        CurrentEnemyTarget->UnhighlightAsTarget();
         CurrentEnemyTarget = nullptr;
     }
 
@@ -131,15 +130,7 @@ void UDkFocusComponent::DetectEnemyTarget()
                         
                         if (Enemy != CurrentEnemyTarget)
                         {
-                            // Unhighlight previous target
-                            if (CurrentEnemyTarget)
-                            {
-                                CurrentEnemyTarget->UnhighlightAsTarget();
-                            }
-                            
-                            // Highlight new target
                             CurrentEnemyTarget = Enemy;
-                            CurrentEnemyTarget->HighlightAsTarget();
                         }
                         break;
                     }
@@ -148,10 +139,8 @@ void UDkFocusComponent::DetectEnemyTarget()
         }
     }
     
-    // If no enemy found but we had one highlighted, unhighlight it
     if (!bFoundEnemy && CurrentEnemyTarget)
     {
-        CurrentEnemyTarget->UnhighlightAsTarget();
         CurrentEnemyTarget = nullptr;
     }
 }
