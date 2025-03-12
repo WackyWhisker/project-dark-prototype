@@ -52,7 +52,7 @@ void UDkEnemyHealthWidget::UpdateBars(float CurrentHealth, float MaxHealth, floa
 				BindingTransform.Translation = FVector2D(-HealthOffset, 0.0f);
 				BindingBar->SetRenderTransform(BindingTransform);
 			},
-			0.016f,  // About 1 frame at 60fps
+			0.05f, 
 			false);
 		return;
 	}
