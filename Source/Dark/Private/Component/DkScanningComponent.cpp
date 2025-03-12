@@ -92,6 +92,30 @@ void UDkScanningComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
         return;
     }
 
+    TArray<FOverlapResult> OverlapResults;
+    FCollisionShape SphereShape;
+    SphereShape.SetSphere(TraceRange);
+    
+    GetWorld()->OverlapMultiByChannel(
+        OverlapResults,
+        GetOwner()->GetActorLocation(),
+        FQuat::Identity,
+        ECollisionChannel::ECC_Visibility,
+        SphereShape,
+        FCollisionQueryParams()
+    );
+    
+    for (const FOverlapResult& Result : OverlapResults)
+    {
+        if (AActor* Actor = Result.GetActor())
+        {
+            if (UDkScannableComponent* Scannable = Actor->FindComponentByClass<UDkScannableComponent>())
+            {
+                Scannable->OnScanModeEntered();
+            }
+        }
+    }
+
     // Handle scanning progress
     if (bIsExecutingScanning && CurrentScannableTarget)
     {
@@ -254,6 +278,17 @@ void UDkScanningComponent::HandleFocusChanged(bool bIsFocused)
             CurrentScannableTarget->UnhighlightAsTarget();
             CurrentScannableTarget = nullptr;
         }
+        
+        // Call OnScanModeEnd when leaving focus to reset scannable materials
+        if (bIsScanningMode)
+        {
+            OnScanModeEnd();
+        }
+    }
+    else if (bIsFocused && bIsScanningMode)
+    {
+        // If re-entering focus and we're already in scanning mode, call OnScanModeStart
+        OnScanModeStart();
     }
 }
 

@@ -123,7 +123,7 @@ void UDkScannableComponent::OnScanModeEntered()
             }
         }
     }
-    UE_LOG(LogTemp, Log, TEXT("Scannable %s entered scan mode"), *GetOwner()->GetName());
+    //UE_LOG(LogTemp, Log, TEXT("Scannable %s entered scan mode"), *GetOwner()->GetName());
 }
 
 void UDkScannableComponent::OnScanModeExited()
@@ -139,7 +139,7 @@ void UDkScannableComponent::OnScanModeExited()
         }
         UnhighlightAsTarget();
     }
-    UE_LOG(LogTemp, Log, TEXT("Scannable %s exited scan mode"), *GetOwner()->GetName());
+    //UE_LOG(LogTemp, Log, TEXT("Scannable %s exited scan mode"), *GetOwner()->GetName());
 }
 
 void UDkScannableComponent::HighlightAsTarget()
