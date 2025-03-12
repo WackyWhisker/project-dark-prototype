@@ -11,6 +11,7 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class UDkDamageFlashComponent;
 class UStaticMeshComponent;
 class UInputMappingContext;
 class UInputAction;
@@ -65,6 +66,9 @@ public:
 
 	//Death Handler Interface
 	virtual void HandleDeath_Implementation() override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects")
+	UDkDamageFlashComponent* FlashComponent;
 
 protected:
 	virtual void BeginPlay() override;

@@ -43,7 +43,7 @@ void ADkPistol::Fire()
     FHitResult CameraHit;
     bool bHit = GetWorld()->LineTraceSingleByChannel(CameraHit, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
     
-    DrawDebugLine(GetWorld(), TraceStart, bHit ? CameraHit.Location : TraceEnd, FColor::Green, false, 2.0f);
+    //DrawDebugLine(GetWorld(), TraceStart, bHit ? CameraHit.Location : TraceEnd, FColor::Green, false, 2.0f);
     
     // If we hit something, do muzzle trace for effects
     if (bHit)
@@ -53,7 +53,7 @@ void ADkPistol::Fire()
         FHitResult MuzzleHit;
         GetWorld()->LineTraceSingleByChannel(MuzzleHit, MuzzleLocation, CameraHit.Location, ECC_Visibility, QueryParams);
         
-        DrawDebugLine(GetWorld(), MuzzleLocation, CameraHit.Location, FColor::Red, false, 2.0f);
+        //DrawDebugLine(GetWorld(), MuzzleLocation, CameraHit.Location, FColor::Red, false, 2.0f);
         
         ProcessHit(CameraHit, MuzzleHit);
     }

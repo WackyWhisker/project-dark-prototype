@@ -36,13 +36,23 @@ void UDkDamageFlashComponent::TickComponent(float DeltaTime, ELevelTick TickType
 
 void UDkDamageFlashComponent::PlayFlash()
 {
+	UE_LOG(LogTemp, Warning, TEXT("PlayFlash() Called"));
+	UE_LOG(LogTemp, Warning, TEXT("Dynamic Material Instances Count: %d"), DynamicMaterialInstances.Num());
+
 	for (UMaterialInstanceDynamic* MaterialInstance : DynamicMaterialInstances)
 	{
 		if (MaterialInstance)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Processing Material Instance"));
+          
 			// Set the flash parameters
 			MaterialInstance->SetVectorParameterValue(FlashColorParameter, FlashColor);
 			MaterialInstance->SetScalarParameterValue(FlashIntensityParameter, 1.0f);
+			UE_LOG(LogTemp, Warning, TEXT("FLASH"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Null Material Instance"));
 		}
 	}
     

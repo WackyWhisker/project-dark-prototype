@@ -3,6 +3,7 @@
 #include "Character/DkCharacter.h"
 
 #include "Camera/CameraComponent.h"
+#include "Component/DkDamageFlashComponent.h"
 #include "Core/DkGameModeBase.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -25,6 +26,9 @@ ADkCharacter::ADkCharacter(const FObjectInitializer& ObjectInitializer)
 
 	//Weapon mesh
 	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>("WeaponMesh");
+
+	//Adding flash component
+	FlashComponent = CreateDefaultSubobject<UDkDamageFlashComponent>(TEXT("FlashComponent"));
 	
 	
 	//Camera boom
@@ -68,6 +72,10 @@ void ADkCharacter::BeginPlay()
 	Super::BeginPlay();
 	StateManager->InitializeStateManager();
 	AttachWeaponToSocket("HolsterWeaponSocket");
+	if (FlashComponent)
+	{
+		FlashComponent->SetupMesh(GetMesh());
+	}
 	
 }
 

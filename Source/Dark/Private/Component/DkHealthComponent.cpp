@@ -185,6 +185,13 @@ void UDkHealthComponent::ApplyDamagePushback(AActor* DamagedActor, float Damage,
     if (!OwningCharacter) return;
 
     FVector PushDirection = (DamagedActor->GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal();
+    
+    // Zero out the vertical component to prevent lifting
+    PushDirection.Z = 0.0f;
+    
+    // Renormalize to maintain original horizontal magnitude
+    PushDirection = PushDirection.GetSafeNormal();
+    
     OwningCharacter->LaunchCharacter(PushDirection * DamagePushbackStrength, false, false);
 }
 
