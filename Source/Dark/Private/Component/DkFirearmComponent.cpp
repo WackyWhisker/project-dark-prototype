@@ -53,6 +53,11 @@ void UDkFirearmComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
         FocusComponent->OnFocusStateChanged.RemoveAll(this);
         FocusComponent->OnFocusModeChanged.RemoveAll(this);
     }
+
+    if (CurrentWeapon)
+    {
+        CurrentWeapon->OnAmmoStateChanged.RemoveAll(this);
+    }
 }
 
 void UDkFirearmComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -116,16 +121,15 @@ void UDkFirearmComponent::EndFireCooldown()
 
 void UDkFirearmComponent::EquipWeapon(TSubclassOf<ADkFirearmBase> WeaponClass)
 {
-    // Destroy current weapon if exists
     if (CurrentWeapon)
     {
+        CurrentWeapon->OnAmmoStateChanged.RemoveAll(this);
         CurrentWeapon->Destroy();
         CurrentWeapon = nullptr;
     }
     
     if (!WeaponClass || !GetOwner()) return;
     
-    // Spawn new weapon
     FActorSpawnParameters SpawnParams;
     SpawnParams.Owner = GetOwner();
     
@@ -133,11 +137,22 @@ void UDkFirearmComponent::EquipWeapon(TSubclassOf<ADkFirearmBase> WeaponClass)
     
     if (CurrentWeapon)
     {
-        // Attach to holster initially
         ACharacter* Character = Cast<ACharacter>(GetOwner());
         if (Character)
         {
             CurrentWeapon->AttachToHolster(Character->GetMesh());
         }
+        
+        // Subscribe to weapon's ammo changes
+        CurrentWeapon->OnAmmoStateChanged.AddDynamic(this, &UDkFirearmComponent::OnWeaponAmmoChanged);
+        OnWeaponAmmoChanged(CurrentWeapon->GetCurrentAmmo(), CurrentWeapon->GetMaxAmmo());
+    }
+}
+
+void UDkFirearmComponent::OnWeaponAmmoChanged(int32 InCurrentAmmo, int32 InMaxAmmo)
+{
+    if (CurrentWeapon)
+    {
+        OnAmmoChanged.Broadcast(InCurrentAmmo, InMaxAmmo, CurrentWeapon);
     }
 }

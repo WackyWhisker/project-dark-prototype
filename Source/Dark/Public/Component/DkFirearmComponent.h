@@ -11,55 +11,58 @@ class UDkFocusComponent;
 enum class EDkFocusMode : uint8;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponFired);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnAmmoChanged, int32, CurrentAmmo, int32, MaxAmmo, class ADkFirearmBase*, Weapon);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DARK_API UDkFirearmComponent : public UActorComponent
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:    
-	UDkFirearmComponent();
+    UDkFirearmComponent();
 
-	virtual void BeginPlay() override;
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void BeginPlay() override;
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	// Core functions
-	void Fire();
-	void Reload();
+    void Fire();
+    void Reload();
 
-	UPROPERTY(BlueprintAssignable, Category = "Firearms")
-	FOnWeaponFired OnWeaponFired;
+    UPROPERTY(BlueprintAssignable, Category = "Firearms")
+    FOnWeaponFired OnWeaponFired;
+
+    UPROPERTY(BlueprintAssignable, Category = "Firearms")
+    FOnAmmoChanged OnAmmoChanged;
     
-	// Weapon management
-	UFUNCTION(BlueprintCallable, Category = "Firearms")
-	void EquipWeapon(TSubclassOf<ADkFirearmBase> WeaponClass);
+    UFUNCTION(BlueprintCallable, Category = "Firearms")
+    void EquipWeapon(TSubclassOf<ADkFirearmBase> WeaponClass);
     
-	UFUNCTION(BlueprintPure, Category = "Firearms")
-	ADkFirearmBase* GetCurrentWeapon() const { return CurrentWeapon; }
+    UFUNCTION(BlueprintPure, Category = "Firearms")
+    ADkFirearmBase* GetCurrentWeapon() const { return CurrentWeapon; }
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Firearms")
-	float FireRate = 0.25f;
+    UPROPERTY(EditDefaultsOnly, Category = "Firearms")
+    float FireRate = 0.25f;
     
-	FTimerHandle FireRateTimerHandle;
-	bool bCanFire = true;
+    FTimerHandle FireRateTimerHandle;
+    bool bCanFire = true;
 
-	void EndFireCooldown();
-    
-	// Focus system handling
-	void HandleFocusChanged(bool bIsFocused);
-	void HandleFocusModeChanged(EDkFocusMode NewMode, EDkFocusMode OldMode);
+    void EndFireCooldown();
+    void HandleFocusChanged(bool bIsFocused);
+    void HandleFocusModeChanged(EDkFocusMode NewMode, EDkFocusMode OldMode);
     
 private:
-	UPROPERTY()
-	ADkFirearmBase* CurrentWeapon;
+    UPROPERTY()
+    ADkFirearmBase* CurrentWeapon;
     
-	UPROPERTY(EditDefaultsOnly, Category = "Firearms")
-	TSubclassOf<ADkFirearmBase> DefaultWeapon;
+    UPROPERTY(EditDefaultsOnly, Category = "Firearms")
+    TSubclassOf<ADkFirearmBase> DefaultWeapon;
 
-	UPROPERTY()
-	UDkFocusComponent* FocusComponent;
+    UPROPERTY()
+    UDkFocusComponent* FocusComponent;
 
-	bool bIsFirearmMode = false;
+    bool bIsFirearmMode = false;
+
+    UFUNCTION()
+    void OnWeaponAmmoChanged(int32 InCurrentAmmo, int32 InMaxAmmo);
 };

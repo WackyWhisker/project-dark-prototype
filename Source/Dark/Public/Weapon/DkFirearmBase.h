@@ -8,6 +8,8 @@
 #include "Engine/DamageEvents.h"
 #include "DkFirearmBase.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAmmoStateChanged, int32, CurrentAmmo, int32, MaxAmmo);
+
 UCLASS()
 class DARK_API ADkFirearmBase : public AActor
 {
@@ -16,15 +18,12 @@ class DARK_API ADkFirearmBase : public AActor
 public:
 	ADkFirearmBase();
 
-	// Basic weapon functions
 	virtual void Fire();
 	virtual void StartReload();
     
-	// Attachment functions
 	void AttachToHolster(USkeletalMeshComponent* CharacterMesh);
 	void AttachToHand(USkeletalMeshComponent* CharacterMesh);
     
-	// Getters
 	UFUNCTION(BlueprintPure, Category = "Weapon")
 	bool CanFire() const;
     
@@ -37,18 +36,18 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Weapon")
 	int32 GetMaxAmmo() const { return MaxAmmo; }
 
+	UPROPERTY(BlueprintAssignable, Category = "Weapon")
+	FOnAmmoStateChanged OnAmmoStateChanged;
+
 protected:
 	virtual void BeginPlay() override;
 
-	// Socket names
 	static const FName HolsterSocket;
 	static const FName HandSocket;
 
-	// Components
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
 	USkeletalMeshComponent* WeaponMesh;
     
-	// Weapon properties
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	float Damage = 20.0f;
     

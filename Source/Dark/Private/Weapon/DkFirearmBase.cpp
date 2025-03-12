@@ -18,6 +18,7 @@ void ADkFirearmBase::BeginPlay()
 	Super::BeginPlay();
 	CurrentAmmo = MaxAmmo;
 	bIsReloading = false;
+	OnAmmoStateChanged.Broadcast(CurrentAmmo, MaxAmmo);
 }
 
 void ADkFirearmBase::Fire()
@@ -25,6 +26,8 @@ void ADkFirearmBase::Fire()
 	if (!CanFire()) return;
     
 	CurrentAmmo--;
+	OnAmmoStateChanged.Broadcast(CurrentAmmo, MaxAmmo);
+    
 	if (CurrentAmmo <= 0 && bAutoReload)
 	{
 		StartReload();
@@ -34,7 +37,7 @@ void ADkFirearmBase::Fire()
 void ADkFirearmBase::StartReload()
 {
 	if (bIsReloading || CurrentAmmo == MaxAmmo) return;
-	GEngine->AddOnScreenDebugMessage(-1, ReloadTime, FColor::Red, TEXT("Reloading"));
+    
 	bIsReloading = true;
 	GetWorld()->GetTimerManager().SetTimer(ReloadTimerHandle, this, &ADkFirearmBase::FinishReload, ReloadTime, false);
 }
@@ -43,6 +46,7 @@ void ADkFirearmBase::FinishReload()
 {
 	CurrentAmmo = MaxAmmo;
 	bIsReloading = false;
+	OnAmmoStateChanged.Broadcast(CurrentAmmo, MaxAmmo);
 }
 
 bool ADkFirearmBase::CanFire() const
