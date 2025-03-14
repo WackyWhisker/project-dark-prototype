@@ -145,7 +145,7 @@ public:
 	// Helper to check if any rooms are still in process of being unloaded
 	bool AreAnyRoomsUnloading() const;
 	
-	UPROPERTY(EditInstanceOnly, Category = "Castle Configuration")
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Castle Configuration")
 	TObjectPtr<UCastleRoomData> RoomData;
     
 	// Track loaded rooms with their info

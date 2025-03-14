@@ -7,14 +7,35 @@ UCastleRoomData::UCastleRoomData()
     // Constructor
 }
 
-FName UCastleRoomData::GetRandomLevelVariantForRoom(const FString& RoomID) const
+FName UCastleRoomData::GetRandomLevelVariantForRoom(const FString& RoomID)
 {
     if (const FCastleRoom* Room = Rooms.Find(RoomID))
     {
-        if (Room->LevelVariants.Num() > 0)
+        const int32 NumVariants = Room->LevelVariants.Num();
+        if (NumVariants > 0)
         {
-            int32 RandomIndex = FMath::RandRange(0, Room->LevelVariants.Num() - 1);
-            return Room->LevelVariants[RandomIndex];
+            // If only one variant, just return it
+            if (NumVariants == 1)
+            {
+                return Room->LevelVariants[0];
+            }
+
+            int32 SelectedIndex;
+            
+            if (bUseSecretVariant && Room->LevelVariants.IsValidIndex(3))
+            {
+                SelectedIndex = 3;
+            }
+            else
+            {
+                SelectedIndex = VariantCounter % 3;
+                VariantCounter = (VariantCounter + 1) % 3; // Ensures we loop 0,1,2,0,1,2...
+            }
+
+            if (Room->LevelVariants.IsValidIndex(SelectedIndex))
+            {
+                return Room->LevelVariants[SelectedIndex];
+            }
         }
     }
     return NAME_None;

@@ -62,6 +62,12 @@ class DARK_API UCastleRoomData : public UDataAsset
 public:
     UCastleRoomData();
 
+    // Demo switch for secret variant
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Castle Demo")
+    bool bUseSecretVariant;
+
+
+
     // Map of room IDs to room data
     UPROPERTY(EditDefaultsOnly, Category = "Castle Rooms")
     TMap<FString, FCastleRoom> Rooms;
@@ -72,7 +78,7 @@ public:
 
     // Get a random level variant for a room
     UFUNCTION(BlueprintPure, Category = "Castle Rooms")
-    FName GetRandomLevelVariantForRoom(const FString& RoomID) const;
+    FName GetRandomLevelVariantForRoom(const FString& RoomID);
 
     // Get room type for a room ID
     UFUNCTION(BlueprintPure, Category = "Castle Rooms")
@@ -89,4 +95,7 @@ public:
     // Get connected room IDs
     UFUNCTION(BlueprintPure, Category = "Castle Rooms")
     TArray<FString> GetConnectedRooms(const FString& RoomID) const;
+
+private:
+    int32 VariantCounter;
 };
