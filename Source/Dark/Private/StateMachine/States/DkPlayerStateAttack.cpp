@@ -57,6 +57,9 @@ void UDkPlayerStateAttack::OnStateExit()
     {
         AnimInstance->OnMontageEnded.RemoveAll(this);
     }
+
+    IsAttacking = false;
+    IsInAttackWindow = false;
 }
 
 void UDkPlayerStateAttack::OpenAttackWindow()
@@ -82,5 +85,18 @@ void UDkPlayerStateAttack::OnMontageEnded(UAnimMontage* Montage, bool bInterrupt
     if (AnimInstance)
     {
         AnimInstance->OnMontageEnded.RemoveAll(this);
+    }
+
+    // Force state transition based on movement
+    if (PlayerRef && PlayerRef->GetCharacterMovement())
+    {
+        if (PlayerRef->GetCharacterMovement()->Velocity.Length() > 0.0f && PlayerRef->GetCharacterMovement()->IsMovingOnGround())
+        {
+            PlayerRef->StateManager->SwitchStateByKey("Run");
+        }
+        else if (PlayerRef->GetCharacterMovement()->IsMovingOnGround())
+        {
+            PlayerRef->StateManager->SwitchStateByKey("Idle");
+        }
     }
 }
