@@ -7,8 +7,8 @@
 #include "Core/DkGameModeBase.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "Subsystem/DkGameStateSubsystem.h"
+#include "Component/DkAbilitySystemComponent.h"
 
 DEFINE_LOG_CATEGORY(LogDkCharacter);
 
@@ -48,6 +48,10 @@ ADkCharacter::ADkCharacter(const FObjectInitializer& ObjectInitializer)
 	//Player States
 	DkPlayerState = EDkPlayerAnimationState::Default;
 	DkPlayerAimingAnimationState = EDkPlayerAimingAnimationState::None;
+
+	//Ability System Component
+	AbilitySystemComponent = CreateDefaultSubobject<UDkAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	
 }
 
 void ADkCharacter::AttachWeaponToSocket(FName SocketName)
@@ -76,6 +80,8 @@ void ADkCharacter::BeginPlay()
 	{
 		FlashComponent->SetupMesh(GetMesh());
 	}
+
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	
 }
 

@@ -9,6 +9,7 @@
 #include "StateMachine/DkStateManagerComponent.h"
 #include "DkCharacter.generated.h"
 
+class UDkAbilitySystemComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UDkDamageFlashComponent;
@@ -69,6 +70,10 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects")
 	UDkDamageFlashComponent* FlashComponent;
+
+	//Ability System Component
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Abilities)
+	TObjectPtr<UDkAbilitySystemComponent> AbilitySystemComponent;
 
 protected:
 	virtual void BeginPlay() override;
