@@ -84,7 +84,7 @@ void ADkCharacter::BeginPlay()
 	}
 
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-	
+		
 }
 
 void ADkCharacter::Destroyed()
