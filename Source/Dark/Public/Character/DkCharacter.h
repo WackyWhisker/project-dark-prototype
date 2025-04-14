@@ -10,6 +10,7 @@
 #include "DkCharacter.generated.h"
 
 class UDkAbilitySystemComponent;
+class UDkGenericAttributeSet;
 class USpringArmComponent;
 class UCameraComponent;
 class UDkDamageFlashComponent;
@@ -71,13 +72,17 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects")
 	UDkDamageFlashComponent* FlashComponent;
 
+protected:
+	virtual void BeginPlay() override;
+	virtual void Destroyed() override;
+
 	//Ability System Component
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Abilities)
 	TObjectPtr<UDkAbilitySystemComponent> AbilitySystemComponent;
 
-protected:
-	virtual void BeginPlay() override;
-	virtual void Destroyed() override;
+	UPROPERTY()
+	TObjectPtr<UDkGenericAttributeSet> GenericAttributes;
+	
 
 private:
 	//Camera

@@ -8,7 +8,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Subsystem/DkGameStateSubsystem.h"
-#include "Component/DkAbilitySystemComponent.h"
+#include "AbilitySystem/AbilitySystemComponent/DkAbilitySystemComponent.h"
+#include "AbilitySystem/AttributeSets/DkGenericAttributeSet.h"
 
 DEFINE_LOG_CATEGORY(LogDkCharacter);
 
@@ -51,6 +52,7 @@ ADkCharacter::ADkCharacter(const FObjectInitializer& ObjectInitializer)
 
 	//Ability System Component
 	AbilitySystemComponent = CreateDefaultSubobject<UDkAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	GenericAttributes = CreateDefaultSubobject<UDkGenericAttributeSet>(TEXT("GenericAttributes"));
 	
 }
 
