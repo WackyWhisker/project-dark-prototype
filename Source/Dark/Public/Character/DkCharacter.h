@@ -77,6 +77,8 @@ public:
 	//Ability System Component
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
+	
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;
@@ -89,7 +91,7 @@ protected:
 	TObjectPtr<UDkGenericAttributeSet> GenericAttributes;
 
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-
+public:
 	FORCEINLINE UDkGameplayAbilityData* GetPlayerGameplayAbilitiesDataAsset() const { return GameplayAbilityData; }
 	
 

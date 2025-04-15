@@ -11,4 +11,6 @@ UCLASS()
 class DARK_API UDkGameplayAbility : public UGameplayAbility
 {
 	GENERATED_BODY()
+public:
+	UDkGameplayAbility(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 };

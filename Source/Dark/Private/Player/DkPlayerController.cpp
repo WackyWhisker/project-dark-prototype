@@ -52,9 +52,6 @@ void ADkPlayerController::SetupInputComponent()
     
     if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
     {
-        // Moving
-        EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ADkPlayerController::Move);
-
         // Looking
         EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADkPlayerController::Look);
 
@@ -99,27 +96,6 @@ void ADkPlayerController::SetupInputComponent()
 }
 
 // Input handling methods
-void ADkPlayerController::Move(const FInputActionValue& Value)
-{
-    if (!PlayerRef)
-    {
-        UE_LOG(LogDkPlayerController, Warning, TEXT("No player ref when moving"));
-        return;
-    }
-    FVector2D MovementVector = Value.Get<FVector2D>();
-    const FRotator SpringArmRotation = PlayerSpringArmRef->GetTargetRotation();
-    // We only want the yaw component for horizontal movement
-    const FRotator YawRotation(0, SpringArmRotation.Yaw, 0);
-    
-    // Get the forward and right vectors based on the spring arm's rotation
-    const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-    const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-    
-    // Apply movement in the rotated directions
-    PlayerRef->AddMovementInput(ForwardDirection, MovementVector.Y);
-    PlayerRef->AddMovementInput(RightDirection, MovementVector.X);
-}
-
 void ADkPlayerController::Look(const FInputActionValue& Value)
 {
     if (!PlayerRef) {return;}
