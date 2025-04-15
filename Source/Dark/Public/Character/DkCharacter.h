@@ -9,6 +9,8 @@
 #include "StateMachine/DkStateManagerComponent.h"
 #include "DkCharacter.generated.h"
 
+class UAbilitySystemComponent;
+class UDkGameplayAbilityData;
 class UDkAbilitySystemComponent;
 class UDkGenericAttributeSet;
 class USpringArmComponent;
@@ -72,6 +74,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects")
 	UDkDamageFlashComponent* FlashComponent;
 
+	//Ability System Component
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;
@@ -82,6 +87,10 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UDkGenericAttributeSet> GenericAttributes;
+
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+
+	FORCEINLINE UDkGameplayAbilityData* GetPlayerGameplayAbilitiesDataAsset() const { return GameplayAbilityData; }
 	
 
 private:
@@ -95,5 +104,16 @@ private:
 	//Weapons TODO: see if a weapon manager would be needed
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* WeaponMesh;
+
+	//Ability System Component
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputMappingContext> DefaultAbilityMappingContext;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UDkGameplayAbilityData> GameplayAbilityData;
+
+	void InitAbilitySystem();
+	void OnAbilityInputPressed(int32 InputID);
+	void OnAbilityInputReleased(int32 InputID);
 	
 };
