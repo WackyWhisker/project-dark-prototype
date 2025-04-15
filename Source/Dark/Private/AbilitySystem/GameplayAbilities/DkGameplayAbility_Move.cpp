@@ -1,10 +1,8 @@
 // Copyright @ Christian Reichel
 
-
 #include "AbilitySystem/GameplayAbilities/DkGameplayAbility_Move.h"
 #include "Character/DkCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
-
 
 void UDkGameplayAbility_Move::OnTriggeredInputAction(const FInputActionValue& Value)
 {

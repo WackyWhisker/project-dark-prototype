@@ -52,9 +52,6 @@ void ADkPlayerController::SetupInputComponent()
     
     if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
     {
-        // Looking
-        EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADkPlayerController::Look);
-
         //Jumping
         EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ADkPlayerController::Jump);
 
@@ -93,16 +90,6 @@ void ADkPlayerController::SetupInputComponent()
     {
         UE_LOG(LogDkPlayerController, Error, TEXT("'%s' Failed to find an Enhanced Input component!"), *GetNameSafe(this));
     }
-}
-
-// Input handling methods
-void ADkPlayerController::Look(const FInputActionValue& Value)
-{
-    if (!PlayerRef) {return;}
-    FVector2D LookAxisVector = Value.Get<FVector2D>();
-    
-    PlayerRef->AddControllerYawInput(LookAxisVector.X * TargetingYawInputScale);
-    PlayerRef->AddControllerPitchInput(LookAxisVector.Y);
 }
 
 // Basic player actions
