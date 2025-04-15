@@ -114,11 +114,7 @@ protected:
    // Base controller methods
    virtual void BeginPlay() override;
    virtual void SetupInputComponent() override;
-   
-   // Input handling
-   void Move(const FInputActionValue& Value);
-   void Look(const FInputActionValue& Value);
-   
+      
    // Setup methods
    void SetupTargetingBindings();
    void SetupFocusBindings();
@@ -151,12 +147,6 @@ private:
    TMap<FName, UInputMappingContext*> MappingContexts;
 
    // Input actions
-   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   UInputAction* MoveAction;
-
-   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   UInputAction* LookAction;
-
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputAction* JumpAction;
 
