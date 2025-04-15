@@ -20,6 +20,9 @@ struct FGameplayInputAbilityInfo
 	UPROPERTY(EditAnywhere, Category = "GameplayAbilityInputInfo")
 	TObjectPtr<UInputAction> InputAction;
 
+	UPROPERTY(EditAnywhere, Category = "GameplayAbilityInputInfo")
+	bool bGiveByDefault = true;
+
 	//InputID will be generated automatically
 	UPROPERTY(VisibleAnywhere, Category = "GameplayAbilityInputInfo")
 	int32 InputID;

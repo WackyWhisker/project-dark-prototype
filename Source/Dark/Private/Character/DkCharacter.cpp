@@ -113,7 +113,7 @@ void ADkCharacter::InitAbilitySystem()
   
 		for (const auto& It : InputAbilities)
 		{
-			if (It.IsValid())
+			if (It.IsValid() && It.bGiveByDefault) //give only if marked as give by default. that way it receives an input id in the data asset for later, but not every single set up ability is given directly at start.
 			{
 				const FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(It.GameplayAbilityClass, AbilityLevel, It.InputID);
 				AbilitySystemComponent->GiveAbility(AbilitySpec);
