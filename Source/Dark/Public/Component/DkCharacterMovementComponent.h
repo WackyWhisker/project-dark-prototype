@@ -15,12 +15,6 @@ class DARK_API UDkCharacterMovementComponent : public UCharacterMovementComponen
 public:
 	UDkCharacterMovementComponent();
 
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
-	float MaxNonForwardSpeed = 300.0f; 
-
-	virtual float GetMaxSpeed() const override;
-
 protected:
 	virtual void BeginPlay() override;
 
