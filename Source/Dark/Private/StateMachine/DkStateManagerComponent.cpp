@@ -6,13 +6,13 @@
 
 UDkStateManagerComponent::UDkStateManagerComponent()
 {
-    PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UDkStateManagerComponent::BeginPlay()
 {
     Super::BeginPlay();
-    InitializeStates();
+    //InitializeStates();
 }
 
 void UDkStateManagerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
