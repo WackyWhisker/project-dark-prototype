@@ -75,7 +75,7 @@ public:
    void Shoot();
       
    // UI and mapping context
-   void SetMappingContext(const FName& ContextName, bool bEnable);
+   void SetMappingContext(const FName& ContextName, bool bEnable, int32 Priority);
    void ToggleLetterboxUI(bool bShowLetterboxUI);
 
 public:

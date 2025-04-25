@@ -175,7 +175,7 @@ void ADkPlayerController::ToggleLetterboxUI(bool bShowLetterboxUI)
     }
 }
 
-void ADkPlayerController::SetMappingContext(const FName& ContextName, bool bEnable)
+void ADkPlayerController::SetMappingContext(const FName& ContextName, bool bEnable, int32 Priority)
 {
     if (UInputMappingContext* Context = MappingContexts.FindRef(ContextName))
     {
@@ -183,7 +183,7 @@ void ADkPlayerController::SetMappingContext(const FName& ContextName, bool bEnab
         {
             if (bEnable)
             {
-                Subsystem->AddMappingContext(Context, 0);
+                Subsystem->AddMappingContext(Context, Priority);
             }
             else
             {
