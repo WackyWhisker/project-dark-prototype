@@ -52,9 +52,6 @@ void ADkPlayerController::SetupInputComponent()
     
     if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
     {
-        //Jumping
-        EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ADkPlayerController::Jump);
-
         //Dodge
         EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, this, &ADkPlayerController::Dodge);
 
@@ -93,15 +90,6 @@ void ADkPlayerController::SetupInputComponent()
 }
 
 // Basic player actions
-void ADkPlayerController::Jump()
-{
-    UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerController: Jump Input"));
-    if (JumpDelegate.IsBound())
-    {
-        JumpDelegate.Broadcast();
-    }
-}
-
 void ADkPlayerController::Dodge()
 {
     UE_LOG(LogDkPlayerController, Warning, TEXT("PlayerController: Dodge Input"));
@@ -470,11 +458,6 @@ void ADkPlayerController::SetupFocusBindings()
 }
 
 // Interface method implementations
-FJumpSignature* ADkPlayerController::GetJumpDelegate()
-{
-    return &JumpDelegate;
-}
-
 FDodgeSignature* ADkPlayerController::GetDodgeDelegate()
 {
     return &DodgeDelegate;

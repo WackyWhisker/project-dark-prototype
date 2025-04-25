@@ -141,7 +141,7 @@ void ADkCharacter::OnAbilityInputReleased(int32 InputID)
 void ADkCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	//StateManager->InitializeStateManager();
+	StateManager->InitializeStateManager();
 	AttachWeaponToSocket("HolsterWeaponSocket");
 	if (FlashComponent)
 	{

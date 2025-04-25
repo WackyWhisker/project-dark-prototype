@@ -33,7 +33,6 @@ public:
 protected:
 	// protected methods
 	//Matching functions for the player controller delegates
-	virtual void Jump();
 	virtual void Attack();
 	virtual void Dodge();
 	virtual void Lift();

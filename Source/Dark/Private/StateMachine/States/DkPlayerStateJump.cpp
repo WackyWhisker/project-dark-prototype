@@ -19,11 +19,3 @@ void UDkPlayerStateJump::TickState()
 	}
 }
 
-void UDkPlayerStateJump::Jump()
-{
-	Super::Jump();
-	UE_LOG(LogTemp, Warning, TEXT("Executing Jump in again in jump State"));
-	PlayerRef->Jump();
-	PlayerRef->StateManager->SwitchStateByKey("Jump");
-}
-

@@ -25,7 +25,6 @@ void UDkPlayerStateBase::OnStateEnter(AActor* StateOwner)
     //TODO: Consider which of these should be in the child states only
     if(PlayerControllerInterface)
     {
-       PlayerControllerInterface->GetJumpDelegate()->AddUObject(this, &UDkPlayerStateBase::Jump);
        PlayerControllerInterface->GetAttackDelegate()->AddUObject(this, &UDkPlayerStateBase::Attack);
        PlayerControllerInterface->GetDodgeDelegate()->AddUObject(this, &UDkPlayerStateBase::Dodge);
        PlayerControllerInterface->GetLiftDelegate()->AddUObject(this, &UDkPlayerStateBase::Lift);
@@ -39,17 +38,11 @@ void UDkPlayerStateBase::OnStateExit()
     //Unbind all relevant delegates
     if(PlayerControllerInterface)
     {
-       PlayerControllerInterface->GetJumpDelegate()->RemoveAll(this);
        PlayerControllerInterface->GetAttackDelegate()->RemoveAll(this);
        PlayerControllerInterface->GetDodgeDelegate()->RemoveAll(this);
        PlayerControllerInterface->GetLiftDelegate()->RemoveAll(this);
        PlayerControllerInterface->GetDropDelegate()->RemoveAll(this);
     }
-}
-
-void UDkPlayerStateBase::Jump()
-{
-    //executed in child states
 }
 
 void UDkPlayerStateBase::Attack()
