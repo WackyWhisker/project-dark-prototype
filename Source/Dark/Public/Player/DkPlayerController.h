@@ -26,7 +26,6 @@ class DARK_API ADkPlayerController : public APlayerController, public IDkPlayerC
 
 public:
    // Basic player actions
-   void Jump();
    void Dodge();
    void Attack();
    void Interact();
@@ -76,7 +75,7 @@ public:
    void Shoot();
       
    // UI and mapping context
-   void SetMappingContext(const FName& ContextName, bool bEnable);
+   void SetMappingContext(const FName& ContextName, bool bEnable, int32 Priority);
    void ToggleLetterboxUI(bool bShowLetterboxUI);
 
 public:
@@ -91,7 +90,6 @@ public:
    float TargetingYawInputScale = 1.0f;
 
    // Interface method implementations
-   virtual FJumpSignature* GetJumpDelegate() override;
    virtual FDodgeSignature* GetDodgeDelegate() override;
    virtual FAttackSignature* GetAttackDelegate() override;
    virtual FTargetStartSignature* GetTargetStartDelegate() override;
@@ -147,9 +145,6 @@ private:
    TMap<FName, UInputMappingContext*> MappingContexts;
 
    // Input actions
-   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-   UInputAction* JumpAction;
-
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
    UInputAction* DodgeAction;
 
@@ -222,7 +217,6 @@ private:
    UEnhancedInputComponent* CachedEnhancedInputComponent;
 
    // Delegates
-   FJumpSignature JumpDelegate;
    FDodgeSignature DodgeDelegate;
    FAttackSignature AttackDelegate;
    FTargetStartSignature TargetStartDelegate;

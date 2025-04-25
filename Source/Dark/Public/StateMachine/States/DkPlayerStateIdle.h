@@ -18,7 +18,6 @@ public:
 	virtual void TickState() override;
 
 protected:
-	virtual void Jump() override;
 	virtual void Attack() override;
 	virtual void OnStateEnter(AActor* StateOwner) override;
 	

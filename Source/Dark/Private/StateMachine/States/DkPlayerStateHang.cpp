@@ -38,7 +38,7 @@ void UDkPlayerStateHang::OnStateEnter(AActor* StateOwner)
 	}
 
 	if (!PlayerControllerRef) return;
-	PlayerControllerRef->SetMappingContext("LedgeHang", true);
+	PlayerControllerRef->SetMappingContext("LedgeHang", true,10);
 	PlayerRef->DkPlayerState = EDkPlayerAnimationState::Hang;
 }
 
@@ -139,7 +139,7 @@ void UDkPlayerStateHang::OnStateExit()
 {
 	Super::OnStateExit();
 	if (!PlayerControllerRef) return;
-	PlayerControllerRef->SetMappingContext("LedgeHang", false);
+	PlayerControllerRef->SetMappingContext("LedgeHang", false, 0);
 
 	// Unlock movement
 	if (UCharacterMovementComponent* MovementComp = PlayerRef->GetCharacterMovement())
