@@ -12,8 +12,6 @@ UE_DISABLE_OPTIMIZATION
 
 void UDkImGuiSubsystem::Tick(float DeltaTime)
 {
-	static bool bDoubleJumpAbilityGranted = false;
-    
 	if (bShowDebugMenu)
 	{
 		ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_Always);
@@ -27,6 +25,7 @@ void UDkImGuiSubsystem::Tick(float DeltaTime)
 				if (OwnerCharacter)
 				{
 					OwnerCharacter->GrantAbilityByName("Double Jump");//name hard referenced in gameplay ablity data
+					OwnerCharacter->RevokeAbilityByName("Jump");
 				}
 			}
 			else
@@ -35,6 +34,7 @@ void UDkImGuiSubsystem::Tick(float DeltaTime)
 				if (OwnerCharacter)
 				{
 					OwnerCharacter->RevokeAbilityByName("Double Jump");
+					OwnerCharacter->GrantAbilityByName("Jump");
 				}
 			}
 		}

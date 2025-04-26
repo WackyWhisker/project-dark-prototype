@@ -29,6 +29,7 @@ public:
 private:
 	
 	bool bShowDebugMenu = false;
+	bool bDoubleJumpAbilityGranted = false;
 
 	UPROPERTY()
 	TSoftObjectPtr<ADkCharacter> OwnerCharacter = nullptr;
