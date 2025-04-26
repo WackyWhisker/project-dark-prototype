@@ -77,6 +77,13 @@ public:
 	//Ability System Component
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
+public:
+	UFUNCTION(BlueprintCallable, Category = "AbilitySystem")
+	void GrantAbilityByName(FName AbilityName);
+    
+	UFUNCTION(BlueprintCallable, Category = "AbilitySystem")
+	void RevokeAbilityByName(FName AbilityName);
+
 	
 
 protected:

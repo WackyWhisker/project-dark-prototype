@@ -8,6 +8,18 @@ const TSet<FGameplayInputAbilityInfo>& UDkGameplayAbilityData::GetInputAbilities
 	return InputAbilities;
 }
 
+const FGameplayInputAbilityInfo* UDkGameplayAbilityData::FindAbilityInfoByName(FName AbilityName) const
+{
+	for (const FGameplayInputAbilityInfo& AbilityInfo : InputAbilities)
+	{
+		if (AbilityInfo.AbilityName == AbilityName)
+		{
+			return &AbilityInfo;
+		}
+	}
+	return nullptr;
+}
+
 #if WITH_EDITOR
 void UDkGameplayAbilityData::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {

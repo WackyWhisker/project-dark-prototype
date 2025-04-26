@@ -15,6 +15,9 @@ struct FGameplayInputAbilityInfo
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, Category = "GameplayAbilityInputInfo")
+	FName AbilityName;
+
+	UPROPERTY(EditAnywhere, Category = "GameplayAbilityInputInfo")
 	TSubclassOf<UDkGameplayAbility> GameplayAbilityClass;
 
 	UPROPERTY(EditAnywhere, Category = "GameplayAbilityInputInfo")
@@ -29,7 +32,7 @@ struct FGameplayInputAbilityInfo
 
 	bool IsValid() const
 	{
-		return GameplayAbilityClass && InputAction;
+		return GameplayAbilityClass && InputAction && !AbilityName.IsNone();
 	}
 
 	bool operator==(const FGameplayInputAbilityInfo& Other) const
@@ -60,6 +63,8 @@ class DARK_API UDkGameplayAbilityData : public UDataAsset
 
 public:
 	const TSet<FGameplayInputAbilityInfo>& GetInputAbilities() const;
+
+	const FGameplayInputAbilityInfo* FindAbilityInfoByName(FName AbilityName) const;
 	
 protected:
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")

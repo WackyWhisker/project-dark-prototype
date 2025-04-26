@@ -6,6 +6,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "DkImGuiSubsystem.generated.h"
 
+class ADkCharacter;
 
 UCLASS()
 class DARK_API UDkImGuiSubsystem : public UGameInstanceSubsystem, public FTickableGameObject
@@ -19,6 +20,16 @@ public:
 	virtual ETickableTickType GetTickableTickType() const override { return IsTemplate() ? ETickableTickType::Never : ETickableTickType::Always; }
 	virtual bool IsTickableWhenPaused() const override { return true; }
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Debug")
 	static void ToggleImGuiInput();
+
+	UFUNCTION(BlueprintCallable, Category = "Debug")
+	void ToggleDebugMenu(ADkCharacter* InOwnerCharacter);
+
+private:
+	
+	bool bShowDebugMenu = false;
+
+	UPROPERTY()
+	TSoftObjectPtr<ADkCharacter> OwnerCharacter = nullptr;
 };

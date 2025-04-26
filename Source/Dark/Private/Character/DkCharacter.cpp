@@ -81,6 +81,41 @@ UAbilitySystemComponent* ADkCharacter::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+void ADkCharacter::GrantAbilityByName(FName AbilityName)
+{
+	if (!GameplayAbilityData || !AbilitySystemComponent) return;
+    
+	const FGameplayInputAbilityInfo* AbilityInfo = GameplayAbilityData->FindAbilityInfoByName(AbilityName);
+	if (AbilityInfo && AbilityInfo->IsValid())
+	{
+		const FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityInfo->GameplayAbilityClass, 1, AbilityInfo->InputID);
+		AbilitySystemComponent->GiveAbility(AbilitySpec);
+	}
+}
+
+void ADkCharacter::RevokeAbilityByName(FName AbilityName)
+{
+	if (!GameplayAbilityData || !AbilitySystemComponent) return;
+    
+	const FGameplayInputAbilityInfo* AbilityInfo = GameplayAbilityData->FindAbilityInfoByName(AbilityName);
+	if (AbilityInfo && AbilityInfo->IsValid())
+	{
+		// Get all activatable abilities
+		const TArray<FGameplayAbilitySpec>& Abilities = AbilitySystemComponent->GetActivatableAbilities();
+        
+		// Find the ability with matching InputID and class
+		for (const FGameplayAbilitySpec& Spec : Abilities)
+		{
+			if (Spec.InputID == AbilityInfo->InputID && 
+				Spec.Ability->GetClass() == AbilityInfo->GameplayAbilityClass)
+			{
+				AbilitySystemComponent->ClearAbility(Spec.Handle);
+				break;
+			}
+		}
+	}
+}
+
 void ADkCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
